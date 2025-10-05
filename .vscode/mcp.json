@@ -1,0 +1,21 @@
+{
+  "servers": {
+    "neondatabase/mcp-server-neon": {
+      "type": "sse",
+      "url": "https://mcp.neon.tech/sse"
+    },
+    "cloudflare/workers-bindings": {
+      "type": "sse",
+      "url": "https://bindings.mcp.cloudflare.com/sse"
+    },
+    "cloudinary/asset-management": {
+      "type": "sse",
+      "url": "https://asset-management.mcp.cloudinary.com/sse"
+    },
+    "github": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/"
+    }
+  },
+  "inputs": []
+}
