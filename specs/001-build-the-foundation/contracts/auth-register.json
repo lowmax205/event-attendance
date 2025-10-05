@@ -1,301 +1,290 @@
 {
-    "endpoint": "POST /api/auth/register",
-    "description": "Register a new user with email, password, and role",
-    "authentication": "None (public endpoint)",
-    "rateLimit": "5 requests per hour per email address",
-    "request": {
-        "contentType": "application/json",
-        "schema": {
+  "endpoint": "POST /api/auth/register",
+  "description": "Register a new user with email, password, and role",
+  "authentication": "None (public endpoint)",
+  "rateLimit": "5 requests per hour per email address",
+  "request": {
+    "contentType": "application/json",
+    "schema": {
+      "type": "object",
+      "required": ["email", "password", "confirmPassword", "role"],
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email",
+          "maxLength": 254,
+          "example": "student@university.edu",
+          "description": "User's email address (will be username)"
+        },
+        "password": {
+          "type": "string",
+          "minLength": 8,
+          "pattern": "^(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{8,}$",
+          "example": "SecurePass123!",
+          "description": "Password with at least 8 chars, 1 uppercase, 1 number, 1 special char"
+        },
+        "confirmPassword": {
+          "type": "string",
+          "example": "SecurePass123!",
+          "description": "Must match password field"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["Student", "Moderator", "Administrator"],
+          "example": "Student",
+          "description": "User's role in the system"
+        }
+      }
+    },
+    "validation": {
+      "email": [
+        "Must be valid email format (RFC 5322)",
+        "Maximum 254 characters",
+        "Must be unique (not already registered)"
+      ],
+      "password": [
+        "Minimum 8 characters",
+        "At least one uppercase letter (A-Z)",
+        "At least one number (0-9)",
+        "At least one special character (!@#$%^&*)",
+        "Must match confirmPassword"
+      ],
+      "role": ["Must be one of: Student, Moderator, Administrator"]
+    },
+    "exampleRequest": {
+      "email": "john.doe@university.edu",
+      "password": "MySecure123!",
+      "confirmPassword": "MySecure123!",
+      "role": "Student"
+    }
+  },
+  "responses": {
+    "201": {
+      "description": "User successfully registered",
+      "contentType": "application/json",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "example": "Registration successful"
+          },
+          "user": {
             "type": "object",
-            "required": [
-                "email",
-                "password",
-                "confirmPassword",
-                "role"
-            ],
             "properties": {
-                "email": {
-                    "type": "string",
-                    "format": "email",
-                    "maxLength": 254,
-                    "example": "student@university.edu",
-                    "description": "User's email address (will be username)"
-                },
-                "password": {
-                    "type": "string",
-                    "minLength": 8,
-                    "pattern": "^(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{8,}$",
-                    "example": "SecurePass123!",
-                    "description": "Password with at least 8 chars, 1 uppercase, 1 number, 1 special char"
-                },
-                "confirmPassword": {
-                    "type": "string",
-                    "example": "SecurePass123!",
-                    "description": "Must match password field"
-                },
-                "role": {
-                    "type": "string",
-                    "enum": [
-                        "Student",
-                        "Moderator",
-                        "Administrator"
-                    ],
-                    "example": "Student",
-                    "description": "User's role in the system"
-                }
+              "id": {
+                "type": "string",
+                "example": "clx123abc..."
+              },
+              "email": {
+                "type": "string",
+                "example": "john.doe@university.edu"
+              },
+              "role": {
+                "type": "string",
+                "example": "Student"
+              },
+              "profileComplete": {
+                "type": "boolean",
+                "example": false
+              }
             }
-        },
-        "validation": {
-            "email": [
-                "Must be valid email format (RFC 5322)",
-                "Maximum 254 characters",
-                "Must be unique (not already registered)"
-            ],
-            "password": [
-                "Minimum 8 characters",
-                "At least one uppercase letter (A-Z)",
-                "At least one number (0-9)",
-                "At least one special character (!@#$%^&*)",
-                "Must match confirmPassword"
-            ],
-            "role": [
-                "Must be one of: Student, Moderator, Administrator"
-            ]
-        },
-        "exampleRequest": {
-            "email": "john.doe@university.edu",
-            "password": "MySecure123!",
-            "confirmPassword": "MySecure123!",
-            "role": "Student"
+          },
+          "accessToken": {
+            "type": "string",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+            "description": "JWT access token (1 hour TTL)"
+          }
         }
+      },
+      "cookies": [
+        {
+          "name": "refreshToken",
+          "description": "JWT refresh token (30 days TTL)",
+          "attributes": "httpOnly, secure, sameSite=lax, path=/"
+        }
+      ],
+      "exampleResponse": {
+        "success": true,
+        "message": "Registration successful",
+        "user": {
+          "id": "clx123abc456def789",
+          "email": "john.doe@university.edu",
+          "role": "Student",
+          "profileComplete": false
+        },
+        "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbHgxMjNhYmM0NTZkZWY3ODkiLCJyb2xlIjoiU3R1ZGVudCIsImlhdCI6MTY5ODc2NTQzMiwiZXhwIjoxNjk4NzY2MzMyfQ.abc123..."
+      },
+      "nextStep": "Redirect user to /profile/complete (profileComplete is false)"
     },
-    "responses": {
-        "201": {
-            "description": "User successfully registered",
-            "contentType": "application/json",
-            "schema": {
-                "type": "object",
-                "properties": {
-                    "success": {
-                        "type": "boolean",
-                        "example": true
-                    },
-                    "message": {
-                        "type": "string",
-                        "example": "Registration successful"
-                    },
-                    "user": {
-                        "type": "object",
-                        "properties": {
-                            "id": {
-                                "type": "string",
-                                "example": "clx123abc..."
-                            },
-                            "email": {
-                                "type": "string",
-                                "example": "john.doe@university.edu"
-                            },
-                            "role": {
-                                "type": "string",
-                                "example": "Student"
-                            },
-                            "profileComplete": {
-                                "type": "boolean",
-                                "example": false
-                            }
-                        }
-                    },
-                    "accessToken": {
-                        "type": "string",
-                        "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-                        "description": "JWT access token (1 hour TTL)"
-                    }
-                }
-            },
-            "cookies": [
-                {
-                    "name": "refreshToken",
-                    "description": "JWT refresh token (30 days TTL)",
-                    "attributes": "httpOnly, secure, sameSite=lax, path=/"
-                }
-            ],
-            "exampleResponse": {
-                "success": true,
-                "message": "Registration successful",
-                "user": {
-                    "id": "clx123abc456def789",
-                    "email": "john.doe@university.edu",
-                    "role": "Student",
-                    "profileComplete": false
+    "400": {
+      "description": "Validation error",
+      "contentType": "application/json",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "error": {
+            "type": "string",
+            "example": "Validation failed"
+          },
+          "details": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "field": {
+                  "type": "string",
+                  "example": "password"
                 },
-                "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbHgxMjNhYmM0NTZkZWY3ODkiLCJyb2xlIjoiU3R1ZGVudCIsImlhdCI6MTY5ODc2NTQzMiwiZXhwIjoxNjk4NzY2MzMyfQ.abc123..."
-            },
-            "nextStep": "Redirect user to /profile/complete (profileComplete is false)"
-        },
-        "400": {
-            "description": "Validation error",
-            "contentType": "application/json",
-            "schema": {
-                "type": "object",
-                "properties": {
-                    "success": {
-                        "type": "boolean",
-                        "example": false
-                    },
-                    "error": {
-                        "type": "string",
-                        "example": "Validation failed"
-                    },
-                    "details": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "field": {
-                                    "type": "string",
-                                    "example": "password"
-                                },
-                                "message": {
-                                    "type": "string",
-                                    "example": "Password must contain at least one uppercase letter"
-                                }
-                            }
-                        }
-                    }
+                "message": {
+                  "type": "string",
+                  "example": "Password must contain at least one uppercase letter"
                 }
-            },
-            "exampleResponse": {
-                "success": false,
-                "error": "Validation failed",
-                "details": [
-                    {
-                        "field": "password",
-                        "message": "Password must contain at least one uppercase letter"
-                    },
-                    {
-                        "field": "confirmPassword",
-                        "message": "Passwords do not match"
-                    }
-                ]
+              }
             }
-        },
-        "409": {
-            "description": "Email already registered",
-            "contentType": "application/json",
-            "schema": {
-                "type": "object",
-                "properties": {
-                    "success": {
-                        "type": "boolean",
-                        "example": false
-                    },
-                    "error": {
-                        "type": "string",
-                        "example": "An account with this email already exists. Please log in instead."
-                    }
-                }
-            },
-            "exampleResponse": {
-                "success": false,
-                "error": "An account with this email already exists. Please log in instead."
-            }
-        },
-        "429": {
-            "description": "Rate limit exceeded",
-            "contentType": "application/json",
-            "schema": {
-                "type": "object",
-                "properties": {
-                    "success": {
-                        "type": "boolean",
-                        "example": false
-                    },
-                    "error": {
-                        "type": "string",
-                        "example": "Too many registration attempts. Please try again in 1 hour."
-                    }
-                }
-            },
-            "exampleResponse": {
-                "success": false,
-                "error": "Too many registration attempts. Please try again in 1 hour."
-            }
-        },
-        "500": {
-            "description": "Server error",
-            "contentType": "application/json",
-            "schema": {
-                "type": "object",
-                "properties": {
-                    "success": {
-                        "type": "boolean",
-                        "example": false
-                    },
-                    "error": {
-                        "type": "string",
-                        "example": "An unexpected error occurred. Please try again later."
-                    }
-                }
-            },
-            "exampleResponse": {
-                "success": false,
-                "error": "An unexpected error occurred. Please try again later."
-            }
+          }
         }
+      },
+      "exampleResponse": {
+        "success": false,
+        "error": "Validation failed",
+        "details": [
+          {
+            "field": "password",
+            "message": "Password must contain at least one uppercase letter"
+          },
+          {
+            "field": "confirmPassword",
+            "message": "Passwords do not match"
+          }
+        ]
+      }
     },
-    "sideEffects": [
-        "Creates new User record in database",
-        "Hashes password with bcrypt (cost factor 12)",
-        "Generates JWT access token (1 hour TTL) and refresh token (30 days TTL)",
-        "Creates Session record in database",
-        "Sets httpOnly refreshToken cookie",
-        "Creates SecurityLog entry (eventType: 'registration', success: true)"
-    ],
-    "securityConsiderations": [
-        "Password is hashed with bcrypt before storage (never store plain text)",
-        "Email uniqueness check prevents duplicate accounts",
-        "Rate limiting (5 per hour per email) prevents automated registration abuse",
-        "Refresh token stored in httpOnly cookie (XSS protection)",
-        "Access token sent in response body (client stores in memory, not localStorage)",
-        "All inputs sanitized to prevent XSS/SQL injection",
-        "Generic error messages do not expose whether email exists (privacy)"
-    ],
-    "contractTests": [
-        {
-            "name": "should register user with valid inputs",
-            "given": "Valid email, password, confirmPassword, role",
-            "when": "POST /api/auth/register",
-            "then": "Returns 201, user object, accessToken, sets refreshToken cookie"
-        },
-        {
-            "name": "should reject registration with existing email",
-            "given": "Email that already exists in database",
-            "when": "POST /api/auth/register",
-            "then": "Returns 409 with error message"
-        },
-        {
-            "name": "should reject weak password",
-            "given": "Password without uppercase letter",
-            "when": "POST /api/auth/register",
-            "then": "Returns 400 with validation error details"
-        },
-        {
-            "name": "should reject mismatched passwords",
-            "given": "password !== confirmPassword",
-            "when": "POST /api/auth/register",
-            "then": "Returns 400 with validation error"
-        },
-        {
-            "name": "should reject invalid role",
-            "given": "role = 'InvalidRole'",
-            "when": "POST /api/auth/register",
-            "then": "Returns 400 with validation error"
-        },
-        {
-            "name": "should enforce rate limit",
-            "given": "6 registration attempts from same email address within 1 hour",
-            "when": "POST /api/auth/register (6th attempt)",
-            "then": "Returns 429 rate limit error"
+    "409": {
+      "description": "Email already registered",
+      "contentType": "application/json",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "error": {
+            "type": "string",
+            "example": "An account with this email already exists. Please log in instead."
+          }
         }
-    ]
+      },
+      "exampleResponse": {
+        "success": false,
+        "error": "An account with this email already exists. Please log in instead."
+      }
+    },
+    "429": {
+      "description": "Rate limit exceeded",
+      "contentType": "application/json",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "error": {
+            "type": "string",
+            "example": "Too many registration attempts. Please try again in 1 hour."
+          }
+        }
+      },
+      "exampleResponse": {
+        "success": false,
+        "error": "Too many registration attempts. Please try again in 1 hour."
+      }
+    },
+    "500": {
+      "description": "Server error",
+      "contentType": "application/json",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "error": {
+            "type": "string",
+            "example": "An unexpected error occurred. Please try again later."
+          }
+        }
+      },
+      "exampleResponse": {
+        "success": false,
+        "error": "An unexpected error occurred. Please try again later."
+      }
+    }
+  },
+  "sideEffects": [
+    "Creates new User record in database",
+    "Hashes password with bcrypt (cost factor 12)",
+    "Generates JWT access token (1 hour TTL) and refresh token (30 days TTL)",
+    "Creates Session record in database",
+    "Sets httpOnly refreshToken cookie",
+    "Creates SecurityLog entry (eventType: 'registration', success: true)"
+  ],
+  "securityConsiderations": [
+    "Password is hashed with bcrypt before storage (never store plain text)",
+    "Email uniqueness check prevents duplicate accounts",
+    "Rate limiting (5 per hour per email) prevents automated registration abuse",
+    "Refresh token stored in httpOnly cookie (XSS protection)",
+    "Access token sent in response body (client stores in memory, not localStorage)",
+    "All inputs sanitized to prevent XSS/SQL injection",
+    "Generic error messages do not expose whether email exists (privacy)"
+  ],
+  "contractTests": [
+    {
+      "name": "should register user with valid inputs",
+      "given": "Valid email, password, confirmPassword, role",
+      "when": "POST /api/auth/register",
+      "then": "Returns 201, user object, accessToken, sets refreshToken cookie"
+    },
+    {
+      "name": "should reject registration with existing email",
+      "given": "Email that already exists in database",
+      "when": "POST /api/auth/register",
+      "then": "Returns 409 with error message"
+    },
+    {
+      "name": "should reject weak password",
+      "given": "Password without uppercase letter",
+      "when": "POST /api/auth/register",
+      "then": "Returns 400 with validation error details"
+    },
+    {
+      "name": "should reject mismatched passwords",
+      "given": "password !== confirmPassword",
+      "when": "POST /api/auth/register",
+      "then": "Returns 400 with validation error"
+    },
+    {
+      "name": "should reject invalid role",
+      "given": "role = 'InvalidRole'",
+      "when": "POST /api/auth/register",
+      "then": "Returns 400 with validation error"
+    },
+    {
+      "name": "should enforce rate limit",
+      "given": "6 registration attempts from same email address within 1 hour",
+      "when": "POST /api/auth/register (6th attempt)",
+      "then": "Returns 429 rate limit error"
+    }
+  ]
 }

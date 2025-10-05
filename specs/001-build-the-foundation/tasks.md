@@ -32,7 +32,7 @@ All paths relative to repository root `D:\Shared Folder\VS Code Project\Coding 2
 
 ## Phase 3.1: Setup & Infrastructure
 
-- [ ] **T001** Initialize Prisma with PostgreSQL
+- [x] **T001** Initialize Prisma with PostgreSQL
 
   - Create `prisma/schema.prisma` with User, UserProfile, Session, SecurityLog models
   - Configure `provider = "postgresql"` and `url = env("DATABASE_URL")`
@@ -41,7 +41,7 @@ All paths relative to repository root `D:\Shared Folder\VS Code Project\Coding 2
   - **Dependencies**: None (first task)
   - **Blocks**: T002, T004
 
-- [ ] **T002** Install and configure project dependencies
+- [x] **T002** Install and configure project dependencies
 
   - Run `npm install prisma @prisma/client bcryptjs jose @upstash/ratelimit @upstash/redis react-hook-form zod @hookform/resolvers sonner`
   - Run `npm install -D @types/bcryptjs`
@@ -49,7 +49,7 @@ All paths relative to repository root `D:\Shared Folder\VS Code Project\Coding 2
   - **Dependencies**: T001
   - **Blocks**: All subsequent tasks
 
-- [ ] **T003** Configure environment variables
+- [x] **T003** Configure environment variables
 
   - Create `.env.example` with template variables: `DATABASE_URL`, `JWT_SECRET`, `JWT_ACCESS_EXPIRY="1h"`, `JWT_REFRESH_EXPIRY="30d"`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`
   - Add `.env` to `.gitignore` (verify)
@@ -57,7 +57,7 @@ All paths relative to repository root `D:\Shared Folder\VS Code Project\Coding 2
   - **Dependencies**: T002
   - **Blocks**: T004, T016, T019
 
-- [ ] **T004** Run database migrations
+- [x] **T004** Run database migrations
 
   - Execute `npx prisma migrate dev --name init` to create initial migration
   - Verify migration creates tables: User, UserProfile, Session, SecurityLog
@@ -76,7 +76,7 @@ All paths relative to repository root `D:\Shared Folder\VS Code Project\Coding 2
 
 ## Phase 3.2: Theming & Base Components
 
-- [ ] **T006** Update globals.css with green/yellow theme
+- [x] **T006** Update globals.css with green/yellow theme
 
   - File: `src/app/globals.css`
   - Add CSS custom properties: `--primary: 142 71% 45%` (green-700), `--secondary: 42 78% 35%` (yellow-700)
@@ -85,7 +85,7 @@ All paths relative to repository root `D:\Shared Folder\VS Code Project\Coding 2
   - **Dependencies**: T002
   - **Blocks**: T007, T011-T014, T023-T025
 
-- [ ] **T007** Install missing shadcn/ui components
+- [x] **T007** Install missing shadcn/ui components
 
   - Run `npx shadcn-ui@latest add form label`
   - Verify components created in `src/components/ui/form.tsx` and `src/components/ui/label.tsx`
@@ -93,7 +93,7 @@ All paths relative to repository root `D:\Shared Folder\VS Code Project\Coding 2
   - **Dependencies**: T002, T006
   - **Blocks**: T008, T023-T025, T030
 
-- [ ] **T008** Create Navigation component
+- [x] **T008** Create Navigation component
 
   - File: `src/components/navigation.tsx`
   - Implement persistent header with logo, nav links (Home, Events, RoadMap)
@@ -106,7 +106,7 @@ All paths relative to repository root `D:\Shared Folder\VS Code Project\Coding 2
   - **Blocks**: T010
   - **Note**: Will be updated in T025 to use AuthModalTrigger component
 
-- [ ] **T009** [P] Create reusable FormField wrapper component
+- [x] **T009** [P] Create reusable FormField wrapper component
 
   - File: `src/components/form-field-wrapper.tsx`
   - Wrap shadcn/ui Form components with consistent error display and ARIA labels
@@ -116,7 +116,7 @@ All paths relative to repository root `D:\Shared Folder\VS Code Project\Coding 2
   - **Dependencies**: T007
   - **Blocks**: T023-T025, T030
 
-- [ ] **T010** Update layout.tsx with Navigation and theme
+- [x] **T010** Update layout.tsx with Navigation and theme
   - File: `src/app/layout.tsx`
   - Import and render `<Navigation />` component above `{children}`
   - Add Sonner `<Toaster />` component for notifications
@@ -131,7 +131,7 @@ All paths relative to repository root `D:\Shared Folder\VS Code Project\Coding 2
 
 **Note**: These tasks can run in parallel (different page files)
 
-- [ ] **T011** [P] Create Home page
+- [x] **T011** [P] Create Home page
 
   - File: `src/app/page.tsx`
   - Implement as Next.js Server Component (zero client JS)
@@ -142,7 +142,7 @@ All paths relative to repository root `D:\Shared Folder\VS Code Project\Coding 2
   - **Dependencies**: T010
   - **Blocks**: None
 
-- [ ] **T012** [P] Create Events page
+- [x] **T012** [P] Create Events page
 
   - File: `src/app/events/page.tsx`
   - Implement as Next.js Server Component
@@ -152,7 +152,7 @@ All paths relative to repository root `D:\Shared Folder\VS Code Project\Coding 2
   - **Dependencies**: T010
   - **Blocks**: None
 
-- [ ] **T013** [P] Create RoadMap page
+- [x] **T013** [P] Create RoadMap page
 
   - File: `src/app/roadmap/page.tsx`
   - Implement as Next.js Server Component
@@ -162,7 +162,7 @@ All paths relative to repository root `D:\Shared Folder\VS Code Project\Coding 2
   - **Dependencies**: T010
   - **Blocks**: None
 
-- [ ] **T014** [P] Optimize images for landing pages
+- [x] **T014** [P] Optimize images for landing pages
   - Create or download logo in SVG format: `public/images/logo.svg` (green/yellow colors)
   - Source placeholder images: Use stock photos from Unsplash/Pexels OR AI-generated placeholders (MidJourney/DALL-E/Stable Diffusion) for Home, Events, RoadMap pages
   - Convert to WebP format using tools like Squoosh or cwebp
@@ -177,7 +177,7 @@ All paths relative to repository root `D:\Shared Folder\VS Code Project\Coding 2
 
 **Note**: T020-T021 can run in parallel (different type files)
 
-- [ ] **T015** Create Zod validation schemas
+- [x] **T015** Create Zod validation schemas
 
   - File: `src/lib/validations.ts`
   - Export `registerSchema`: email (email format, max 254), password (min 8, regex for uppercase + number + special char), confirmPassword (refine match), role (enum)
@@ -187,7 +187,7 @@ All paths relative to repository root `D:\Shared Folder\VS Code Project\Coding 2
   - **Dependencies**: T002
   - **Blocks**: T023-T025, T026-T029, T030, T032
 
-- [ ] **T016** Create Prisma client singleton
+- [x] **T016** Create Prisma client singleton
 
   - File: `src/lib/db.ts`
   - Export singleton PrismaClient instance with best practices (avoid hot reload issues in dev)
@@ -196,7 +196,7 @@ All paths relative to repository root `D:\Shared Folder\VS Code Project\Coding 2
   - **Dependencies**: T002, T004
   - **Blocks**: T026-T029, T032
 
-- [ ] **T017** Create auth utilities (bcrypt, JWT)
+- [x] **T017** Create auth utilities (bcrypt, JWT)
 
   - File: `src/lib/auth.ts`
   - Export `hashPassword(password: string): Promise<string>` using bcrypt with cost factor 12
@@ -208,7 +208,7 @@ All paths relative to repository root `D:\Shared Folder\VS Code Project\Coding 2
   - **Dependencies**: T002, T003
   - **Blocks**: T026-T029
 
-- [ ] **T018** Create session management utilities
+- [x] **T018** Create session management utilities
 
   - File: `src/lib/session.ts`
   - Export `createSession(userId: string, ipAddress: string, userAgent: string): Promise<Session>` - creates Session record, invalidates old sessions (single session constraint)
@@ -219,7 +219,7 @@ All paths relative to repository root `D:\Shared Folder\VS Code Project\Coding 2
   - **Dependencies**: T016, T017
   - **Blocks**: T026-T029
 
-- [ ] **T019** Create rate limiting setup
+- [x] **T019** Create rate limiting setup
 
   - File: `src/lib/rate-limit.ts`
   - Export `loginRateLimiter` using @upstash/ratelimit with sliding window: 5 requests per hour per identifier (email address)
@@ -229,7 +229,7 @@ All paths relative to repository root `D:\Shared Folder\VS Code Project\Coding 2
   - **Dependencies**: T002, T003
   - **Blocks**: T026, T027
 
-- [ ] **T020** [P] Create auth TypeScript types
+- [x] **T020** [P] Create auth TypeScript types
 
   - File: `src/types/auth.ts`
   - Export `RegisterInput` type: email, password, confirmPassword, role
@@ -239,7 +239,7 @@ All paths relative to repository root `D:\Shared Folder\VS Code Project\Coding 2
   - **Dependencies**: T002
   - **Blocks**: T022, T023-T025, T026-T029
 
-- [ ] **T021** [P] Create profile TypeScript types
+- [x] **T021** [P] Create profile TypeScript types
 
   - File: `src/types/profile.ts`
   - Export `ProfileInput` type: idNumber, year, section, course, department, campus, currentSemester
@@ -247,7 +247,7 @@ All paths relative to repository root `D:\Shared Folder\VS Code Project\Coding 2
   - **Dependencies**: T002
   - **Blocks**: T022, T030, T032
 
-- [ ] **T022** Create useAuth custom hook
+- [x] **T022** Create useAuth custom hook
   - File: `src/hooks/use-auth.ts`
   - Create client-side hook with state: `user`, `accessToken`, `loading`
   - Export `useAuth()` returning: user, accessToken, login(), logout(), isAuthenticated
@@ -264,7 +264,7 @@ All paths relative to repository root `D:\Shared Folder\VS Code Project\Coding 2
 
 **Note**: Sequential because they share similar patterns and may import each other
 
-- [ ] **T023** Create LoginForm component
+- [x] **T023** Create LoginForm component
 
   - File: `src/components/login-form.tsx`
   - Use React Hook Form + Zod resolver with `loginSchema`
@@ -277,7 +277,7 @@ All paths relative to repository root `D:\Shared Folder\VS Code Project\Coding 2
   - **Dependencies**: T007, T009, T015, T020
   - **Blocks**: T025
 
-- [ ] **T024** Create RegisterForm component
+- [x] **T024** Create RegisterForm component
 
   - File: `src/components/register-form.tsx`
   - Use React Hook Form + Zod resolver with `registerSchema`
@@ -289,7 +289,7 @@ All paths relative to repository root `D:\Shared Folder\VS Code Project\Coding 2
   - **Dependencies**: T007, T009, T015, T020
   - **Blocks**: T025
 
-- [ ] **T025** Create AuthModal component
+- [x] **T025** Create AuthModal component
   - File: `src/components/auth-modal.tsx`
   - Use shadcn/ui Dialog component
   - State: Toggle between "Login" and "Register" tabs without closing modal
@@ -307,7 +307,7 @@ All paths relative to repository root `D:\Shared Folder\VS Code Project\Coding 2
 
 **Note**: T026-T029 can run in parallel (different Server Action files/functions)
 
-- [ ] **T026** [P] Implement POST /api/auth/register Server Action
+- [x] **T026** [P] Implement POST /api/auth/register Server Action
 
   - File: `src/app/actions/auth-register.ts`
   - Directive: `"use server"` at top
@@ -327,7 +327,7 @@ All paths relative to repository root `D:\Shared Folder\VS Code Project\Coding 2
   - **Dependencies**: T015, T016, T017, T018, T019
   - **Blocks**: T024
 
-- [ ] **T027** [P] Implement POST /api/auth/login Server Action
+- [x] **T027** [P] Implement POST /api/auth/login Server Action
 
   - File: `src/app/actions/auth-login.ts`
   - Directive: `"use server"`
@@ -347,7 +347,7 @@ All paths relative to repository root `D:\Shared Folder\VS Code Project\Coding 2
   - **Dependencies**: T015, T016, T017, T018, T019
   - **Blocks**: T023
 
-- [ ] **T028** [P] Implement POST /api/auth/logout Server Action
+- [x] **T028** [P] Implement POST /api/auth/logout Server Action
 
   - File: `src/app/actions/auth-logout.ts`
   - Directive: `"use server"`
@@ -361,7 +361,7 @@ All paths relative to repository root `D:\Shared Folder\VS Code Project\Coding 2
   - **Dependencies**: T016, T018
   - **Blocks**: T022 (useAuth hook uses this)
 
-- [ ] **T029** [P] Implement POST /api/auth/refresh Server Action
+- [x] **T029** [P] Implement POST /api/auth/refresh Server Action
   - File: `src/app/actions/auth-refresh.ts`
   - Directive: `"use server"`
   - Export async function `refreshToken(oldRefreshToken: string): Promise<{ accessToken: string, refreshToken: string } | null>`
@@ -378,7 +378,7 @@ All paths relative to repository root `D:\Shared Folder\VS Code Project\Coding 2
 
 ## Phase 3.7: Profile Completion
 
-- [ ] **T030** Create ProfileForm component
+- [x] **T030** Create ProfileForm component
 
   - File: `src/components/profile-form.tsx`
   - Use React Hook Form + Zod resolver with `profileSchema`
@@ -390,7 +390,7 @@ All paths relative to repository root `D:\Shared Folder\VS Code Project\Coding 2
   - **Dependencies**: T007, T009, T015, T021
   - **Blocks**: T031
 
-- [ ] **T031** Create profile completion page
+- [x] **T031** Create profile completion page
 
   - File: `src/app/profile/complete/page.tsx`
   - Implement as Next.js client page (needs form interactivity)
@@ -401,7 +401,7 @@ All paths relative to repository root `D:\Shared Folder\VS Code Project\Coding 2
   - **Dependencies**: T030
   - **Blocks**: None
 
-- [ ] **T032** [P] Implement POST /api/profile/create Server Action
+- [x] **T032** [P] Implement POST /api/profile/create Server Action
   - File: `src/app/actions/profile-create.ts`
   - Directive: `"use server"`
   - Export async function `createProfile(data: ProfileInput, userId: string): Promise<{ success: boolean, profile?: Profile, redirectTo?: string }>`
@@ -422,7 +422,7 @@ All paths relative to repository root `D:\Shared Folder\VS Code Project\Coding 2
 
 **Note**: T033-T035 can run in parallel (different page files)
 
-- [ ] **T033** [P] Create student dashboard placeholder
+- [x] **T033** [P] Create student dashboard placeholder
 
   - File: `src/app/dashboard/student/page.tsx`
   - Implement as Next.js Server Component
@@ -432,7 +432,7 @@ All paths relative to repository root `D:\Shared Folder\VS Code Project\Coding 2
   - **Dependencies**: T010
   - **Blocks**: None
 
-- [ ] **T034** [P] Create moderator dashboard placeholder
+- [x] **T034** [P] Create moderator dashboard placeholder
 
   - File: `src/app/dashboard/moderator/page.tsx`
   - Implement as Next.js Server Component
@@ -441,7 +441,7 @@ All paths relative to repository root `D:\Shared Folder\VS Code Project\Coding 2
   - **Dependencies**: T010
   - **Blocks**: None
 
-- [ ] **T035** [P] Create admin dashboard placeholder
+- [x] **T035** [P] Create admin dashboard placeholder
   - File: `src/app/dashboard/admin/page.tsx`
   - Implement as Next.js Server Component
   - Content: Heading "Administrator Dashboard", placeholder text "Coming soon: User management, system analytics, configuration"
@@ -453,7 +453,7 @@ All paths relative to repository root `D:\Shared Folder\VS Code Project\Coding 2
 
 ## Phase 3.9: Middleware & Security
 
-- [ ] **T036** Create auth middleware for protected routes
+- [x] **T036** Create auth middleware for protected routes
 
   - File: `src/middleware.ts`
   - Export Next.js middleware function
@@ -470,7 +470,7 @@ All paths relative to repository root `D:\Shared Folder\VS Code Project\Coding 2
   - **Dependencies**: T017, T018, T033-T035, T031
   - **Blocks**: None (final protection layer)
 
-- [ ] **T037** Configure security headers in next.config.ts
+- [x] **T037** Configure security headers in next.config.ts
 
   - File: `next.config.ts`
   - Add `async headers()` function returning array of header rules
@@ -483,7 +483,7 @@ All paths relative to repository root `D:\Shared Folder\VS Code Project\Coding 2
   - **Dependencies**: None (config file)
   - **Blocks**: None
 
-- [ ] **T038** Add CORS configuration
+- [x] **T038** Add CORS configuration
   - File: `src/middleware.ts` (update existing)
   - Add CORS headers in middleware for API routes
   - Allowlist specific origins from env var `ALLOWED_ORIGINS` (default: empty in dev, strict in prod)
@@ -498,7 +498,7 @@ All paths relative to repository root `D:\Shared Folder\VS Code Project\Coding 2
 
 **Note**: T039 and T040 can run in parallel if working on different files
 
-- [ ] **T039** [P] Fix ESLint warnings
+- [x] **T039** [P] Fix ESLint warnings
 
   - Run `npm run lint` to identify all warnings
   - Fix issues: unused variables, missing dependencies in useEffect, any type usage
@@ -508,7 +508,7 @@ All paths relative to repository root `D:\Shared Folder\VS Code Project\Coding 2
   - **Dependencies**: All previous tasks complete
   - **Blocks**: None
 
-- [ ] **T040** [P] Verify TypeScript strict mode compliance
+- [x] **T040** [P] Verify TypeScript strict mode compliance
 
   - Check `tsconfig.json` has `"strict": true`
   - Run `npx tsc --noEmit` to check for type errors
@@ -517,7 +517,7 @@ All paths relative to repository root `D:\Shared Folder\VS Code Project\Coding 2
   - **Dependencies**: All previous tasks complete
   - **Blocks**: None
 
-- [ ] **T041** Optimize bundle size
+- [x] **T041** Optimize bundle size
 
   - Run `npm run build` and check output size
   - Analyze bundle: Use `@next/bundle-analyzer` if needed
@@ -527,7 +527,7 @@ All paths relative to repository root `D:\Shared Folder\VS Code Project\Coding 2
   - **Dependencies**: All previous tasks complete
   - **Blocks**: None
 
-- [ ] **T042** Update README.md with setup instructions
+- [x] **T042** Update README.md with setup instructions
   - File: `README.md`
   - Add sections:
     - Prerequisites: Node.js 18+, PostgreSQL, Upstash Redis account
