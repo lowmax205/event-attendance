@@ -17,7 +17,10 @@ const protectedRoutes = [
 ];
 
 // Routes that require specific roles
-const roleBasedRoutes: Record<string, Array<"Student" | "Moderator" | "Administrator">> = {
+const roleBasedRoutes: Record<
+  string,
+  Array<"Student" | "Moderator" | "Administrator">
+> = {
   "/dashboard/moderator": ["Moderator", "Administrator"],
   "/dashboard/admin": ["Administrator"],
   "/events/create": ["Moderator", "Administrator"],
@@ -41,7 +44,7 @@ export async function middleware(request: NextRequest) {
 
   // Check if route requires authentication
   const requiresAuth = protectedRoutes.some((route) =>
-    pathname.startsWith(route)
+    pathname.startsWith(route),
   );
 
   if (!requiresAuth) {

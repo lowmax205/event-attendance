@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
 import type { UserSession } from "@/lib/types/user";
 
 /**
@@ -83,14 +89,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 /**
  * useAuth Hook
  * Access authentication state and methods from any component
- * 
+ *
  * @example
  * ```tsx
  * const { user, isLoading, logout } = useAuth();
- * 
+ *
  * if (isLoading) return <Spinner />;
  * if (!user) return <LoginForm />;
- * 
+ *
  * return <div>Welcome, {user.firstName}!</div>;
  * ```
  */

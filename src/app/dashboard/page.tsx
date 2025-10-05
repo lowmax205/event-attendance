@@ -73,9 +73,7 @@ export default function StudentDashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle>Recent Attendance</CardTitle>
-            <CardDescription>
-              Your recent event check-ins
-            </CardDescription>
+            <CardDescription>Your recent event check-ins</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
@@ -92,8 +90,9 @@ export default function StudentDashboardPage() {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            This dashboard is currently under development. Full event management,
-            QR code check-in, and attendance history features will be available soon.
+            This dashboard is currently under development. Full event
+            management, QR code check-in, and attendance history features will
+            be available soon.
           </p>
         </CardContent>
       </Card>

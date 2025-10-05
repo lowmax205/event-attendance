@@ -80,7 +80,7 @@ export async function createSession(user: User): Promise<{
  * @returns Session if valid, null otherwise
  */
 export async function validateRefreshToken(
-  refreshToken: string
+  refreshToken: string,
 ): Promise<Session | null> {
   const session = await db.session.findUnique({
     where: { refreshToken },
@@ -137,10 +137,7 @@ export async function revokeAllUserSessions(userId: string): Promise<void> {
 export async function cleanupExpiredSessions(): Promise<number> {
   const result = await db.session.deleteMany({
     where: {
-      OR: [
-        { expiresAt: { lt: new Date() } },
-        { isRevoked: true },
-      ],
+      OR: [{ expiresAt: { lt: new Date() } }, { isRevoked: true }],
     },
   });
 

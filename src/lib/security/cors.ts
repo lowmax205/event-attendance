@@ -24,7 +24,7 @@ export function handleCORSPreflight(request: NextRequest): NextResponse {
  */
 export function withCORS(
   response: NextResponse,
-  request: NextRequest
+  request: NextRequest,
 ): NextResponse {
   const origin = request.headers.get("origin") || "";
   const corsHeaders = getCORSHeaders(origin);
@@ -38,7 +38,7 @@ export function withCORS(
 
 /**
  * CORS wrapper for API route handlers
- * 
+ *
  * @example
  * ```ts
  * export const GET = withCORSHandler(async (request) => {
@@ -48,7 +48,7 @@ export function withCORS(
  * ```
  */
 export function withCORSHandler(
-  handler: (request: NextRequest) => Promise<NextResponse>
+  handler: (request: NextRequest) => Promise<NextResponse>,
 ) {
   return async (request: NextRequest): Promise<NextResponse> => {
     // Handle OPTIONS request (preflight)

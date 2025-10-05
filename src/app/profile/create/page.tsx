@@ -16,8 +16,9 @@ export default function CreateProfilePage() {
             Complete Your Profile
           </CardTitle>
           <CardDescription className="text-base">
-            Please provide your student information to continue. This information
-            will be used for event attendance tracking and verification.
+            Please provide your student information to continue. This
+            information will be used for event attendance tracking and
+            verification.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -33,12 +34,12 @@ export default function CreateProfilePage() {
         <CardContent className="space-y-2 text-sm text-muted-foreground">
           <p>
             <strong>Student ID:</strong> Use your official university student ID
-            number. It should match the format used by your institution
-            (e.g., 2024-12345).
+            number. It should match the format used by your institution (e.g.,
+            2024-12345).
           </p>
           <p>
-            <strong>Department:</strong> Enter your full department or program name
-            (e.g., Computer Science, Business Administration).
+            <strong>Department:</strong> Enter your full department or program
+            name (e.g., Computer Science, Business Administration).
           </p>
           <p>
             <strong>Year Level:</strong> Enter a number from 1 to 6 representing

@@ -12,8 +12,8 @@ export default function RoadMapPage() {
     <div className="container mx-auto px-4 py-8 max-w-5xl">
       <h1 className="text-4xl font-bold mb-4">Development Roadmap</h1>
       <p className="text-lg text-muted-foreground mb-8">
-        Our vision for the future of event attendance tracking. Here&apos;s what we&apos;re
-        building next.
+        Our vision for the future of event attendance tracking. Here&apos;s what
+        we&apos;re building next.
       </p>
 
       {/* Timeline */}
@@ -74,7 +74,9 @@ export default function RoadMapPage() {
             <ul className="space-y-2 text-sm">
               <li className="flex items-start gap-2">
                 <span className="text-secondary mt-1">◐</span>
-                <span>Event creation with rich details and capacity limits</span>
+                <span>
+                  Event creation with rich details and capacity limits
+                </span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-secondary mt-1">◐</span>
@@ -118,7 +120,9 @@ export default function RoadMapPage() {
               </li>
               <li className="flex items-start gap-2">
                 <span className="mt-1">○</span>
-                <span>Attendance trend analysis across events and time periods</span>
+                <span>
+                  Attendance trend analysis across events and time periods
+                </span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="mt-1">○</span>
@@ -164,9 +168,7 @@ export default function RoadMapPage() {
               </li>
               <li className="flex items-start gap-2">
                 <span className="mt-1">○</span>
-                <span>
-                  Integration with student information systems (SIS)
-                </span>
+                <span>Integration with student information systems (SIS)</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="mt-1">○</span>
@@ -187,10 +189,10 @@ export default function RoadMapPage() {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            Check out our GitHub repository to report issues, suggest features, or
-            submit pull requests. Whether you&apos;re fixing bugs, improving
-            documentation, or adding new features, we appreciate your help in making
-            this project better.
+            Check out our GitHub repository to report issues, suggest features,
+            or submit pull requests. Whether you&apos;re fixing bugs, improving
+            documentation, or adding new features, we appreciate your help in
+            making this project better.
           </p>
         </CardContent>
       </Card>

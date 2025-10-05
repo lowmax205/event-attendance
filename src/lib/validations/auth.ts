@@ -34,20 +34,26 @@ export const registerSchema = z
       .regex(/[0-9]/, "Password must contain at least one number")
       .regex(
         /[^A-Za-z0-9]/,
-        "Password must contain at least one special character"
+        "Password must contain at least one special character",
       ),
     confirmPassword: z.string().min(1, "Please confirm your password"),
     firstName: z
       .string()
       .min(1, "First name is required")
       .max(50, "First name must be less than 50 characters")
-      .regex(/^[a-zA-Z\s'-]+$/, "First name can only contain letters, spaces, hyphens, and apostrophes")
+      .regex(
+        /^[a-zA-Z\s'-]+$/,
+        "First name can only contain letters, spaces, hyphens, and apostrophes",
+      )
       .trim(),
     lastName: z
       .string()
       .min(1, "Last name is required")
       .max(50, "Last name must be less than 50 characters")
-      .regex(/^[a-zA-Z\s'-]+$/, "Last name can only contain letters, spaces, hyphens, and apostrophes")
+      .regex(
+        /^[a-zA-Z\s'-]+$/,
+        "Last name can only contain letters, spaces, hyphens, and apostrophes",
+      )
       .trim(),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -64,7 +70,10 @@ export const profileSchema = z.object({
     .string()
     .min(1, "Student ID is required")
     .max(20, "Student ID must be less than 20 characters")
-    .regex(/^[A-Z0-9-]+$/, "Student ID can only contain uppercase letters, numbers, and hyphens")
+    .regex(
+      /^[A-Z0-9-]+$/,
+      "Student ID can only contain uppercase letters, numbers, and hyphens",
+    )
     .trim(),
   department: z
     .string()
@@ -82,7 +91,10 @@ export const profileSchema = z.object({
     .optional(),
   contactNumber: z
     .string()
-    .regex(/^[0-9+\-() ]+$/, "Contact number can only contain numbers, +, -, (), and spaces")
+    .regex(
+      /^[0-9+\-() ]+$/,
+      "Contact number can only contain numbers, +, -, (), and spaces",
+    )
     .min(10, "Contact number must be at least 10 characters")
     .max(20, "Contact number must be less than 20 characters")
     .optional(),

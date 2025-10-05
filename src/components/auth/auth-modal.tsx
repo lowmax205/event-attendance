@@ -107,7 +107,11 @@ export function AuthModal({ trigger, defaultTab = "login" }: AuthModalProps) {
  * AuthModalTrigger Component
  * Pre-configured trigger button for common use cases
  */
-export function AuthModalTrigger({ defaultTab }: { defaultTab?: "login" | "register" }) {
+export function AuthModalTrigger({
+  defaultTab,
+}: {
+  defaultTab?: "login" | "register";
+}) {
   return (
     <AuthModal
       defaultTab={defaultTab}

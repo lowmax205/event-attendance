@@ -15,7 +15,9 @@ interface ProfileResponse {
  * Creates a user profile after registration
  * Requires authenticated user (checks access token)
  */
-export async function createProfile(data: ProfileInput): Promise<ProfileResponse> {
+export async function createProfile(
+  data: ProfileInput,
+): Promise<ProfileResponse> {
   try {
     // 1. Validate input
     const validationResult = profileSchema.safeParse(data);
@@ -56,7 +58,8 @@ export async function createProfile(data: ProfileInput): Promise<ProfileResponse
     if (existingProfile) {
       return {
         success: false,
-        message: "You already have a profile. Use the edit feature to update it.",
+        message:
+          "You already have a profile. Use the edit feature to update it.",
       };
     }
 

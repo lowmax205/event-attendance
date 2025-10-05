@@ -17,7 +17,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Event Attendance System",
-  description: "A modern event attendance tracking system for educational institutions",
+  description:
+    "A modern event attendance tracking system for educational institutions",
 };
 
 export default function RootLayout({

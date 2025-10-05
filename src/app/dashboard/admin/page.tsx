@@ -14,7 +14,9 @@ export default function AdminDashboardPage() {
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
           <h1 className="text-4xl font-bold">Administrator Dashboard</h1>
-          <Badge variant="destructive" className="text-sm">Administrator</Badge>
+          <Badge variant="destructive" className="text-sm">
+            Administrator
+          </Badge>
         </div>
         <p className="text-lg text-muted-foreground">
           Full system control - manage users, events, and security.
@@ -69,9 +71,7 @@ export default function AdminDashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle>User Management</CardTitle>
-            <CardDescription>
-              Manage accounts and permissions
-            </CardDescription>
+            <CardDescription>Manage accounts and permissions</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <Button className="w-full" variant="outline">
@@ -89,9 +89,7 @@ export default function AdminDashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle>Event Oversight</CardTitle>
-            <CardDescription>
-              Monitor all system events
-            </CardDescription>
+            <CardDescription>Monitor all system events</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <Button className="w-full" variant="outline">
@@ -109,9 +107,7 @@ export default function AdminDashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle>Security & Audit</CardTitle>
-            <CardDescription>
-              System security and logs
-            </CardDescription>
+            <CardDescription>System security and logs</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <Button className="w-full" variant="outline">
@@ -131,9 +127,7 @@ export default function AdminDashboardPage() {
       <Card>
         <CardHeader>
           <CardTitle>Recent System Activity</CardTitle>
-          <CardDescription>
-            Latest actions across the platform
-          </CardDescription>
+          <CardDescription>Latest actions across the platform</CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">

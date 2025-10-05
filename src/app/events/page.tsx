@@ -11,8 +11,8 @@ export default function EventsPage() {
     <div className="container mx-auto px-4 py-8 max-w-5xl">
       <h1 className="text-4xl font-bold mb-4">Event Tracking</h1>
       <p className="text-lg text-muted-foreground mb-8">
-        Learn how our event attendance system works and what features are available
-        to each role.
+        Learn how our event attendance system works and what features are
+        available to each role.
       </p>
 
       {/* How It Works */}
@@ -28,9 +28,9 @@ export default function EventsPage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Events can be created with details such as name, description, date,
-                time, location, and capacity. Each event gets a unique QR code for
-                quick check-ins.
+                Events can be created with details such as name, description,
+                date, time, location, and capacity. Each event gets a unique QR
+                code for quick check-ins.
               </p>
             </CardContent>
           </Card>
@@ -44,8 +44,8 @@ export default function EventsPage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Students browse available events and register in advance. They receive
-                confirmation and can add events to their calendar.
+                Students browse available events and register in advance. They
+                receive confirmation and can add events to their calendar.
               </p>
             </CardContent>
           </Card>
@@ -59,8 +59,9 @@ export default function EventsPage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Students can check in by scanning the event QR code or entering a
-                unique event code. Moderators can also manually mark attendance.
+                Students can check in by scanning the event QR code or entering
+                a unique event code. Moderators can also manually mark
+                attendance.
               </p>
             </CardContent>
           </Card>

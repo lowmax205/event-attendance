@@ -4,7 +4,7 @@ import { Redis } from "@upstash/redis";
 /**
  * Rate Limiting Configuration
  * Uses Upstash Redis for distributed rate limiting
- * 
+ *
  * Strategy: Sliding window - 5 attempts per hour per email
  * This prevents brute-force attacks on login/registration
  */
@@ -65,7 +65,7 @@ export async function resetAuthRateLimit(email: string): Promise<void> {
 export function createRateLimiter(
   requests: number,
   window: Duration,
-  prefix: string
+  prefix: string,
 ) {
   return new Ratelimit({
     redis,

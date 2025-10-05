@@ -6,7 +6,7 @@ import { SignJWT, jwtVerify } from "jose";
  */
 
 const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "fallback-secret-change-in-production"
+  process.env.JWT_SECRET || "fallback-secret-change-in-production",
 );
 
 const ACCESS_TOKEN_EXPIRY = process.env.JWT_ACCESS_EXPIRY || "1h";
@@ -50,7 +50,7 @@ function parseTimeToSeconds(timeString: string): number {
  * Short-lived token for API authentication
  */
 export async function generateAccessToken(
-  payload: Omit<JWTPayload, "type">
+  payload: Omit<JWTPayload, "type">,
 ): Promise<string> {
   const expiresIn = parseTimeToSeconds(ACCESS_TOKEN_EXPIRY);
 
@@ -66,7 +66,7 @@ export async function generateAccessToken(
  * Long-lived token for obtaining new access tokens
  */
 export async function generateRefreshToken(
-  payload: Omit<JWTPayload, "type">
+  payload: Omit<JWTPayload, "type">,
 ): Promise<string> {
   const expiresIn = parseTimeToSeconds(REFRESH_TOKEN_EXPIRY);
 
@@ -81,9 +81,7 @@ export async function generateRefreshToken(
  * Verify and decode a JWT token
  * Returns null if token is invalid or expired
  */
-export async function verifyToken(
-  token: string
-): Promise<JWTPayload | null> {
+export async function verifyToken(token: string): Promise<JWTPayload | null> {
   try {
     const { payload } = await jwtVerify(token, JWT_SECRET);
     return payload as unknown as JWTPayload;

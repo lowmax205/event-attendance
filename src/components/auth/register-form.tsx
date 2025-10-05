@@ -34,7 +34,9 @@ export function RegisterForm() {
     setError(null);
 
     try {
-      const { register: registerAction } = await import("@/actions/auth/register");
+      const { register: registerAction } = await import(
+        "@/actions/auth/register"
+      );
       const result = await registerAction(data);
 
       if (result.success && result.user) {
@@ -167,11 +169,7 @@ export function RegisterForm() {
           )}
         </FormFieldWrapper>
 
-        <Button
-          type="submit"
-          className="w-full min-h-11"
-          disabled={isLoading}
-        >
+        <Button type="submit" className="w-full min-h-11" disabled={isLoading}>
           {isLoading ? (
             <>
               <Spinner className="mr-2" />

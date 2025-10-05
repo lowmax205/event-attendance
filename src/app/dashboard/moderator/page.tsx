@@ -15,7 +15,9 @@ export default function ModeratorDashboardPage() {
         <div>
           <div className="flex items-center gap-3 mb-2">
             <h1 className="text-4xl font-bold">Moderator Dashboard</h1>
-            <Badge variant="secondary" className="text-sm">Moderator</Badge>
+            <Badge variant="secondary" className="text-sm">
+              Moderator
+            </Badge>
           </div>
           <p className="text-lg text-muted-foreground">
             Create and manage events, track attendance in real-time.
@@ -72,14 +74,12 @@ export default function ModeratorDashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle>Your Events</CardTitle>
-            <CardDescription>
-              Events you created and manage
-            </CardDescription>
+            <CardDescription>Events you created and manage</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground mb-4">
-              You haven&apos;t created any events yet. Click the Create Event button
-              to get started.
+              You haven&apos;t created any events yet. Click the Create Event
+              button to get started.
             </p>
             <Button>Create Your First Event</Button>
           </CardContent>
@@ -88,9 +88,7 @@ export default function ModeratorDashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle>Real-Time Attendance</CardTitle>
-            <CardDescription>
-              Live check-in tracking
-            </CardDescription>
+            <CardDescription>Live check-in tracking</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">

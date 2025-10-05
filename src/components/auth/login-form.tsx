@@ -114,11 +114,7 @@ export function LoginForm() {
           )}
         </FormFieldWrapper>
 
-        <Button
-          type="submit"
-          className="w-full min-h-11"
-          disabled={isLoading}
-        >
+        <Button type="submit" className="w-full min-h-11" disabled={isLoading}>
           {isLoading ? (
             <>
               <Spinner className="mr-2" />

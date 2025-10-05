@@ -7,11 +7,16 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Control, FieldPath, FieldValues, ControllerRenderProps } from "react-hook-form";
+import {
+  Control,
+  FieldPath,
+  FieldValues,
+  ControllerRenderProps,
+} from "react-hook-form";
 
 interface FormFieldWrapperProps<
   TFieldValues extends FieldValues = FieldValues,
-  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
+  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
 > {
   name: TName;
   control: Control<TFieldValues>;
@@ -23,7 +28,7 @@ interface FormFieldWrapperProps<
 
 export function FormFieldWrapper<
   TFieldValues extends FieldValues = FieldValues,
-  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
+  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
 >({
   name,
   control,

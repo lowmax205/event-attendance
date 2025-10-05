@@ -18,8 +18,8 @@ export default function HomePage() {
         </h1>
         <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
           A modern, secure platform for tracking event attendance in educational
-          institutions. Simplify check-ins, manage events, and gain insights—all in
-          one place.
+          institutions. Simplify check-ins, manage events, and gain insights—all
+          in one place.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button size="lg" asChild className="min-h-11 min-w-44">
@@ -38,9 +38,7 @@ export default function HomePage() {
 
       {/* Features Section */}
       <section className="py-12">
-        <h2 className="text-3xl font-bold text-center mb-10">
-          Key Features
-        </h2>
+        <h2 className="text-3xl font-bold text-center mb-10">Key Features</h2>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           <Card>
             <CardHeader>
@@ -61,13 +59,14 @@ export default function HomePage() {
             <CardHeader>
               <CardTitle>Role-Based Access</CardTitle>
               <CardDescription>
-                Different permissions for students, moderators, and administrators
+                Different permissions for students, moderators, and
+                administrators
               </CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Secure access control ensures each user sees only the features and
-                data relevant to their role.
+                Secure access control ensures each user sees only the features
+                and data relevant to their role.
               </p>
             </CardContent>
           </Card>
