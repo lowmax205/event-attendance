@@ -12,7 +12,7 @@ export default function RoadMapPage() {
     <div className="container mx-auto px-4 py-8 max-w-5xl">
       <h1 className="text-4xl font-bold mb-4">Development Roadmap</h1>
       <p className="text-lg text-muted-foreground mb-8">
-        Our vision for the future of event attendance tracking. Here's what we're
+        Our vision for the future of event attendance tracking. Here&apos;s what we&apos;re
         building next.
       </p>
 
@@ -188,7 +188,7 @@ export default function RoadMapPage() {
         <CardContent>
           <p className="text-sm text-muted-foreground">
             Check out our GitHub repository to report issues, suggest features, or
-            submit pull requests. Whether you're fixing bugs, improving
+            submit pull requests. Whether you&apos;re fixing bugs, improving
             documentation, or adding new features, we appreciate your help in making
             this project better.
           </p>
