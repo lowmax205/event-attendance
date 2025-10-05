@@ -7,6 +7,28 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { StepCard } from "@/components/step-card";
+
+const steps = [
+  {
+    iconKey: "scan" as const,
+    title: "Scan QR Code",
+    description:
+      "Students scan the unique QR code displayed at the event venue using their mobile device.",
+  },
+  {
+    iconKey: "verify" as const,
+    title: "Verify Location & Identity",
+    description:
+      "System verifies GPS location and captures selfie with event background for authentication.",
+  },
+  {
+    iconKey: "record" as const,
+    title: "Record Attendance",
+    description:
+      "Attendance is automatically recorded and real-time reports are updated instantly.",
+  },
+];
 
 export default function HomePage() {
   return (
@@ -130,6 +152,30 @@ export default function HomePage() {
               </p>
             </CardContent>
           </Card>
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section className="bg-muted/30 border-t py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-16 text-center">
+            <h2 className="mb-4 text-3xl font-bold md:text-4xl">
+              How It Works
+            </h2>
+            <p className="text-muted-foreground mx-auto max-w-2xl text-lg leading-relaxed md:text-xl">
+              Simple and secure attendance process in just three steps.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+            {steps.map((step, idx) => (
+              <StepCard
+                key={idx}
+                iconKey={step.iconKey}
+                title={step.title}
+                description={step.description}
+              />
+            ))}
+          </div>
         </div>
       </section>
 

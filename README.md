@@ -5,6 +5,7 @@ A modern, full-stack Event Attendance System built with Next.js 15, featuring ro
 ## Features
 
 - 🎨 Modern, responsive landing pages (Home, Events, RoadMap)
+- 🌓 Dynamic theme switching (Light/Dark/System) with next-themes
 - 🔐 Role-based authentication (Student, Moderator, Administrator)
 - 📝 Academic profile completion with 7 required fields
 - 🛡️ Comprehensive security: bcrypt hashing, JWT sessions, rate limiting
@@ -23,6 +24,7 @@ A modern, full-stack Event Attendance System built with Next.js 15, featuring ro
 - **Framework**: Next.js 15.5.4 (App Router + Server Actions)
 - **Language**: TypeScript 5+
 - **Styling**: Tailwind CSS 4 + shadcn/ui
+- **Theming**: next-themes (Light/Dark/System modes)
 - **Database**: PostgreSQL + Prisma ORM
 - **Authentication**: Custom JWT with bcryptjs
 - **Forms**: React Hook Form + Zod validation

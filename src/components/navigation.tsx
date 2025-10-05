@@ -6,6 +6,7 @@ import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { AuthModalTrigger } from "@/components/auth/auth-modal";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
@@ -27,7 +28,7 @@ export function Navigation() {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-6">
+          <div className="hidden md:flex items-center space-x-4">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
@@ -37,6 +38,7 @@ export function Navigation() {
                 {link.label}
               </Link>
             ))}
+            <ThemeToggle />
             <AuthModalTrigger />
           </div>
 
@@ -68,8 +70,11 @@ export function Navigation() {
                     {link.label}
                   </Link>
                 ))}
-                <div onClick={() => setIsOpen(false)}>
-                  <AuthModalTrigger />
+                <div className="flex items-center gap-2">
+                  <ThemeToggle />
+                  <div onClick={() => setIsOpen(false)}>
+                    <AuthModalTrigger />
+                  </div>
                 </div>
               </nav>
             </SheetContent>
