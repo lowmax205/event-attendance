@@ -2,12 +2,12 @@ import { ReactNode } from "react";
 import {
   FormControl,
   FormDescription,
-  FormField as ShadcnFormField,
+  FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Control, FieldPath, FieldValues } from "react-hook-form";
+import { Control, FieldPath, FieldValues, ControllerRenderProps } from "react-hook-form";
 
 interface FormFieldWrapperProps<
   TFieldValues extends FieldValues = FieldValues,
@@ -18,7 +18,7 @@ interface FormFieldWrapperProps<
   label: string;
   description?: string;
   required?: boolean;
-  children: (field: any) => ReactNode;
+  children: (field: ControllerRenderProps<TFieldValues, TName>) => ReactNode;
 }
 
 export function FormFieldWrapper<
@@ -29,14 +29,14 @@ export function FormFieldWrapper<
   control,
   label,
   description,
-  required = false,
+  required,
   children,
 }: FormFieldWrapperProps<TFieldValues, TName>) {
   return (
-    <ShadcnFormField
+    <FormField
       control={control}
       name={name}
-      render={({ field, fieldState }) => (
+      render={({ field }) => (
         <FormItem>
           <FormLabel>
             {label}

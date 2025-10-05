@@ -1,4 +1,4 @@
-import { Ratelimit } from "@upstash/ratelimit";
+import { Ratelimit, type Duration } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
 /**
@@ -64,7 +64,7 @@ export async function resetAuthRateLimit(email: string): Promise<void> {
  */
 export function createRateLimiter(
   requests: number,
-  window: string,
+  window: Duration,
   prefix: string
 ) {
   return new Ratelimit({
