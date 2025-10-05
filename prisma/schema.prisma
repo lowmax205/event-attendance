@@ -1,6 +1,3 @@
-// This is your Prisma schema file
-// Learn more: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,91 +7,69 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ===== Core Entities =====
-
 model User {
-  id            String   @id @default(cuid())
-  email         String   @unique
+  id            String        @id @default(cuid())
+  email         String        @unique
   passwordHash  String
+  role          Role          @default(Student)
+  accountStatus String        @default("active")
+  emailVerified Boolean       @default(false)
+  createdAt     DateTime      @default(now())
+  lastLoginAt   DateTime?
   firstName     String
   lastName      String
-  role          Role     @default(Student)
-  accountStatus String   @default("active")
-  emailVerified Boolean  @default(false)
-  createdAt     DateTime @default(now())
-  lastLoginAt   DateTime?
-
-  // Relationships
-  profile      UserProfile?
-  sessions     Session[]
-  securityLogs SecurityLog[]
+  securityLogs  SecurityLog[]
+  sessions      Session[]
+  profile       UserProfile?
 
   @@index([email])
 }
 
 model UserProfile {
-  id              String   @id @default(cuid())
-  userId          String   @unique
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  // Student ID
-  studentId       String   @unique
-
-  // Academic details
-  department      String
-  yearLevel       Int
-  section         String?
-  contactNumber   String?
-
-  // Metadata
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-}
-
-enum Role {
-  Student
-  Moderator
-  Administrator
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  section       String?
+  department    String
+  updatedAt     DateTime @updatedAt
+  contactNumber String?
+  createdAt     DateTime @default(now())
+  studentId     String   @unique
+  yearLevel     Int
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Session {
   id           String   @id @default(cuid())
   userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  // Refresh token
   refreshToken String   @unique
-
-  // Metadata
   ipAddress    String?
   userAgent    String?
-
-  // Timestamps
   createdAt    DateTime @default(now())
   expiresAt    DateTime
   isRevoked    Boolean  @default(false)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([refreshToken])
 }
 
 model SecurityLog {
-  id          String   @id @default(cuid())
-  userId      String?
-  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-
-  // Event details
-  action      String   // USER_REGISTERED, USER_LOGIN, USER_LOGOUT, PROFILE_CREATED, etc.
-  metadata    Json?    // Additional event data
-
-  // Client metadata
-  ipAddress   String?
-  userAgent   String?
-
-  // Timestamp
-  createdAt   DateTime @default(now())
+  id        String   @id @default(cuid())
+  userId    String?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  action    String
+  metadata  Json?
+  user      User?    @relation(fields: [userId], references: [id])
 
   @@index([userId, createdAt])
   @@index([action, createdAt])
   @@index([createdAt])
+}
+
+enum Role {
+  Student
+  Moderator
+  Administrator
 }

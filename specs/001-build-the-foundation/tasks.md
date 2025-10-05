@@ -65,7 +65,7 @@ All paths relative to repository root `D:\Shared Folder\VS Code Project\Coding 2
   - **Dependencies**: T001, T003
   - **Blocks**: T016, T026-T029, T032
 
-- [ ] **T005** Configure Husky pre-commit hooks
+- [x] **T005** Configure Husky pre-commit hooks
   - Run `npx husky-init`
   - Update `.husky/pre-commit` to run `npm run lint` and `npx prettier --check .`
   - Test hook: Make a commit with intentional formatting issue (e.g., add extra spaces), verify commit is rejected with error message, fix formatting, verify commit succeeds
