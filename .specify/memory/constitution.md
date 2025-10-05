@@ -30,7 +30,7 @@ Sync Impact Report:
 - TypeScript MUST be used for all source code with strict mode enabled (`"strict": true` in tsconfig.json)
 - ESLint rules MUST be enforced on every commit; builds MUST fail on linting errors
 - Prettier MUST auto-format code on save; inconsistent formatting is not acceptable
-- Code MUST be well-commented: complex logic requires explanatory comments, public functions require JSDoc
+- Code MUST be well-commented: complex logic requires explanatory comments, public functions SHOULD have JSDoc (recommended for maintainability)
 - Modularity is MANDATORY: Functions should be focused (single responsibility), components should be reusable
 - Type safety MUST NOT be bypassed: No `any` types without explicit justification documented in code comments
 
@@ -60,7 +60,7 @@ Sync Impact Report:
 - Images MUST be optimized: Modern formats (WebP/AVIF), lazy loading, responsive sizes
 - Data fetching MUST be efficient: Server-side rendering for initial load, client-side caching, optimistic UI updates
 - Bundle sizes MUST be monitored: Code splitting by route, tree shaking enabled, dependencies audited quarterly
-- Performance regression tests REQUIRED: Lighthouse CI integration, fail builds if metrics degrade >10%
+- Performance validation REQUIRED: Manual Lighthouse audits for each major feature, target score ≥90 (automated CI testing not required per project decision)
 
 **Rationale**: Slow applications frustrate users and reduce engagement. Performance is a feature, not an optimization. The 2-second target ensures usability even on poor network connections common in schools/events.
 
@@ -72,7 +72,7 @@ Sync Impact Report:
 - Passwords MUST be hashed with bcrypt (cost factor ≥12) or Argon2id
 - Input validation MANDATORY on both client and server: Sanitize all user inputs, use allowlists over denylists
 - API keys/secrets MUST be stored in environment variables, NEVER committed to repository
-- HTTPS REQUIRED for all production traffic
+- HTTPS REQUIRED for all production traffic (infrastructure/deployment concern, verify in production checklist)
 - CORS policies MUST be restrictive: Allowlist specific origins, no wildcard in production
 - Rate limiting REQUIRED on all API endpoints: Prevent brute force and DDoS attacks
 - Security headers MANDATORY: CSP, X-Frame-Options, HSTS, X-Content-Type-Options
@@ -94,7 +94,6 @@ Sync Impact Report:
 - Components MUST follow single responsibility: One component, one purpose; composition over inheritance
 - Prop interfaces MUST be explicitly typed and documented
 - Storybook or similar documentation RECOMMENDED for component libraries
-- Tests REQUIRED for reusable components: Unit tests for logic, integration tests for user flows
 - Breaking changes to shared components REQUIRE migration guide and deprecation period
 
 **Rationale**: Consistent structure reduces onboarding time and cognitive load. Reusable components accelerate development and ensure UI consistency. shadcn/ui provides accessible, customizable primitives that align with modern React patterns.
@@ -116,12 +115,7 @@ Sync Impact Report:
 - Vercel or similar edge platform for deployment
 - GitHub Actions for CI/CD pipeline
 
-**Testing Stack**:
-
-- Vitest for unit tests
-- React Testing Library for component tests
-- Playwright for end-to-end tests
-- Lighthouse CI for performance regression testing
+**Testing Stack**: None (testing not required for this project)
 
 **Code Quality Tools**:
 
@@ -137,16 +131,14 @@ Sync Impact Report:
 - [ ] ESLint passes with zero errors
 - [ ] Prettier formatting applied
 - [ ] TypeScript compilation successful with no errors
-- [ ] Staged files pass unit tests
 
 **Pull Request Gates** (enforced via CI):
 
-- [ ] All tests pass (unit, integration, e2e)
-- [ ] Code coverage ≥80% for new code
-- [ ] Lighthouse performance score ≥90
-- [ ] Accessibility audit passes (no violations)
-- [ ] Security audit passes (no high/critical vulnerabilities)
 - [ ] Build succeeds without warnings
+- [ ] ESLint passes with zero errors
+- [ ] TypeScript compilation successful
+- [ ] Lighthouse performance score ≥90 (manual validation)
+- [ ] Accessibility audit passes (manual validation with browser DevTools)
 - [ ] At least one approving review from code owner
 
 **Code Review Standards**:
@@ -160,11 +152,9 @@ Sync Impact Report:
 **Definition of Done**:
 
 - [ ] Feature implemented per specification
-- [ ] Unit tests written and passing
-- [ ] Integration/E2E tests written for user flows
 - [ ] Accessibility tested with keyboard navigation and screen reader
 - [ ] Mobile responsive tested on iOS Safari and Chrome Android
-- [ ] Performance metrics validated (LCP <2.5s)
+- [ ] Performance metrics validated (LCP <2.5s) using browser DevTools
 - [ ] Documentation updated (README, API docs, component docs)
 - [ ] Code reviewed and approved
 - [ ] Deployed to staging and validated

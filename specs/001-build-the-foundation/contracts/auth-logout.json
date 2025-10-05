@@ -1,0 +1,125 @@
+{
+    "endpoint": "POST /api/auth/logout",
+    "description": "Terminate user session and invalidate tokens",
+    "authentication": "Required (Bearer token in Authorization header)",
+    "rateLimit": "None (authenticated users only)",
+    "request": {
+        "headers": {
+            "Authorization": "Bearer {accessToken}",
+            "description": "JWT access token obtained from login/register"
+        },
+        "body": "None (empty request body)",
+        "exampleRequest": "POST /api/auth/logout with header: Authorization: Bearer eyJhbG..."
+    },
+    "responses": {
+        "200": {
+            "description": "Logout successful",
+            "contentType": "application/json",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Logout successful"
+                    }
+                }
+            },
+            "cookies": [
+                {
+                    "name": "refreshToken",
+                    "description": "Refresh token cookie is cleared",
+                    "attributes": "maxAge=0 (immediate expiry)"
+                }
+            ],
+            "exampleResponse": {
+                "success": true,
+                "message": "Logout successful"
+            },
+            "nextStep": "Redirect user to home page, clear access token from client memory"
+        },
+        "401": {
+            "description": "Unauthorized (missing or invalid token)",
+            "contentType": "application/json",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "error": {
+                        "type": "string",
+                        "example": "Unauthorized. Please log in."
+                    }
+                }
+            },
+            "exampleResponse": {
+                "success": false,
+                "error": "Unauthorized. Please log in."
+            }
+        },
+        "500": {
+            "description": "Server error",
+            "contentType": "application/json",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "error": {
+                        "type": "string",
+                        "example": "An unexpected error occurred. Please try again later."
+                    }
+                }
+            },
+            "exampleResponse": {
+                "success": false,
+                "error": "An unexpected error occurred. Please try again later."
+            }
+        }
+    },
+    "sideEffects": [
+        "Deletes Session record from database (invalidates refresh token)",
+        "Clears refreshToken cookie (sets maxAge=0)",
+        "Creates SecurityLog entry (eventType: 'logout', success: true)",
+        "Client must clear access token from memory"
+    ],
+    "securityConsiderations": [
+        "Requires valid access token (user must be authenticated)",
+        "Deletes session from database (refresh token cannot be used again)",
+        "Clears httpOnly cookie to prevent token reuse",
+        "Access token becomes useless after session deletion (backend validates session exists)"
+    ],
+    "contractTests": [
+        {
+            "name": "should logout authenticated user",
+            "given": "Valid access token in Authorization header",
+            "when": "POST /api/auth/logout",
+            "then": "Returns 200, clears refreshToken cookie, deletes Session record"
+        },
+        {
+            "name": "should reject logout without token",
+            "given": "No Authorization header",
+            "when": "POST /api/auth/logout",
+            "then": "Returns 401 unauthorized error"
+        },
+        {
+            "name": "should reject logout with invalid token",
+            "given": "Malformed or expired access token",
+            "when": "POST /api/auth/logout",
+            "then": "Returns 401 unauthorized error"
+        },
+        {
+            "name": "should log logout event",
+            "given": "Successful logout",
+            "when": "POST /api/auth/logout",
+            "then": "SecurityLog entry created with eventType='logout', success=true"
+        }
+    ]
+}
