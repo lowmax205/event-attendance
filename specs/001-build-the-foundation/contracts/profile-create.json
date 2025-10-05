@@ -1,0 +1,378 @@
+{
+  "endpoint": "POST /api/profile/create",
+  "description": "Create user profile with academic details after registration",
+  "authentication": "Required (Bearer token in Authorization header)",
+  "rateLimit": "None (authenticated users only)",
+  "request": {
+    "headers": {
+      "Authorization": "Bearer {accessToken}",
+      "description": "JWT access token obtained from registration"
+    },
+    "contentType": "application/json",
+    "schema": {
+      "type": "object",
+      "required": [
+        "idNumber",
+        "year",
+        "section",
+        "course",
+        "department",
+        "campus",
+        "currentSemester"
+      ],
+      "properties": {
+        "idNumber": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9-]+$",
+          "maxLength": 50,
+          "example": "2024-12345",
+          "description": "School/institution ID number"
+        },
+        "year": {
+          "type": "string",
+          "enum": ["1st", "2nd", "3rd", "4th", "5th"],
+          "example": "3rd",
+          "description": "Academic year level"
+        },
+        "section": {
+          "type": "string",
+          "maxLength": 100,
+          "example": "A",
+          "description": "Class section"
+        },
+        "course": {
+          "type": "string",
+          "maxLength": 100,
+          "example": "Computer Science",
+          "description": "Degree program or course name"
+        },
+        "department": {
+          "type": "string",
+          "maxLength": 100,
+          "example": "College of Engineering",
+          "description": "Academic department"
+        },
+        "campus": {
+          "type": "string",
+          "maxLength": 100,
+          "example": "Main Campus",
+          "description": "Campus location"
+        },
+        "currentSemester": {
+          "type": "string",
+          "enum": ["1st Sem", "2nd Sem", "Summer"],
+          "example": "2nd Sem",
+          "description": "Current academic semester"
+        }
+      }
+    },
+    "validation": {
+      "idNumber": [
+        "Required",
+        "Alphanumeric with hyphens only",
+        "Maximum 50 characters"
+      ],
+      "year": ["Required", "Must be one of: 1st, 2nd, 3rd, 4th, 5th"],
+      "section": [
+        "Required",
+        "Trimmed whitespace",
+        "Minimum 1 character",
+        "Maximum 100 characters"
+      ],
+      "course": [
+        "Required",
+        "Trimmed whitespace",
+        "Minimum 1 character",
+        "Maximum 100 characters"
+      ],
+      "department": [
+        "Required",
+        "Trimmed whitespace",
+        "Minimum 1 character",
+        "Maximum 100 characters"
+      ],
+      "campus": [
+        "Required",
+        "Trimmed whitespace",
+        "Minimum 1 character",
+        "Maximum 100 characters"
+      ],
+      "currentSemester": [
+        "Required",
+        "Must be one of: 1st Sem, 2nd Sem, Summer"
+      ]
+    },
+    "exampleRequest": {
+      "idNumber": "2024-12345",
+      "year": "3rd",
+      "section": "A",
+      "course": "Computer Science",
+      "department": "College of Engineering",
+      "campus": "Main Campus",
+      "currentSemester": "2nd Sem"
+    }
+  },
+  "responses": {
+    "201": {
+      "description": "Profile created successfully",
+      "contentType": "application/json",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "example": "Profile completed successfully"
+          },
+          "profile": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "example": "clp123xyz..."
+              },
+              "userId": {
+                "type": "string",
+                "example": "clx123abc..."
+              },
+              "idNumber": {
+                "type": "string",
+                "example": "2024-12345"
+              },
+              "year": {
+                "type": "string",
+                "example": "3rd"
+              },
+              "section": {
+                "type": "string",
+                "example": "A"
+              },
+              "course": {
+                "type": "string",
+                "example": "Computer Science"
+              },
+              "department": {
+                "type": "string",
+                "example": "College of Engineering"
+              },
+              "campus": {
+                "type": "string",
+                "example": "Main Campus"
+              },
+              "currentSemester": {
+                "type": "string",
+                "example": "2nd Sem"
+              },
+              "completedAt": {
+                "type": "string",
+                "format": "date-time",
+                "example": "2025-10-06T12:34:56.789Z"
+              }
+            }
+          },
+          "redirectTo": {
+            "type": "string",
+            "example": "/dashboard/student",
+            "description": "Role-specific dashboard URL"
+          }
+        }
+      },
+      "exampleResponse": {
+        "success": true,
+        "message": "Profile completed successfully",
+        "profile": {
+          "id": "clp123xyz789",
+          "userId": "clx123abc456",
+          "idNumber": "2024-12345",
+          "year": "3rd",
+          "section": "A",
+          "course": "Computer Science",
+          "department": "College of Engineering",
+          "campus": "Main Campus",
+          "currentSemester": "2nd Sem",
+          "completedAt": "2025-10-06T12:34:56.789Z"
+        },
+        "redirectTo": "/dashboard/student"
+      },
+      "nextStep": "Redirect user to role-specific dashboard"
+    },
+    "400": {
+      "description": "Validation error",
+      "contentType": "application/json",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "error": {
+            "type": "string",
+            "example": "Validation failed"
+          },
+          "details": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "field": {
+                  "type": "string",
+                  "example": "idNumber"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "ID Number can only contain letters, numbers, and hyphens"
+                }
+              }
+            }
+          }
+        }
+      },
+      "exampleResponse": {
+        "success": false,
+        "error": "Validation failed",
+        "details": [
+          {
+            "field": "idNumber",
+            "message": "ID Number is required"
+          },
+          {
+            "field": "year",
+            "message": "Please select a year"
+          }
+        ]
+      }
+    },
+    "401": {
+      "description": "Unauthorized (missing or invalid token)",
+      "contentType": "application/json",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "error": {
+            "type": "string",
+            "example": "Unauthorized. Please log in."
+          }
+        }
+      },
+      "exampleResponse": {
+        "success": false,
+        "error": "Unauthorized. Please log in."
+      }
+    },
+    "409": {
+      "description": "Profile already exists",
+      "contentType": "application/json",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "error": {
+            "type": "string",
+            "example": "Profile already completed. Use /api/profile/update to modify."
+          }
+        }
+      },
+      "exampleResponse": {
+        "success": false,
+        "error": "Profile already completed. Use /api/profile/update to modify."
+      }
+    },
+    "500": {
+      "description": "Server error",
+      "contentType": "application/json",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "error": {
+            "type": "string",
+            "example": "An unexpected error occurred. Please try again later."
+          }
+        }
+      },
+      "exampleResponse": {
+        "success": false,
+        "error": "An unexpected error occurred. Please try again later."
+      }
+    }
+  },
+  "sideEffects": [
+    "Creates new UserProfile record in database linked to authenticated user",
+    "Sets completedAt timestamp to current time",
+    "User becomes eligible to access role-specific dashboard"
+  ],
+  "securityConsiderations": [
+    "Requires valid access token (user must be authenticated)",
+    "userId extracted from JWT token (user cannot create profile for another user)",
+    "All text inputs trimmed and sanitized to prevent XSS",
+    "Enum fields (year, currentSemester) validated against allowed values",
+    "Profile can only be created once (409 error if already exists)"
+  ],
+  "businessLogic": {
+    "userIdSource": "Extracted from JWT access token (not from request body)",
+    "profileCompletion": "After profile creation, user.profileComplete becomes true",
+    "redirectBasedOnRole": {
+      "Student": "/dashboard/student",
+      "Moderator": "/dashboard/moderator",
+      "Administrator": "/dashboard/admin"
+    }
+  },
+  "contractTests": [
+    {
+      "name": "should create profile with valid inputs",
+      "given": "Authenticated user with no existing profile, valid profile data",
+      "when": "POST /api/profile/create",
+      "then": "Returns 201, profile object, redirectTo URL"
+    },
+    {
+      "name": "should reject creation if profile already exists",
+      "given": "Authenticated user with existing profile",
+      "when": "POST /api/profile/create",
+      "then": "Returns 409 conflict error"
+    },
+    {
+      "name": "should reject creation without authentication",
+      "given": "No Authorization header or invalid token",
+      "when": "POST /api/profile/create",
+      "then": "Returns 401 unauthorized error"
+    },
+    {
+      "name": "should validate required fields",
+      "given": "Missing required field (e.g., idNumber)",
+      "when": "POST /api/profile/create",
+      "then": "Returns 400 with validation error details"
+    },
+    {
+      "name": "should validate enum fields",
+      "given": "Invalid year value (e.g., '6th')",
+      "when": "POST /api/profile/create",
+      "then": "Returns 400 with validation error"
+    },
+    {
+      "name": "should trim whitespace from text fields",
+      "given": "section = '  A  ' (with leading/trailing spaces)",
+      "when": "POST /api/profile/create",
+      "then": "Profile created with section = 'A' (trimmed)"
+    },
+    {
+      "name": "should set completedAt timestamp",
+      "given": "Valid profile creation",
+      "when": "POST /api/profile/create",
+      "then": "Profile.completedAt is set to current timestamp"
+    }
+  ]
+}

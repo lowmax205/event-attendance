@@ -1,0 +1,96 @@
+{
+  "endpoint": "PATCH /api/profile/update",
+  "description": "Update user profile academic details (future feature, not in MVP)",
+  "authentication": "Required (Bearer token in Authorization header)",
+  "rateLimit": "10 requests per hour per user",
+  "mvpStatus": "NOT IMPLEMENTED IN MVP - Placeholder contract for future development",
+  "request": {
+    "headers": {
+      "Authorization": "Bearer {accessToken}",
+      "description": "JWT access token"
+    },
+    "contentType": "application/json",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "year": {
+          "type": "string",
+          "enum": ["1st", "2nd", "3rd", "4th", "5th"]
+        },
+        "section": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "course": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "department": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "campus": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "currentSemester": {
+          "type": "string",
+          "enum": ["1st Sem", "2nd Sem", "Summer"]
+        }
+      }
+    },
+    "exampleRequest": {
+      "year": "4th",
+      "currentSemester": "1st Sem"
+    },
+    "note": "Partial updates allowed - only send fields to be updated"
+  },
+  "responses": {
+    "200": {
+      "description": "Profile updated successfully",
+      "contentType": "application/json",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "example": "Profile updated successfully"
+          },
+          "profile": {
+            "type": "object",
+            "description": "Complete updated profile object"
+          }
+        }
+      }
+    },
+    "400": {
+      "description": "Validation error"
+    },
+    "401": {
+      "description": "Unauthorized"
+    },
+    "404": {
+      "description": "Profile not found (user has not completed profile)"
+    },
+    "500": {
+      "description": "Server error"
+    }
+  },
+  "sideEffects": [
+    "Updates specified fields in UserProfile record",
+    "Sets updatedAt timestamp to current time",
+    "idNumber cannot be updated (immutable field)"
+  ],
+  "contractTests": [
+    {
+      "name": "MVP: should return 501 Not Implemented",
+      "given": "Any valid request",
+      "when": "PATCH /api/profile/update",
+      "then": "Returns 501 Not Implemented (feature not in MVP scope)"
+    }
+  ]
+}

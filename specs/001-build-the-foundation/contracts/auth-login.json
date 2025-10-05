@@ -1,0 +1,243 @@
+{
+  "endpoint": "POST /api/auth/login",
+  "description": "Authenticate user with email and password",
+  "authentication": "None (public endpoint)",
+  "rateLimit": "5 requests per hour per email address",
+  "request": {
+    "contentType": "application/json",
+    "schema": {
+      "type": "object",
+      "required": ["email", "password"],
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email",
+          "example": "student@university.edu",
+          "description": "User's registered email address"
+        },
+        "password": {
+          "type": "string",
+          "example": "SecurePass123!",
+          "description": "User's password"
+        }
+      }
+    },
+    "exampleRequest": {
+      "email": "john.doe@university.edu",
+      "password": "MySecure123!"
+    }
+  },
+  "responses": {
+    "200": {
+      "description": "Login successful",
+      "contentType": "application/json",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "example": "Login successful"
+          },
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "example": "clx123abc..."
+              },
+              "email": {
+                "type": "string",
+                "example": "john.doe@university.edu"
+              },
+              "role": {
+                "type": "string",
+                "example": "Student"
+              },
+              "profileComplete": {
+                "type": "boolean",
+                "example": true
+              }
+            }
+          },
+          "accessToken": {
+            "type": "string",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+            "description": "JWT access token (1 hour TTL)"
+          },
+          "redirectTo": {
+            "type": "string",
+            "example": "/dashboard/student",
+            "description": "URL to redirect user after login"
+          }
+        }
+      },
+      "cookies": [
+        {
+          "name": "refreshToken",
+          "description": "JWT refresh token (30 days TTL)",
+          "attributes": "httpOnly, secure, sameSite=lax, path=/"
+        }
+      ],
+      "exampleResponse": {
+        "success": true,
+        "message": "Login successful",
+        "user": {
+          "id": "clx123abc456def789",
+          "email": "john.doe@university.edu",
+          "role": "Student",
+          "profileComplete": true
+        },
+        "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbHgxMjNhYmM0NTZkZWY3ODkiLCJyb2xlIjoiU3R1ZGVudCIsImlhdCI6MTY5ODc2NTQzMiwiZXhwIjoxNjk4NzY2MzMyfQ.abc123...",
+        "redirectTo": "/dashboard/student"
+      },
+      "nextStep": "Redirect user to redirectTo URL (role-specific dashboard or profile completion)"
+    },
+    "401": {
+      "description": "Invalid credentials",
+      "contentType": "application/json",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "error": {
+            "type": "string",
+            "example": "Invalid credentials. Please check your email and password."
+          }
+        }
+      },
+      "exampleResponse": {
+        "success": false,
+        "error": "Invalid credentials. Please check your email and password."
+      },
+      "securityNote": "Same error message for 'email not found' and 'wrong password' to prevent user enumeration"
+    },
+    "429": {
+      "description": "Rate limit exceeded",
+      "contentType": "application/json",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "error": {
+            "type": "string",
+            "example": "Too many login attempts. Please try again in 1 hour."
+          }
+        }
+      },
+      "exampleResponse": {
+        "success": false,
+        "error": "Too many login attempts. Please try again in 15 minutes."
+      }
+    },
+    "500": {
+      "description": "Server error",
+      "contentType": "application/json",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "error": {
+            "type": "string",
+            "example": "An unexpected error occurred. Please try again later."
+          }
+        }
+      },
+      "exampleResponse": {
+        "success": false,
+        "error": "An unexpected error occurred. Please try again later."
+      }
+    }
+  },
+  "sideEffects": [
+    "Updates User.lastLoginAt timestamp",
+    "Generates new JWT access token (1 hour TTL) and refresh token (30 days TTL)",
+    "Creates new Session record in database",
+    "Sets httpOnly refreshToken cookie",
+    "Creates SecurityLog entry (eventType: 'login', success: true) on success",
+    "Creates SecurityLog entry (eventType: 'failed_login', success: false) on failure"
+  ],
+  "securityConsiderations": [
+    "Password comparison uses bcrypt.compare() (constant-time to prevent timing attacks)",
+    "Rate limiting (5 per hour per email) prevents brute force attacks",
+    "Generic error message for invalid credentials (does not reveal if email exists)",
+    "Refresh token stored in httpOnly cookie (XSS protection)",
+    "Access token sent in response body (client stores in memory)",
+    "Failed login attempts logged for security audit",
+    "Account lockout after N failed attempts (future feature)"
+  ],
+  "businessLogic": {
+    "profileComplete": {
+      "condition": "User has associated UserProfile record",
+      "ifTrue": "redirectTo = /dashboard/{role}",
+      "ifFalse": "redirectTo = /profile/complete"
+    },
+    "roleBasedRedirect": {
+      "Student": "/dashboard/student",
+      "Moderator": "/dashboard/moderator",
+      "Administrator": "/dashboard/admin"
+    }
+  },
+  "contractTests": [
+    {
+      "name": "should login user with valid credentials",
+      "given": "Existing user with correct email and password",
+      "when": "POST /api/auth/login",
+      "then": "Returns 200, user object, accessToken, redirectTo, sets refreshToken cookie"
+    },
+    {
+      "name": "should redirect to profile completion if profile incomplete",
+      "given": "User exists, password correct, but no UserProfile",
+      "when": "POST /api/auth/login",
+      "then": "Returns 200 with redirectTo = '/profile/complete'"
+    },
+    {
+      "name": "should redirect to role-specific dashboard if profile complete",
+      "given": "Student with complete profile",
+      "when": "POST /api/auth/login",
+      "then": "Returns 200 with redirectTo = '/dashboard/student'"
+    },
+    {
+      "name": "should reject login with wrong password",
+      "given": "Existing email but incorrect password",
+      "when": "POST /api/auth/login",
+      "then": "Returns 401 with generic 'Invalid credentials' error"
+    },
+    {
+      "name": "should reject login with non-existent email",
+      "given": "Email not in database",
+      "when": "POST /api/auth/login",
+      "then": "Returns 401 with same 'Invalid credentials' error (no user enumeration)"
+    },
+    {
+      "name": "should enforce rate limit",
+      "given": "6 login attempts with same email within 1 hour",
+      "when": "POST /api/auth/login (6th attempt)",
+      "then": "Returns 429 rate limit error"
+    },
+    {
+      "name": "should update lastLoginAt timestamp",
+      "given": "Successful login",
+      "when": "POST /api/auth/login",
+      "then": "User.lastLoginAt is updated to current timestamp"
+    },
+    {
+      "name": "should log failed login attempt",
+      "given": "Invalid credentials",
+      "when": "POST /api/auth/login",
+      "then": "SecurityLog entry created with eventType='failed_login', success=false"
+    }
+  ]
+}
