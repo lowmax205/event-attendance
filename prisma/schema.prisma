@@ -1,0 +1,101 @@
+// This is your Prisma schema file
+// Learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ===== Core Entities =====
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  passwordHash  String
+  role          Role
+  accountStatus String   @default("active")
+  emailVerified Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  lastLoginAt   DateTime?
+
+  // Relationships
+  profile      UserProfile?
+  sessions     Session[]
+  securityLogs SecurityLog[]
+
+  @@index([email])
+}
+
+model UserProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Academic details
+  idNumber        String
+  year            String   // 1st, 2nd, 3rd, 4th, 5th
+  section         String
+  course          String
+  department      String
+  campus          String
+  currentSemester String   // 1st Sem, 2nd Sem, Summer
+
+  // Metadata
+  completedAt     DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+enum Role {
+  Student
+  Moderator
+  Administrator
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Tokens
+  accessToken  String   @unique
+  refreshToken String   @unique
+
+  // Client metadata
+  ipAddress    String?
+  userAgent    String?
+  deviceType   String?  // mobile, tablet, desktop
+
+  // Timestamps
+  createdAt    DateTime @default(now())
+  expiresAt    DateTime // Refresh token expiry (30 days from creation)
+  refreshedAt  DateTime? // Last time tokens were refreshed
+
+  @@index([userId])
+  @@index([refreshToken])
+}
+
+model SecurityLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  // Event details
+  eventType   String   // registration, login, logout, failed_login, password_change, token_refresh
+  success     Boolean
+  failReason  String?
+
+  // Client metadata
+  ipAddress   String?
+  userAgent   String?
+
+  // Timestamp
+  createdAt   DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([eventType, createdAt])
+  @@index([createdAt])
+}
