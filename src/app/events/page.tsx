@@ -5,137 +5,168 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Calendar, MapPin, Clock, User } from "lucide-react";
+import { format } from "date-fns";
+import { db } from "@/lib/db";
 
-export default function EventsPage() {
+async function getUpcomingEvents() {
+  const now = new Date();
+
+  const events = await db.event.findMany({
+    where: {
+      status: "Active",
+      OR: [
+        // Upcoming: starts in the future
+        {
+          startDateTime: {
+            gte: now,
+          },
+        },
+        // Ongoing: started but hasn't ended yet
+        {
+          startDateTime: {
+            lte: now,
+          },
+          endDateTime: {
+            gte: now,
+          },
+        },
+      ],
+    },
+    include: {
+      createdBy: {
+        select: {
+          firstName: true,
+          lastName: true,
+          UserProfile: {
+            select: {
+              department: true,
+            },
+          },
+        },
+      },
+    },
+    orderBy: {
+      startDateTime: "asc",
+    },
+  });
+
+  return events;
+}
+
+function isEventOngoing(startDateTime: Date, endDateTime: Date) {
+  const now = new Date();
+  return startDateTime <= now && endDateTime >= now;
+}
+
+export default async function EventsPage() {
+  const events = await getUpcomingEvents();
   return (
-    <div className="container mx-auto px-4 py-8 max-w-5xl">
-      <h1 className="text-4xl font-bold mb-4">Event Tracking</h1>
-      <p className="text-lg text-muted-foreground mb-8">
-        Learn how our event attendance system works and what features are
-        available to each role.
-      </p>
+    <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold mb-2">Events</h1>
+        <p className="text-lg text-muted-foreground">
+          Browse upcoming and ongoing events. Check in to events using QR codes.
+        </p>
+      </div>
 
-      {/* How It Works */}
-      <section className="mb-12">
-        <h2 className="text-3xl font-bold mb-6">How It Works</h2>
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>1. Event Creation</CardTitle>
-              <CardDescription>
-                Moderators and administrators create events
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+      {events.length === 0 ? (
+        <Card>
+          <CardContent className="py-12">
+            <div className="text-center">
+              <Calendar className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-lg font-semibold mb-2">
+                No Events Available
+              </h3>
               <p className="text-sm text-muted-foreground">
-                Events can be created with details such as name, description,
-                date, time, location, and capacity. Each event gets a unique QR
-                code for quick check-ins.
+                There are currently no upcoming or ongoing events.
               </p>
-            </CardContent>
-          </Card>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-6 md:grid-cols-2">
+          {events.map((event) => {
+            const ongoing = isEventOngoing(
+              event.startDateTime,
+              event.endDateTime,
+            );
 
-          <Card>
-            <CardHeader>
-              <CardTitle>2. Student Registration</CardTitle>
-              <CardDescription>
-                Students discover and register for events
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Students browse available events and register in advance. They
-                receive confirmation and can add events to their calendar.
-              </p>
-            </CardContent>
-          </Card>
+            return (
+              <Card
+                key={event.id}
+                className="hover:shadow-lg transition-shadow"
+              >
+                <CardHeader>
+                  <div className="flex items-start justify-between gap-2">
+                    <CardTitle className="text-xl">{event.name}</CardTitle>
+                    {ongoing && (
+                      <Badge variant="default" className="bg-green-600">
+                        Ongoing
+                      </Badge>
+                    )}
+                  </div>
+                  {event.description && (
+                    <CardDescription className="line-clamp-2">
+                      {event.description}
+                    </CardDescription>
+                  )}
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {/* Location */}
+                  <div className="flex items-start gap-2 text-sm">
+                    <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+                    <div>
+                      <p className="font-medium">{event.venueName}</p>
+                      {event.venueAddress && (
+                        <p className="text-muted-foreground text-xs">
+                          {event.venueAddress}
+                        </p>
+                      )}
+                    </div>
+                  </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>3. Check-In Process</CardTitle>
-              <CardDescription>
-                Multiple ways to mark attendance
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Students can check in by scanning the event QR code or entering
-                a unique event code. Moderators can also manually mark
-                attendance.
-              </p>
-            </CardContent>
-          </Card>
+                  {/* Date */}
+                  <div className="flex items-center gap-2 text-sm">
+                    <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <span>
+                      {format(
+                        new Date(event.startDateTime),
+                        "EEEE, MMMM d, yyyy",
+                      )}
+                    </span>
+                  </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>4. Real-Time Tracking</CardTitle>
-              <CardDescription>
-                Monitor attendance as it happens
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Moderators and administrators can see who has checked in, view
-                capacity status, and receive alerts when events reach capacity.
-              </p>
-            </CardContent>
-          </Card>
+                  {/* Time */}
+                  <div className="flex items-center gap-2 text-sm">
+                    <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <span>
+                      {format(new Date(event.startDateTime), "h:mm a")} -{" "}
+                      {format(new Date(event.endDateTime), "h:mm a")}
+                    </span>
+                  </div>
+
+                  {/* Creator & Department */}
+                  <div className="flex items-center gap-2 text-sm pt-2 border-t">
+                    <User className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="font-medium">
+                        {event.createdBy.firstName} {event.createdBy.lastName}
+                      </p>
+                      {event.createdBy.UserProfile?.department && (
+                        <p className="text-xs text-muted-foreground">
+                          {event.createdBy.UserProfile.department}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
-      </section>
-
-      {/* Role Capabilities */}
-      <section>
-        <h2 className="text-3xl font-bold mb-6">Role Capabilities</h2>
-        <div className="grid gap-6 md:grid-cols-3">
-          <Card className="border-primary/50">
-            <CardHeader>
-              <CardTitle>Student</CardTitle>
-              <CardDescription>Basic event participation</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>• Browse upcoming events</li>
-                <li>• Register for events</li>
-                <li>• Check in to events</li>
-                <li>• View personal attendance history</li>
-                <li>• Update profile information</li>
-              </ul>
-            </CardContent>
-          </Card>
-
-          <Card className="border-secondary/50">
-            <CardHeader>
-              <CardTitle>Moderator</CardTitle>
-              <CardDescription>Event management powers</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>• All student capabilities</li>
-                <li>• Create and edit events</li>
-                <li>• Manually mark attendance</li>
-                <li>• View event analytics</li>
-                <li>• Export attendance reports</li>
-              </ul>
-            </CardContent>
-          </Card>
-
-          <Card className="border-destructive/50">
-            <CardHeader>
-              <CardTitle>Administrator</CardTitle>
-              <CardDescription>Full system control</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>• All moderator capabilities</li>
-                <li>• Manage user accounts</li>
-                <li>• Assign roles and permissions</li>
-                <li>• View system-wide analytics</li>
-                <li>• Access security audit logs</li>
-              </ul>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
+      )}
     </div>
   );
 }

@@ -11,6 +11,7 @@ type User = {
   id: string;
   email: string;
   role: "Student" | "Moderator" | "Administrator";
+  hasProfile?: boolean;
 };
 
 type Session = {
@@ -48,12 +49,14 @@ export async function createSession(user: User): Promise<{
     userId: user.id,
     email: user.email,
     role: user.role,
+    hasProfile: user.hasProfile ?? false,
   });
 
   const refreshToken = await generateRefreshToken({
     userId: user.id,
     email: user.email,
     role: user.role,
+    hasProfile: user.hasProfile ?? false,
   });
 
   // Calculate expiry (30 days from now)

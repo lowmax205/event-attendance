@@ -14,6 +14,14 @@ const protectedRoutes = [
   "/profile",
   "/events/create",
   "/events/manage",
+  "/attendance",
+];
+
+// Routes accessible without profile completion
+const profileExemptRoutes = [
+  "/profile/create",
+  "/auth/login",
+  "/auth/register",
 ];
 
 // Routes that require specific roles
@@ -29,12 +37,7 @@ const roleBasedRoutes: Record<
 };
 
 // Public routes that don't require authentication
-const publicRoutes = [
-  "/",
-  "/events",
-  "/roadmap",
-  "/attendance", // QR scanner is public but requires valid QR code
-];
+const publicRoutes = ["/", "/events", "/roadmap"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -85,6 +88,37 @@ export async function middleware(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     url.searchParams.set("error", "session_expired");
+    return NextResponse.redirect(url);
+  }
+
+  // Check if user has completed their profile
+  const isProfileExempt = profileExemptRoutes.some((route) =>
+    pathname.startsWith(route),
+  );
+
+  if (!payload.hasProfile && !isProfileExempt) {
+    // User hasn't completed profile - redirect to profile creation
+    const url = request.nextUrl.clone();
+    url.pathname = "/profile/create";
+    return NextResponse.redirect(url);
+  }
+
+  // If user has profile and tries to access profile creation, redirect to dashboard
+  if (payload.hasProfile && pathname.startsWith("/profile/create")) {
+    const url = request.nextUrl.clone();
+    switch (payload.role) {
+      case "Student":
+        url.pathname = "/dashboard/student";
+        break;
+      case "Moderator":
+        url.pathname = "/dashboard/moderator";
+        break;
+      case "Administrator":
+        url.pathname = "/dashboard/admin";
+        break;
+      default:
+        url.pathname = "/";
+    }
     return NextResponse.redirect(url);
   }
 

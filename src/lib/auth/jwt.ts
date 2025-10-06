@@ -19,6 +19,7 @@ export interface JWTPayload {
   userId: string;
   email: string;
   role: "Student" | "Moderator" | "Administrator";
+  hasProfile: boolean;
   type: "access" | "refresh";
 }
 

@@ -57,10 +57,18 @@ export async function login(data: LoginInput): Promise<AuthResponse> {
       };
     }
 
-    // 5. Create session
-    const { accessToken, refreshToken } = await createSession(user);
+    // 5. Check if user has profile
+    const hasProfile = !!user.UserProfile;
 
-    // 6. Set cookies
+    // 6. Create session
+    const { accessToken, refreshToken } = await createSession({
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      hasProfile,
+    });
+
+    // 7. Set cookies
     const cookieStore = await cookies();
     cookieStore.set("accessToken", accessToken, {
       httpOnly: true,
@@ -78,7 +86,7 @@ export async function login(data: LoginInput): Promise<AuthResponse> {
       path: "/",
     });
 
-    // 7. Log security event
+    // 8. Log security event
     await db.securityLog.create({
       data: {
         userId: user.id,
@@ -88,9 +96,6 @@ export async function login(data: LoginInput): Promise<AuthResponse> {
         },
       },
     });
-
-    // 8. Check if user has profile
-    const hasProfile = !!user.UserProfile;
 
     return {
       success: true,

@@ -62,8 +62,13 @@ export async function register(data: RegisterInput): Promise<AuthResponse> {
       },
     });
 
-    // 6. Create session
-    const { accessToken, refreshToken } = await createSession(user);
+    // 6. Create session (user doesn't have profile yet)
+    const { accessToken, refreshToken } = await createSession({
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      hasProfile: false,
+    });
 
     // 7. Set cookies
     const cookieStore = await cookies();

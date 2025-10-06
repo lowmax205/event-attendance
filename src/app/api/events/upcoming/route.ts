@@ -36,15 +36,28 @@ export async function GET() {
       select: {
         id: true,
         name: true,
+        description: true,
         startDateTime: true,
         endDateTime: true,
         venueName: true,
+        venueAddress: true,
         status: true,
+        createdBy: {
+          select: {
+            firstName: true,
+            lastName: true,
+            UserProfile: {
+              select: {
+                department: true,
+              },
+            },
+          },
+        },
       },
       orderBy: {
         startDateTime: "asc",
       },
-      take: 10, // Limit to 10 events
+      take: 50, // Increased limit to show more events
     });
 
     return NextResponse.json({
