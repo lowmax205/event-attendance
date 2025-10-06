@@ -7,7 +7,9 @@ import { ZodError } from "zod";
 import { z } from "zod";
 
 const validateQRSchema = z.object({
-  qrPayload: z.string().regex(/^attendance:[a-z0-9]+:[0-9]+$/, "Invalid QR code format"),
+  qrPayload: z
+    .string()
+    .regex(/^attendance:[a-z0-9]+:[0-9]+$/, "Invalid QR code format"),
 });
 
 /**
@@ -68,7 +70,8 @@ export async function validateQR(input: unknown) {
     if (!userProfile) {
       return {
         success: false,
-        error: "Profile incomplete: Please complete your profile before checking in",
+        error:
+          "Profile incomplete: Please complete your profile before checking in",
       };
     }
 
@@ -87,8 +90,12 @@ export async function validateQR(input: unknown) {
     });
 
     // Calculate check-in window
-    const opensAt = new Date(event.startDateTime.getTime() - event.checkInBufferMins * 60 * 1000);
-    const closesAt = new Date(event.endDateTime.getTime() + event.checkOutBufferMins * 60 * 1000);
+    const opensAt = new Date(
+      event.startDateTime.getTime() - event.checkInBufferMins * 60 * 1000,
+    );
+    const closesAt = new Date(
+      event.endDateTime.getTime() + event.checkOutBufferMins * 60 * 1000,
+    );
     const now = new Date();
     const isOpen = now >= opensAt && now <= closesAt;
 
@@ -108,7 +115,9 @@ export async function validateQR(input: unknown) {
       if (now < opensAt) {
         validationErrors.push(`Check-in opens at ${opensAt.toISOString()}`);
       } else {
-        validationErrors.push(`Check-in window closed at ${closesAt.toISOString()}`);
+        validationErrors.push(
+          `Check-in window closed at ${closesAt.toISOString()}`,
+        );
       }
       valid = false;
     }
@@ -120,7 +129,9 @@ export async function validateQR(input: unknown) {
 
     // Verify QR payload matches current event payload
     if (event.qrCodePayload !== qrPayload) {
-      validationErrors.push("This QR code has been regenerated. Please scan the latest QR code.");
+      validationErrors.push(
+        "This QR code has been regenerated. Please scan the latest QR code.",
+      );
       valid = false;
     }
 

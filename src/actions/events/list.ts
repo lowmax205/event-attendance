@@ -20,12 +20,7 @@ export async function listEvents(filters: ListEventsFilters = {}) {
     // Require authentication
     await requireAuth();
 
-    const {
-      status,
-      createdById,
-      page = 1,
-      limit = 10,
-    } = filters;
+    const { status, createdById, page = 1, limit = 10 } = filters;
 
     const skip = (page - 1) * limit;
 

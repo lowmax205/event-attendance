@@ -21,7 +21,9 @@ export async function regenerateQRCode(eventId: string, input?: unknown) {
     const user = await requireRole(["Moderator", "Administrator"]);
 
     // Validate input
-    const validatedData = input ? regenerateQRSchema.parse(input) : { reason: undefined };
+    const validatedData = input
+      ? regenerateQRSchema.parse(input)
+      : { reason: undefined };
 
     // Get existing event
     const existingEvent = await db.event.findUnique({
@@ -53,7 +55,10 @@ export async function regenerateQRCode(eventId: string, input?: unknown) {
     const qrDataUrl = await generateQRCode(newPayload);
 
     // Delete old QR code from Cloudinary if exists
-    if (existingEvent.qrCodeUrl && !existingEvent.qrCodeUrl.startsWith("data:")) {
+    if (
+      existingEvent.qrCodeUrl &&
+      !existingEvent.qrCodeUrl.startsWith("data:")
+    ) {
       try {
         // Extract public ID from Cloudinary URL
         const urlParts = existingEvent.qrCodeUrl.split("/");
@@ -71,7 +76,7 @@ export async function regenerateQRCode(eventId: string, input?: unknown) {
     const qrCodeUrl = await uploadQRCode(
       qrDataUrl,
       cloudinaryFolder,
-      `qr_${Date.now()}`
+      `qr_${Date.now()}`,
     );
 
     // Update event with new QR code
@@ -93,7 +98,10 @@ export async function regenerateQRCode(eventId: string, input?: unknown) {
 
     // Log to SecurityLog
     const headersList = await headers();
-    const ipAddress = headersList.get("x-forwarded-for") || headersList.get("x-real-ip") || undefined;
+    const ipAddress =
+      headersList.get("x-forwarded-for") ||
+      headersList.get("x-real-ip") ||
+      undefined;
     const userAgent = headersList.get("user-agent") || undefined;
 
     await db.securityLog.create({
