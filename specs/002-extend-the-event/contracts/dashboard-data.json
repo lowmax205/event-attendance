@@ -1,0 +1,395 @@
+{
+  "operation": "dashboard-data",
+  "description": "Get role-specific dashboard data for Student, Moderator, or Administrator",
+  "method": "GET",
+  "endpoint": "/api/dashboard/[role]",
+  "authentication": "Required (role must match path parameter)",
+  "pathParameters": {
+    "role": {
+      "type": "string",
+      "enum": ["student", "moderator", "administrator"],
+      "description": "User's role (lowercase)"
+    }
+  },
+  "queryParameters": {
+    "page": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 1,
+      "description": "Pagination page number"
+    },
+    "limit": {
+      "type": "integer",
+      "minimum": 10,
+      "maximum": 100,
+      "default": 20,
+      "description": "Items per page"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Pending",
+        "Approved",
+        "Rejected",
+        "Disputed",
+        "Active",
+        "Completed",
+        "Cancelled"
+      ],
+      "description": "Filter by status (context-dependent on role)"
+    }
+  },
+  "responseSchemas": {
+    "student": {
+      "type": "object",
+      "required": ["attendanceHistory", "upcomingEvents", "stats"],
+      "properties": {
+        "attendanceHistory": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "eventName": {
+                "type": "string"
+              },
+              "eventStartDateTime": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "submittedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "verificationStatus": {
+                "type": "string",
+                "enum": ["Pending", "Approved", "Rejected", "Disputed"]
+              },
+              "disputeNote": {
+                "type": "string",
+                "nullable": true
+              }
+            }
+          }
+        },
+        "upcomingEvents": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "startDateTime": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "venueName": {
+                "type": "string"
+              },
+              "qrCodeUrl": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          },
+          "description": "Active events starting within next 7 days"
+        },
+        "stats": {
+          "type": "object",
+          "properties": {
+            "totalAttendance": {
+              "type": "integer"
+            },
+            "approvedCount": {
+              "type": "integer"
+            },
+            "pendingCount": {
+              "type": "integer"
+            },
+            "rejectedCount": {
+              "type": "integer"
+            },
+            "attendanceRate": {
+              "type": "number",
+              "description": "Percentage: (approvedCount / totalEvents) * 100"
+            }
+          }
+        },
+        "pagination": {
+          "type": "object",
+          "properties": {
+            "page": {
+              "type": "integer"
+            },
+            "limit": {
+              "type": "integer"
+            },
+            "totalItems": {
+              "type": "integer"
+            },
+            "totalPages": {
+              "type": "integer"
+            }
+          }
+        }
+      }
+    },
+    "moderator": {
+      "type": "object",
+      "required": ["myEvents", "pendingVerifications", "stats"],
+      "properties": {
+        "myEvents": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "startDateTime": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "endDateTime": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "status": {
+                "type": "string",
+                "enum": ["Active", "Completed", "Cancelled"]
+              },
+              "attendanceCount": {
+                "type": "integer",
+                "description": "Total attendance submissions"
+              },
+              "pendingCount": {
+                "type": "integer",
+                "description": "Attendance pending verification"
+              }
+            }
+          },
+          "description": "Events created by this moderator"
+        },
+        "pendingVerifications": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "eventName": {
+                "type": "string"
+              },
+              "studentName": {
+                "type": "string"
+              },
+              "studentEmail": {
+                "type": "string"
+              },
+              "submittedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "distanceFromVenue": {
+                "type": "number"
+              },
+              "frontPhotoUrl": {
+                "type": "string",
+                "format": "uri"
+              },
+              "backPhotoUrl": {
+                "type": "string",
+                "format": "uri"
+              },
+              "signatureUrl": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          },
+          "description": "Attendance submissions awaiting verification across all events"
+        },
+        "stats": {
+          "type": "object",
+          "properties": {
+            "totalEvents": {
+              "type": "integer"
+            },
+            "activeEvents": {
+              "type": "integer"
+            },
+            "totalAttendance": {
+              "type": "integer"
+            },
+            "pendingVerifications": {
+              "type": "integer"
+            }
+          }
+        },
+        "pagination": {
+          "type": "object",
+          "properties": {
+            "page": {
+              "type": "integer"
+            },
+            "limit": {
+              "type": "integer"
+            },
+            "totalItems": {
+              "type": "integer"
+            },
+            "totalPages": {
+              "type": "integer"
+            }
+          }
+        }
+      }
+    },
+    "administrator": {
+      "type": "object",
+      "required": ["systemStats", "recentActivity", "alerts"],
+      "properties": {
+        "systemStats": {
+          "type": "object",
+          "properties": {
+            "totalUsers": {
+              "type": "integer"
+            },
+            "totalEvents": {
+              "type": "integer"
+            },
+            "totalAttendance": {
+              "type": "integer"
+            },
+            "activeEvents": {
+              "type": "integer"
+            },
+            "pendingVerifications": {
+              "type": "integer"
+            },
+            "disputedAttendance": {
+              "type": "integer"
+            }
+          }
+        },
+        "recentActivity": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "action": {
+                "type": "string",
+                "enum": [
+                  "USER_REGISTERED",
+                  "EVENT_CREATED",
+                  "ATTENDANCE_SUBMITTED",
+                  "ATTENDANCE_VERIFIED"
+                ]
+              },
+              "timestamp": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "userId": {
+                "type": "string"
+              },
+              "userEmail": {
+                "type": "string"
+              },
+              "details": {
+                "type": "string"
+              }
+            }
+          },
+          "description": "Last 50 SecurityLog entries"
+        },
+        "alerts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "severity": {
+                "type": "string",
+                "enum": ["info", "warning", "error"]
+              },
+              "message": {
+                "type": "string"
+              },
+              "count": {
+                "type": "integer"
+              }
+            }
+          },
+          "description": "System alerts (e.g., many disputed attendance, rate limit violations)"
+        },
+        "pagination": {
+          "type": "object",
+          "properties": {
+            "page": {
+              "type": "integer"
+            },
+            "limit": {
+              "type": "integer"
+            },
+            "totalItems": {
+              "type": "integer"
+            },
+            "totalPages": {
+              "type": "integer"
+            }
+          }
+        }
+      }
+    }
+  },
+  "errorResponses": {
+    "401": {
+      "description": "Not authenticated",
+      "example": {
+        "error": "Authentication required"
+      }
+    },
+    "403": {
+      "description": "Role mismatch",
+      "example": {
+        "error": "Access denied: Your role (Student) does not match requested dashboard (moderator)"
+      }
+    },
+    "404": {
+      "description": "Invalid role path",
+      "example": {
+        "error": "Invalid dashboard role"
+      }
+    }
+  },
+  "businessRules": [
+    "User's role must match path parameter (student can only access /api/dashboard/student)",
+    "Student dashboard shows only their own attendance history",
+    "Moderator dashboard shows only events they created",
+    "Administrator dashboard shows system-wide data",
+    "Pagination applies to primary list (attendanceHistory, myEvents, recentActivity)",
+    "Status filter applies to different fields per role: Student (verificationStatus), Moderator (event status), Administrator (not applicable)",
+    "Upcoming events for students filtered to Active status only, startDateTime <= now + 7 days",
+    "Pending verifications for moderator include all events across system, not just their own",
+    "Recent activity limited to last 30 days, max 100 items",
+    "Alerts auto-generated based on thresholds (>10 disputed attendance = warning)"
+  ],
+  "performanceTargets": {
+    "responseTime": "< 500ms",
+    "cacheStrategy": "Redis cache with 60 second TTL for dashboard data",
+    "databaseQueries": "Max 5 queries per request (use Prisma include/select optimization)"
+  }
+}

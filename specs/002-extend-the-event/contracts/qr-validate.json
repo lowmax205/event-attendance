@@ -1,0 +1,199 @@
+{
+  "operation": "qr-validate",
+  "description": "Validate QR code and return event details before showing attendance form",
+  "method": "POST",
+  "endpoint": "/api/qr/validate",
+  "authentication": "Required (Student role)",
+  "requestSchema": {
+    "type": "object",
+    "required": ["qrPayload"],
+    "properties": {
+      "qrPayload": {
+        "type": "string",
+        "pattern": "^attendance:[a-z0-9]+:[0-9]+$",
+        "description": "Scanned QR code payload in format: attendance:{eventId}:{timestamp}",
+        "example": "attendance:clxyz123abc456def789:1728950400000"
+      }
+    }
+  },
+  "responseSchema": {
+    "type": "object",
+    "required": ["valid", "eventId"],
+    "properties": {
+      "valid": {
+        "type": "boolean",
+        "description": "Whether QR code is valid and event is open for check-in"
+      },
+      "eventId": {
+        "type": "string",
+        "description": "Event ID extracted from QR payload"
+      },
+      "event": {
+        "type": "object",
+        "required": ["id", "name", "startDateTime", "endDateTime", "venueName"],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "startDateTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endDateTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "venueName": {
+            "type": "string"
+          },
+          "venueAddress": {
+            "type": "string",
+            "nullable": true
+          },
+          "checkInBufferMins": {
+            "type": "integer"
+          },
+          "checkOutBufferMins": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["Active", "Completed", "Cancelled"]
+          }
+        }
+      },
+      "checkInWindow": {
+        "type": "object",
+        "properties": {
+          "opensAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "startDateTime - checkInBufferMins"
+          },
+          "closesAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "endDateTime + checkOutBufferMins"
+          },
+          "isOpen": {
+            "type": "boolean",
+            "description": "Whether check-in window is currently open"
+          }
+        }
+      },
+      "userStatus": {
+        "type": "object",
+        "properties": {
+          "hasCheckedIn": {
+            "type": "boolean",
+            "description": "Whether current user already checked in to this event"
+          },
+          "previousCheckIn": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "submittedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "verificationStatus": {
+                "type": "string",
+                "enum": ["Pending", "Approved", "Rejected", "Disputed"]
+              }
+            }
+          }
+        }
+      },
+      "validationErrors": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "Reasons why QR code is invalid (if valid=false)"
+      }
+    }
+  },
+  "errorResponses": {
+    "400": {
+      "description": "Invalid QR payload format",
+      "example": {
+        "error": "Invalid QR code format",
+        "expected": "attendance:{eventId}:{timestamp}"
+      }
+    },
+    "401": {
+      "description": "Not authenticated",
+      "example": {
+        "error": "Authentication required"
+      }
+    },
+    "403": {
+      "description": "Profile incomplete",
+      "example": {
+        "error": "Profile incomplete: Please complete your profile before checking in"
+      }
+    },
+    "404": {
+      "description": "Event not found",
+      "example": {
+        "error": "Event not found for QR code"
+      }
+    }
+  },
+  "businessRules": [
+    "QR payload must match format: attendance:{eventId}:{timestamp}",
+    "Event must exist in database",
+    "Student's profile must be complete",
+    "Response includes event details regardless of check-in window status",
+    "Response indicates if user already checked in (even if Rejected)",
+    "validationErrors populated if valid=false (event Cancelled, check-in window closed, duplicate check-in)",
+    "Does NOT enforce location verification (handled in attendance-submit)"
+  ],
+  "validationScenarios": {
+    "valid": {
+      "description": "QR code is valid and event is open for check-in",
+      "response": {
+        "valid": true,
+        "checkInWindow.isOpen": true,
+        "userStatus.hasCheckedIn": false,
+        "validationErrors": []
+      }
+    },
+    "eventCancelled": {
+      "description": "Event exists but status is Cancelled",
+      "response": {
+        "valid": false,
+        "event.status": "Cancelled",
+        "validationErrors": ["Event has been cancelled"]
+      }
+    },
+    "windowClosed": {
+      "description": "Check-in window has closed",
+      "response": {
+        "valid": false,
+        "checkInWindow.isOpen": false,
+        "validationErrors": ["Check-in window closed at 2025-10-15T12:30:00Z"]
+      }
+    },
+    "duplicateCheckIn": {
+      "description": "User already checked in",
+      "response": {
+        "valid": false,
+        "userStatus.hasCheckedIn": true,
+        "userStatus.previousCheckIn.submittedAt": "2025-10-15T09:30:00Z",
+        "validationErrors": ["You have already checked in to this event"]
+      }
+    },
+    "profileIncomplete": {
+      "description": "Student profile not complete (403 error)",
+      "httpStatus": 403
+    }
+  }
+}

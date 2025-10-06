@@ -1,0 +1,129 @@
+{
+  "operation": "event-qr-generate",
+  "description": "Regenerate QR code for existing event (e.g., after venue change or security concerns)",
+  "method": "POST",
+  "endpoint": "/api/events/[id]/qr",
+  "authentication": "Required (Moderator or Administrator role)",
+  "requestSchema": {
+    "type": "object",
+    "required": [],
+    "properties": {
+      "reason": {
+        "type": "string",
+        "maxLength": 500,
+        "description": "Optional reason for QR regeneration (logged in SecurityLog)"
+      }
+    }
+  },
+  "responseSchema": {
+    "type": "object",
+    "required": ["qrCodeUrl", "qrCodePayload", "previousPayload"],
+    "properties": {
+      "qrCodeUrl": {
+        "type": "string",
+        "format": "uri",
+        "description": "New Cloudinary URL for QR code image"
+      },
+      "qrCodePayload": {
+        "type": "string",
+        "description": "New QR code payload: attendance:{eventId}:{newTimestamp}"
+      },
+      "previousPayload": {
+        "type": "string",
+        "description": "Previous QR code payload (for audit trail)"
+      },
+      "regeneratedAt": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "event": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "errorResponses": {
+    "401": {
+      "description": "Not authenticated",
+      "example": {
+        "error": "Authentication required"
+      }
+    },
+    "403": {
+      "description": "Insufficient permissions",
+      "example": {
+        "error": "Only Moderator or Administrator can regenerate QR codes"
+      }
+    },
+    "404": {
+      "description": "Event not found",
+      "example": {
+        "error": "Event not found"
+      }
+    },
+    "422": {
+      "description": "Cannot regenerate for completed/cancelled event",
+      "example": {
+        "error": "Cannot regenerate QR code for Completed event"
+      }
+    },
+    "500": {
+      "description": "QR generation or upload failed",
+      "example": {
+        "error": "Failed to generate QR code image",
+        "retryable": true
+      }
+    }
+  },
+  "businessRules": [
+    "Only Moderator or Administrator can regenerate QR codes",
+    "Event must be Active status (not Completed or Cancelled)",
+    "New QR payload uses current timestamp: attendance:{eventId}:{Date.now()}",
+    "Previous QR code image deleted from Cloudinary",
+    "New QR code image uploaded to Cloudinary: {CLOUDINARY_FOLDER}/events/{eventId}/qr_{timestamp}.png",
+    "CLOUDINARY_FOLDER environment variable used as root folder prefix to separate from other API content",
+    "QR code size: 512x512 pixels, PNG format with transparent background",
+    "Previous payload logged in SecurityLog with action QR_REGENERATED",
+    "Optional reason included in SecurityLog details",
+    "All existing attendance records remain valid (tied to eventId, not QR payload)"
+  ],
+  "useCases": [
+    "Venue coordinates changed (automatic trigger from event-update endpoint)",
+    "Security concern: QR code screenshot shared publicly",
+    "QR code image corrupted or inaccessible",
+    "Moderator wants to invalidate old printed QR codes"
+  ],
+  "sideEffects": [
+    "Previous QR code becomes invalid for new check-ins (QR validation checks current qrCodePayload)",
+    "Students who scanned old QR code but haven't submitted yet will get validation error",
+    "SecurityLog entry created with action: QR_REGENERATED, details: { eventId, previousPayload, newPayload, reason, userId }"
+  ],
+  "performanceTargets": {
+    "totalResponseTime": "< 3 seconds (including QR generation and Cloudinary upload)",
+    "qrGenerationLibrary": "qrcode npm package",
+    "cloudinaryUpload": "signed upload with auto-generated public_id"
+  },
+  "auditTrail": {
+    "loggedFields": [
+      "eventId",
+      "previousPayload",
+      "newPayload",
+      "reason",
+      "regeneratedById",
+      "ipAddress",
+      "userAgent"
+    ],
+    "table": "SecurityLog",
+    "action": "QR_REGENERATED"
+  }
+}

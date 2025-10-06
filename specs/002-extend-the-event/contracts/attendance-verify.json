@@ -1,0 +1,182 @@
+{
+  "operation": "attendance-verify",
+  "description": "Verify (approve/reject) student attendance submission",
+  "method": "PATCH",
+  "endpoint": "/api/attendance/[id]/verify",
+  "authentication": "Required (Moderator or Administrator role)",
+  "requestSchema": {
+    "type": "object",
+    "required": ["verificationStatus"],
+    "properties": {
+      "verificationStatus": {
+        "type": "string",
+        "enum": ["Approved", "Rejected"],
+        "description": "Verification decision"
+      },
+      "disputeNote": {
+        "type": "string",
+        "maxLength": 1000,
+        "description": "Required if Rejected, optional if Approved"
+      }
+    }
+  },
+  "responseSchema": {
+    "type": "object",
+    "required": [
+      "id",
+      "eventId",
+      "userId",
+      "verificationStatus",
+      "verifiedById",
+      "verifiedAt"
+    ],
+    "properties": {
+      "id": {
+        "type": "string"
+      },
+      "eventId": {
+        "type": "string"
+      },
+      "userId": {
+        "type": "string"
+      },
+      "submittedAt": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "latitude": {
+        "type": "number"
+      },
+      "longitude": {
+        "type": "number"
+      },
+      "distanceFromVenue": {
+        "type": "number"
+      },
+      "frontPhotoUrl": {
+        "type": "string",
+        "format": "uri"
+      },
+      "backPhotoUrl": {
+        "type": "string",
+        "format": "uri"
+      },
+      "signatureUrl": {
+        "type": "string",
+        "format": "uri"
+      },
+      "verificationStatus": {
+        "type": "string",
+        "enum": ["Approved", "Rejected"]
+      },
+      "verifiedById": {
+        "type": "string",
+        "description": "User ID of moderator who verified"
+      },
+      "verifiedAt": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "disputeNote": {
+        "type": "string",
+        "nullable": true
+      },
+      "user": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "profile": {
+            "type": "object",
+            "properties": {
+              "firstName": {
+                "type": "string"
+              },
+              "lastName": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "event": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "errorResponses": {
+    "400": {
+      "description": "Validation error",
+      "examples": [
+        {
+          "error": "Validation failed",
+          "details": [
+            {
+              "field": "disputeNote",
+              "message": "Dispute note required when rejecting attendance"
+            }
+          ]
+        },
+        {
+          "error": "Attendance already verified",
+          "currentStatus": "Approved",
+          "verifiedBy": "user@example.com",
+          "verifiedAt": "2025-10-15T10:00:00Z"
+        }
+      ]
+    },
+    "401": {
+      "description": "Not authenticated",
+      "example": {
+        "error": "Authentication required"
+      }
+    },
+    "403": {
+      "description": "Insufficient permissions",
+      "example": {
+        "error": "Only Moderator or Administrator can verify attendance"
+      }
+    },
+    "404": {
+      "description": "Attendance record not found",
+      "example": {
+        "error": "Attendance record not found"
+      }
+    }
+  },
+  "businessRules": [
+    "Only Moderator or Administrator can verify attendance",
+    "Can only verify Pending or Disputed attendance (not already Approved/Rejected)",
+    "Rejected status requires disputeNote (min 10 characters)",
+    "Approved status can optionally include disputeNote for additional comments",
+    "verifiedById set to current user's ID",
+    "verifiedAt set to current timestamp",
+    "Student cannot verify their own attendance (checked server-side)",
+    "Once Approved, attendance cannot be changed to Rejected (must set to Disputed first)",
+    "Verification action logged in SecurityLog table"
+  ],
+  "notifications": [
+    "Student receives in-app notification when attendance Approved",
+    "Student receives email notification when attendance Rejected (includes disputeNote)",
+    "If attendance changed from Rejected to Approved, student notified of reversal"
+  ],
+  "auditTrail": {
+    "loggedFields": [
+      "attendanceId",
+      "previousStatus",
+      "newStatus",
+      "verifiedById",
+      "disputeNote",
+      "ipAddress",
+      "userAgent"
+    ],
+    "table": "SecurityLog",
+    "action": "ATTENDANCE_VERIFIED"
+  }
+}

@@ -1,0 +1,202 @@
+{
+  "operation": "event-create",
+  "description": "Create a new event with QR code generation",
+  "method": "POST",
+  "endpoint": "/api/events",
+  "authentication": "Required (Moderator or Administrator role)",
+  "requestSchema": {
+    "type": "object",
+    "required": [
+      "name",
+      "startDateTime",
+      "endDateTime",
+      "venueLatitude",
+      "venueLongitude",
+      "venueName"
+    ],
+    "properties": {
+      "name": {
+        "type": "string",
+        "minLength": 3,
+        "maxLength": 200,
+        "description": "Event name/title",
+        "example": "Welcome Orientation 2025"
+      },
+      "description": {
+        "type": "string",
+        "maxLength": 2000,
+        "description": "Optional detailed description",
+        "example": "Welcome orientation for all incoming students"
+      },
+      "startDateTime": {
+        "type": "string",
+        "format": "date-time",
+        "description": "Event start time (ISO 8601)",
+        "example": "2025-10-15T09:00:00Z"
+      },
+      "endDateTime": {
+        "type": "string",
+        "format": "date-time",
+        "description": "Event end time (ISO 8601)",
+        "example": "2025-10-15T12:00:00Z"
+      },
+      "venueLatitude": {
+        "type": "number",
+        "minimum": -90,
+        "maximum": 90,
+        "description": "Venue GPS latitude",
+        "example": 14.5995
+      },
+      "venueLongitude": {
+        "type": "number",
+        "minimum": -180,
+        "maximum": 180,
+        "description": "Venue GPS longitude",
+        "example": 120.9842
+      },
+      "venueName": {
+        "type": "string",
+        "minLength": 3,
+        "maxLength": 200,
+        "description": "Human-readable venue name",
+        "example": "Main Auditorium"
+      },
+      "venueAddress": {
+        "type": "string",
+        "maxLength": 500,
+        "description": "Optional full address",
+        "example": "123 University Ave, Manila"
+      },
+      "checkInBufferMins": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 1440,
+        "default": 30,
+        "description": "Minutes before start time check-in allowed",
+        "example": 30
+      },
+      "checkOutBufferMins": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 1440,
+        "default": 30,
+        "description": "Minutes after end time check-in allowed",
+        "example": 30
+      }
+    }
+  },
+  "responseSchema": {
+    "type": "object",
+    "required": [
+      "id",
+      "name",
+      "qrCodeUrl",
+      "qrCodePayload",
+      "status",
+      "createdAt"
+    ],
+    "properties": {
+      "id": {
+        "type": "string",
+        "description": "Event ID (CUID)",
+        "example": "clxyz123abc456def789"
+      },
+      "name": {
+        "type": "string",
+        "example": "Welcome Orientation 2025"
+      },
+      "description": {
+        "type": "string",
+        "nullable": true
+      },
+      "startDateTime": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "endDateTime": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "venueLatitude": {
+        "type": "number"
+      },
+      "venueLongitude": {
+        "type": "number"
+      },
+      "venueName": {
+        "type": "string"
+      },
+      "venueAddress": {
+        "type": "string",
+        "nullable": true
+      },
+      "checkInBufferMins": {
+        "type": "integer"
+      },
+      "checkOutBufferMins": {
+        "type": "integer"
+      },
+      "qrCodeUrl": {
+        "type": "string",
+        "format": "uri",
+        "description": "QR code image URL (data URL or Cloudinary)",
+        "example": "data:image/png;base64,iVBORw0KG..."
+      },
+      "qrCodePayload": {
+        "type": "string",
+        "description": "Scannable QR payload",
+        "example": "attendance:clxyz123:1730793600000"
+      },
+      "status": {
+        "type": "string",
+        "enum": ["Active", "Completed", "Cancelled"],
+        "example": "Active"
+      },
+      "createdById": {
+        "type": "string"
+      },
+      "createdAt": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "updatedAt": {
+        "type": "string",
+        "format": "date-time"
+      }
+    }
+  },
+  "errorResponses": {
+    "400": {
+      "description": "Validation error",
+      "example": {
+        "error": "Validation failed",
+        "details": [
+          {
+            "field": "startDateTime",
+            "message": "Start time must be before end time"
+          }
+        ]
+      }
+    },
+    "401": {
+      "description": "Not authenticated",
+      "example": {
+        "error": "Authentication required"
+      }
+    },
+    "403": {
+      "description": "Insufficient permissions",
+      "example": {
+        "error": "Forbidden: Moderator or Administrator role required"
+      }
+    }
+  },
+  "businessRules": [
+    "startDateTime must be before endDateTime",
+    "Automatically generates QR code with payload: attendance:{eventId}:{timestamp}",
+    "QR code image uploaded to Cloudinary with folder structure: {CLOUDINARY_FOLDER}/events/{eventId}/qr_{timestamp}.png",
+    "CLOUDINARY_FOLDER environment variable used as root folder prefix to separate from other API content",
+    "Default status is Active",
+    "createdById is automatically set to authenticated user's ID"
+  ]
+}
