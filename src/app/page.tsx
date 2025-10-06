@@ -178,25 +178,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
-      {/* CTA Section */}
-      <section className="py-12 text-center">
-        <Card className="max-w-2xl mx-auto bg-gradient-to-br from-primary/10 to-secondary/10">
-          <CardHeader>
-            <CardTitle className="text-2xl md:text-3xl">
-              Ready to Get Started?
-            </CardTitle>
-            <CardDescription className="text-base">
-              Create an account and start managing events today
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button size="lg" asChild className="min-h-11 min-w-44">
-              <Link href="/auth">Sign Up Now</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </section>
     </div>
   );
 }
