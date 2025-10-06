@@ -70,11 +70,11 @@
 
 ## Phase 3.6: UI Components (Attendance)
 
-- [ ] **T029** [P] Create QR scanner modal component in `src/components/attendance/qr-scanner.tsx` using useQRScanner hook, Dialog from shadcn/ui, camera permission handling
-- [ ] **T030** [P] Create location verifier component in `src/components/attendance/location-verifier.tsx` using useGeolocation hook, display distance from venue, visual feedback for within/outside 100m radius
-- [ ] **T031** [P] Create camera capture dialog in `src/components/attendance/camera-capture.tsx` using useCamera hook, video preview, canvas capture to Base64, retake functionality
-- [ ] **T032** [P] Create signature canvas component in `src/components/attendance/signature-canvas.tsx` wrapping react-signature-canvas, clear button, export to transparent PNG Base64
-- [ ] **T033** Create main attendance form wrapper in `src/components/attendance/attendance-form.tsx` integrating QRScanner → LocationVerifier → CameraCapture (front/back) → SignatureCanvas → submit to attendance/submit action, React Hook Form + Zod validation, step progress indicator
+- [x] **T029** [P] Create QR scanner modal component in `src/components/attendance/qr-scanner.tsx` using useQRScanner hook, Dialog from shadcn/ui, camera permission handling
+- [x] **T030** [P] Create location verifier component in `src/components/attendance/location-verifier.tsx` using useGeolocation hook, display distance from venue, visual feedback for within/outside 100m radius
+- [x] **T031** [P] Create camera capture dialog in `src/components/attendance/camera-capture.tsx` using useCamera hook, video preview, canvas capture to Base64, retake functionality
+- [x] **T032** [P] Create signature canvas component in `src/components/attendance/signature-canvas.tsx` wrapping react-signature-canvas, clear button, export to transparent PNG Base64
+- [x] **T033** Create main attendance form wrapper in `src/components/attendance/attendance-form.tsx` integrating QRScanner → LocationVerifier → CameraCapture (front/back) → SignatureCanvas → submit to attendance/submit action, React Hook Form + Zod validation, step progress indicator
 
 ## Phase 3.7: UI Components (Dashboard)
 
