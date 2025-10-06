@@ -3,8 +3,10 @@
 import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth/server";
 import { parseQRPayload } from "@/lib/qr-generator";
+import { checkQRValidationRateLimit } from "@/lib/rate-limit";
 import { ZodError } from "zod";
 import { z } from "zod";
+import { headers } from "next/headers";
 
 const validateQRSchema = z.object({
   qrPayload: z
@@ -19,6 +21,24 @@ const validateQRSchema = z.object({
  */
 export async function validateQR(input: unknown) {
   try {
+    // Check rate limit before processing
+    const headersList = await headers();
+    const ipAddress =
+      headersList.get("x-forwarded-for")?.split(",")[0] ||
+      headersList.get("x-real-ip") ||
+      "unknown";
+
+    const rateLimit = await checkQRValidationRateLimit(ipAddress);
+
+    if (!rateLimit.success) {
+      return {
+        success: false,
+        error: rateLimit.error || "Rate limit exceeded",
+        retryAfter: rateLimit.reset,
+        remaining: rateLimit.remaining,
+      };
+    }
+
     // Require Student role (or higher)
     const user = await requireRole(["Student", "Moderator", "Administrator"]);
 

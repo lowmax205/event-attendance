@@ -86,30 +86,41 @@ export function CameraCapture({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent
+        className="sm:max-w-2xl"
+        aria-describedby="camera-description"
+      >
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{description}</DialogDescription>
+          <DialogDescription id="camera-description">
+            {description}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           {/* Camera permission error */}
           {error && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
+            <Alert variant="destructive" role="alert" aria-live="assertive">
+              <AlertCircle className="h-4 w-4" aria-hidden="true" />
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
 
           {/* Video preview or captured image */}
-          <div className="relative aspect-video rounded-lg border-2 border-dashed border-muted-foreground/25 bg-muted/50 overflow-hidden">
+          <div
+            className="relative aspect-video rounded-lg border-2 border-dashed border-muted-foreground/25 bg-muted/50 overflow-hidden"
+            role="region"
+            aria-label={
+              capturedImage ? "Captured photo preview" : "Live camera feed"
+            }
+          >
             {capturedImage ? (
               // Show captured image
               <>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={capturedImage}
-                  alt="Captured"
+                  alt="Captured photo for attendance verification"
                   className="w-full h-full object-cover"
                 />
               </>
@@ -121,11 +132,15 @@ export function CameraCapture({
                 playsInline
                 muted
                 className="w-full h-full object-cover"
+                aria-label="Live camera viewfinder"
               />
             ) : (
               // Placeholder
               <div className="flex flex-col items-center justify-center h-full space-y-4">
-                <Camera className="h-16 w-16 text-muted-foreground/50" />
+                <Camera
+                  className="h-16 w-16 text-muted-foreground/50"
+                  aria-hidden="true"
+                />
                 <p className="text-sm text-muted-foreground">
                   Camera not active
                 </p>
@@ -134,7 +149,10 @@ export function CameraCapture({
           </div>
 
           {/* Accessibility hints */}
-          <div className="text-xs text-muted-foreground space-y-1">
+          <div
+            className="text-xs text-muted-foreground space-y-1"
+            role="status"
+          >
             <p>• Ensure good lighting for clear photos</p>
             <p>• Hold the camera steady</p>
             <p>• Make sure the subject fills the frame</p>
@@ -142,33 +160,50 @@ export function CameraCapture({
         </div>
 
         <DialogFooter className="gap-2 sm:gap-0">
-          <Button variant="outline" onClick={() => handleOpenChange(false)}>
+          <Button
+            variant="outline"
+            onClick={() => handleOpenChange(false)}
+            aria-label="Cancel photo capture"
+          >
             Cancel
           </Button>
 
           {!capturedImage && stream && (
-            <Button onClick={handleCapture}>
-              <Camera className="mr-2 h-4 w-4" />
+            <Button
+              onClick={handleCapture}
+              aria-label="Capture photo from camera"
+            >
+              <Camera className="mr-2 h-4 w-4" aria-hidden="true" />
               Capture Photo
             </Button>
           )}
 
           {capturedImage && (
             <>
-              <Button variant="outline" onClick={handleRetake}>
-                <RotateCcw className="mr-2 h-4 w-4" />
+              <Button
+                variant="outline"
+                onClick={handleRetake}
+                aria-label="Retake photo"
+              >
+                <RotateCcw className="mr-2 h-4 w-4" aria-hidden="true" />
                 Retake
               </Button>
-              <Button onClick={handleConfirm}>
-                <Check className="mr-2 h-4 w-4" />
+              <Button
+                onClick={handleConfirm}
+                aria-label="Confirm and use this photo"
+              >
+                <Check className="mr-2 h-4 w-4" aria-hidden="true" />
                 Use This Photo
               </Button>
             </>
           )}
 
           {!stream && !error && (
-            <Button onClick={requestPermission}>
-              <Camera className="mr-2 h-4 w-4" />
+            <Button
+              onClick={requestPermission}
+              aria-label="Enable camera access"
+            >
+              <Camera className="mr-2 h-4 w-4" aria-hidden="true" />
               Enable Camera
             </Button>
           )}

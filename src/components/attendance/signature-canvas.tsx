@@ -46,7 +46,7 @@ export function SignatureCanvasComponent({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <PenTool className="h-5 w-5" />
+          <PenTool className="h-5 w-5" aria-hidden="true" />
           Digital Signature
         </CardTitle>
         <CardDescription>
@@ -55,12 +55,18 @@ export function SignatureCanvasComponent({
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Signature canvas */}
-        <div className="relative rounded-lg border-2 border-dashed border-muted-foreground/25 bg-white dark:bg-slate-950">
+        <div
+          className="relative rounded-lg border-2 border-dashed border-muted-foreground/25 bg-white dark:bg-slate-950"
+          role="region"
+          aria-label="Signature drawing area"
+        >
           <SignatureCanvas
             ref={sigCanvas}
             canvasProps={{
               className: "w-full h-48 touch-none",
               style: { touchAction: "none" },
+              "aria-label": "Draw your signature here",
+              role: "img",
             }}
             backgroundColor="transparent"
             penColor="currentColor"
@@ -71,7 +77,10 @@ export function SignatureCanvasComponent({
 
           {/* Empty state hint */}
           {isEmpty && !value && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div
+              className="absolute inset-0 flex items-center justify-center pointer-events-none"
+              aria-hidden="true"
+            >
               <p className="text-sm text-muted-foreground">Sign here</p>
             </div>
           )}
@@ -82,7 +91,7 @@ export function SignatureCanvasComponent({
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={value}
-                alt="Your signature"
+                alt="Your previously captured signature"
                 className="max-h-full max-w-full object-contain"
               />
             </div>
@@ -97,12 +106,17 @@ export function SignatureCanvasComponent({
             size="sm"
             onClick={handleClear}
             disabled={isEmpty && !value}
+            aria-label="Clear signature and start over"
           >
-            <RotateCcw className="mr-2 h-4 w-4" />
+            <RotateCcw className="mr-2 h-4 w-4" aria-hidden="true" />
             Clear
           </Button>
 
-          <p className="text-xs text-muted-foreground">
+          <p
+            className="text-xs text-muted-foreground"
+            role="status"
+            aria-live="polite"
+          >
             {isEmpty && !value
               ? "Draw your signature above"
               : "Signature captured"}
@@ -110,10 +124,10 @@ export function SignatureCanvasComponent({
         </div>
 
         {/* Accessibility and keyboard navigation hints */}
-        <div className="text-xs text-muted-foreground space-y-1">
-          <p>• Use a stylus or your finger on touch devices</p>
-          <p>• Sign clearly within the box</p>
-          <p>• Click &quot;Clear&quot; to start over</p>
+        <div className="text-xs text-muted-foreground space-y-1" role="note">
+          <p>\u2022 Use a stylus or your finger on touch devices</p>
+          <p>\u2022 Sign clearly within the box</p>
+          <p>\u2022 Click &quot;Clear&quot; to start over</p>
         </div>
       </CardContent>
     </Card>

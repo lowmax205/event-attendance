@@ -44,10 +44,13 @@ export function QRScanner({ open, onOpenChange, onScan }: QRScannerProps) {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent
+        className="sm:max-w-md"
+        aria-describedby="qr-scanner-description"
+      >
         <DialogHeader>
           <DialogTitle>Scan QR Code</DialogTitle>
-          <DialogDescription>
+          <DialogDescription id="qr-scanner-description">
             Point your camera at the event QR code to check in
           </DialogDescription>
         </DialogHeader>
@@ -55,17 +58,24 @@ export function QRScanner({ open, onOpenChange, onScan }: QRScannerProps) {
         <div className="space-y-4">
           {/* Camera permission error */}
           {error && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
+            <Alert variant="destructive" role="alert" aria-live="assertive">
+              <AlertCircle className="h-4 w-4" aria-hidden="true" />
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
 
           {/* QR Scanner container */}
-          <div className="relative rounded-lg border-2 border-dashed border-muted-foreground/25 bg-muted/50 p-4">
+          <div
+            className="relative rounded-lg border-2 border-dashed border-muted-foreground/25 bg-muted/50 p-4"
+            role="region"
+            aria-label="QR code scanner viewport"
+          >
             {!isScanning && !error && (
               <div className="flex flex-col items-center justify-center space-y-4 py-12">
-                <Camera className="h-16 w-16 text-muted-foreground/50" />
+                <Camera
+                  className="h-16 w-16 text-muted-foreground/50"
+                  aria-hidden="true"
+                />
                 <p className="text-sm text-muted-foreground">
                   Click &quot;Start Scanner&quot; to begin
                 </p>
@@ -73,26 +83,42 @@ export function QRScanner({ open, onOpenChange, onScan }: QRScannerProps) {
             )}
 
             {/* html5-qrcode will inject video element here */}
-            <div id="qr-reader" className="w-full" />
+            <div id="qr-reader" className="w-full" aria-live="polite" />
           </div>
 
           {/* Scanner controls */}
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => handleOpenChange(false)}>
+            <Button
+              variant="outline"
+              onClick={() => handleOpenChange(false)}
+              aria-label="Cancel QR code scanning"
+            >
               Cancel
             </Button>
             {!isScanning && !error && (
-              <Button onClick={startScanning}>Start Scanner</Button>
+              <Button
+                onClick={startScanning}
+                aria-label="Start QR code scanner"
+              >
+                Start Scanner
+              </Button>
             )}
             {isScanning && (
-              <Button variant="secondary" onClick={stopScanning}>
+              <Button
+                variant="secondary"
+                onClick={stopScanning}
+                aria-label="Stop QR code scanner"
+              >
                 Stop Scanner
               </Button>
             )}
           </div>
 
           {/* Accessibility hint */}
-          <p className="text-xs text-muted-foreground text-center">
+          <p
+            className="text-xs text-muted-foreground text-center"
+            role="status"
+          >
             Ensure good lighting and hold the QR code steady
           </p>
         </div>

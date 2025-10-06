@@ -29,6 +29,11 @@ export async function uploadPhoto(
       format: "jpg",
       quality: "auto",
       fetch_format: "auto",
+      flags: "progressive",
+      transformation: [
+        { width: 1200, height: 1600, crop: "limit" },
+        { quality: "auto:good" },
+      ],
     });
 
     return result.secure_url;
@@ -56,6 +61,11 @@ export async function uploadSignature(
       resource_type: "image",
       format: "png",
       quality: "auto",
+      background: "transparent",
+      transformation: [
+        { width: 800, height: 400, crop: "limit" },
+        { quality: "auto:good" },
+      ],
     });
 
     return result.secure_url;
@@ -100,6 +110,11 @@ export async function uploadQRCode(
       public_id: filename.replace(".png", ""),
       resource_type: "image",
       format: "png",
+      quality: "auto",
+      transformation: [
+        { width: 800, height: 800, crop: "limit" },
+        { quality: "auto:best" },
+      ],
     });
 
     return result.secure_url;

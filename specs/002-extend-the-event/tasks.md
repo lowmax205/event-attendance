@@ -110,16 +110,16 @@
 
 ## Phase 3.10: Middleware & Authorization
 
-- [ ] **T056** Update Next.js middleware in `src/middleware.ts` to protect /dashboard/[role] routes: verify JWT session, check role matches route, redirect unauthorized users to appropriate dashboard or /auth/login
-- [ ] **T057** Add rate limiting to QR validation in `src/lib/rate-limit.ts`: implement token bucket algorithm, max 10 QR scans per minute per IP address, return 429 error on limit exceeded
+- [x] **T056** Update Next.js middleware in `src/middleware.ts` to protect /dashboard/[role] routes: verify JWT session, check role matches route, redirect unauthorized users to appropriate dashboard or /auth/login
+- [x] **T057** Add rate limiting to QR validation in `src/lib/rate-limit.ts`: implement token bucket algorithm, max 10 QR scans per minute per IP address, return 429 error on limit exceeded
 
 ## Phase 3.11: Polish & Validation
 
-- [ ] **T058** [P] Add loading skeletons to all dashboard pages using shadcn/ui Skeleton component for better perceived performance
-- [ ] **T059** [P] Add toast notifications using shadcn/ui Sonner for success/error feedback on form submissions (event create/update, attendance submit, verification); implement standardized error message pattern from FR-043 (title + explanation + suggested action + retry button)
-- [ ] **T060** [P] Add accessibility attributes: aria-labels for QR scanner, camera capture buttons, form fields; aria-live regions for validation errors; keyboard navigation for signature canvas (Tab to focus, Enter to clear)
-- [ ] **T061** [P] Optimize Cloudinary uploads: set quality=auto, format=auto, add progressive loading for large images
-- [ ] **T062** Add error boundary components in dashboard layouts to catch and display runtime errors gracefully
+- [x] **T058** [P] Add loading skeletons to all dashboard pages using shadcn/ui Skeleton component for better perceived performance
+- [x] **T059** [P] Add toast notifications using shadcn/ui Sonner for success/error feedback on form submissions (event create/update, attendance submit, verification); implement standardized error message pattern from FR-043 (title + explanation + suggested action + retry button)
+- [x] **T060** [P] Add accessibility attributes: aria-labels for QR scanner, camera capture buttons, form fields; aria-live regions for validation errors; keyboard navigation for signature canvas (Tab to focus, Enter to clear)
+- [x] **T061** [P] Optimize Cloudinary uploads: set quality=auto, format=auto, add progressive loading for large images
+- [x] **T062** Add error boundary components in dashboard layouts to catch and display runtime errors gracefully
 - [ ] **T063** Manually test all 10 scenarios from quickstart.md: Scenario 1 (successful check-in), Scenario 2 (duplicate prevention), Scenario 3 (location failure), Scenario 4 (profile incomplete), Scenario 5 (window closed), Scenario 6 (offline detection), Scenario 7 (dashboard access), Scenario 8 (moderator verify), Scenario 9 (moderator reject), Scenario 10 (event creation)
 - [ ] **T064** Run Lighthouse audit on /attendance and /dashboard/student pages: target Performance ≥90, Accessibility ≥95, Best Practices ≥90
 - [ ] **T065** Performance validation: measure attendance submission end-to-end time (<5 seconds with 3 uploads), dashboard load time (<500ms), QR validation latency (<200ms)

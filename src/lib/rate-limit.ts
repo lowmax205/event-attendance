@@ -74,3 +74,39 @@ export function createRateLimiter(
     prefix,
   });
 }
+
+/**
+ * Rate limiter for QR code validation
+ * Token bucket algorithm: 10 QR scans per minute per IP address
+ */
+export const qrValidationRateLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.tokenBucket(10, "1 m", 10),
+  analytics: true,
+  prefix: "qr_validation",
+});
+
+/**
+ * Check if an IP address has exceeded QR validation rate limit
+ * @param ipAddress - The IP address to check
+ * @returns Object with { success: boolean, remaining: number, reset: Date, error?: string }
+ */
+export async function checkQRValidationRateLimit(ipAddress: string): Promise<{
+  success: boolean;
+  remaining: number;
+  reset: Date;
+  error?: string;
+}> {
+  const identifier = `qr:${ipAddress}`;
+  const { success, remaining, reset } =
+    await qrValidationRateLimiter.limit(identifier);
+
+  return {
+    success,
+    remaining,
+    reset: new Date(reset),
+    error: success
+      ? undefined
+      : "Rate limit exceeded. Maximum 10 QR scans per minute.",
+  };
+}
