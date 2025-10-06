@@ -2,7 +2,7 @@
 
 **Branch**: `001-build-the-foundation` | **Date**: 2025-10-06 | **Spec**: [spec.md](./spec.md)
 
-**Input**: Feature specification from `D:\Shared Folder\VS Code Project\Coding 2025\School\event-attendance\specs\001-build-the-foundation\spec.md`
+**Input**: Feature specification from `/specs/001-build-the-foundation/spec.md`
 
 ## Execution Flow (/plan command scope)
 
