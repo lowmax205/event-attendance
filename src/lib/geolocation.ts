@@ -10,7 +10,7 @@ export function calculateDistance(
   lat1: number,
   lon1: number,
   lat2: number,
-  lon2: number
+  lon2: number,
 ): number {
   const R = 6371e3; // Earth's radius in meters
   const φ1 = (lat1 * Math.PI) / 180; // Convert to radians
@@ -35,12 +35,9 @@ export function calculateDistance(
  */
 export function isValidCoordinates(
   latitude: number,
-  longitude: number
+  longitude: number,
 ): boolean {
   return (
-    latitude >= -90 &&
-    latitude <= 90 &&
-    longitude >= -180 &&
-    longitude <= 180
+    latitude >= -90 && latitude <= 90 && longitude >= -180 && longitude <= 180
   );
 }

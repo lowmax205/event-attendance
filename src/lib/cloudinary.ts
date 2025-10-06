@@ -7,7 +7,8 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_SECRET_KEY,
 });
 
-const CLOUDINARY_FOLDER = process.env.CLOUDINARY_FOLDER || "event-attendance-storage";
+const CLOUDINARY_FOLDER =
+  process.env.CLOUDINARY_FOLDER || "event-attendance-storage";
 
 /**
  * Upload a photo (JPEG) to Cloudinary
@@ -17,11 +18,11 @@ const CLOUDINARY_FOLDER = process.env.CLOUDINARY_FOLDER || "event-attendance-sto
  */
 export async function uploadPhoto(
   base64: string,
-  folder: string
+  folder: string,
 ): Promise<string> {
   try {
     const fullFolder = `${CLOUDINARY_FOLDER}/${folder}`;
-    
+
     const result = await cloudinary.uploader.upload(base64, {
       folder: fullFolder,
       resource_type: "image",
@@ -45,11 +46,11 @@ export async function uploadPhoto(
  */
 export async function uploadSignature(
   base64: string,
-  folder: string
+  folder: string,
 ): Promise<string> {
   try {
     const fullFolder = `${CLOUDINARY_FOLDER}/${folder}`;
-    
+
     const result = await cloudinary.uploader.upload(base64, {
       folder: fullFolder,
       resource_type: "image",
@@ -89,11 +90,11 @@ export async function deleteImage(publicId: string): Promise<boolean> {
 export async function uploadQRCode(
   base64: string,
   folder: string,
-  filename: string
+  filename: string,
 ): Promise<string> {
   try {
     const fullFolder = `${CLOUDINARY_FOLDER}/${folder}`;
-    
+
     const result = await cloudinary.uploader.upload(base64, {
       folder: fullFolder,
       public_id: filename.replace(".png", ""),

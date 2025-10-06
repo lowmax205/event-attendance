@@ -21,21 +21,21 @@ export const submitAttendanceSchema = z.object({
     .string()
     .regex(
       /^data:image\/(jpeg|png);base64,/,
-      "Front photo must be a valid base64 encoded JPEG or PNG image"
+      "Front photo must be a valid base64 encoded JPEG or PNG image",
     )
     .min(1, "Front photo is required"),
   backPhotoBase64: z
     .string()
     .regex(
       /^data:image\/(jpeg|png);base64,/,
-      "Back photo must be a valid base64 encoded JPEG or PNG image"
+      "Back photo must be a valid base64 encoded JPEG or PNG image",
     )
     .min(1, "Back photo is required"),
   signatureBase64: z
     .string()
     .regex(
       /^data:image\/png;base64,/,
-      "Signature must be a valid base64 encoded PNG image"
+      "Signature must be a valid base64 encoded PNG image",
     )
     .min(1, "Signature is required"),
 });
@@ -51,7 +51,7 @@ export const validateQRSchema = z.object({
     .string()
     .regex(
       /^attendance:[a-z0-9]+:[0-9]+$/,
-      "Invalid QR code format. Expected: attendance:{eventId}:{timestamp}"
+      "Invalid QR code format. Expected: attendance:{eventId}:{timestamp}",
     )
     .min(1, "QR code payload is required"),
 });
@@ -84,7 +84,7 @@ export const verifyAttendanceSchema = z
       message:
         "Dispute note is required when rejecting attendance (minimum 10 characters)",
       path: ["disputeNote"],
-    }
+    },
   );
 
 export type VerifyAttendanceInput = z.infer<typeof verifyAttendanceSchema>;

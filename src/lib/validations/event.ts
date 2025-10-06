@@ -120,7 +120,7 @@ export const updateEventSchema = z
     {
       message: "Start time must be before end time",
       path: ["startDateTime"],
-    }
+    },
   );
 
 export type UpdateEventInput = z.infer<typeof updateEventSchema>;
