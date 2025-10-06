@@ -59,16 +59,18 @@ model User {
 }
 
 model UserProfile {
-  id            String   @id @default(cuid())
-  userId        String   @unique
-  section       String?
-  department    String
-  updatedAt     DateTime @updatedAt
-  contactNumber String?
-  createdAt     DateTime @default(now())
-  studentId     String   @unique
-  yearLevel     Int
-  User          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  section          String?
+  department       String
+  updatedAt        DateTime @updatedAt
+  contactNumber    String?
+  createdAt        DateTime @default(now())
+  studentId        String   @unique
+  yearLevel        Int
+  profilePictureUrl String?
+  documentUrls     String[] @default([])
+  User             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 enum Role {
