@@ -41,18 +41,18 @@
 
 ## Phase 3.2: Custom React Hooks
 
-- [ ] **T012** [P] Create `src/hooks/use-qr-scanner.ts` hook with html5-qrcode wrapper: `useQRScanner(onScan: (payload: string) => void)` returning `{ startScanning, stopScanning, isScanning }`
-- [ ] **T013** [P] Create `src/hooks/use-geolocation.ts` hook: `useGeolocation()` returning `{ coords, error, loading, requestPermission }`
-- [ ] **T014** [P] Create `src/hooks/use-camera.ts` hook for MediaDevices API: `useCamera(facingMode: 'user' | 'environment')` returning `{ stream, error, requestPermission, capture }`
-- [ ] **T015** [P] Create `src/hooks/use-online.ts` hook: `useOnline()` returning `{ isOnline }` using navigator.onLine and online/offline event listeners
+- [x] **T012** [P] Create `src/hooks/use-qr-scanner.ts` hook with html5-qrcode wrapper: `useQRScanner(onScan: (payload: string) => void)` returning `{ startScanning, stopScanning, isScanning }`
+- [x] **T013** [P] Create `src/hooks/use-geolocation.ts` hook: `useGeolocation()` returning `{ coords, error, loading, requestPermission }`
+- [x] **T014** [P] Create `src/hooks/use-camera.ts` hook for MediaDevices API: `useCamera(facingMode: 'user' | 'environment')` returning `{ stream, error, requestPermission, capture }`
+- [x] **T015** [P] Create `src/hooks/use-online.ts` hook: `useOnline()` returning `{ isOnline }` using navigator.onLine and online/offline event listeners
 
 ## Phase 3.3: Server Actions (Event Management)
 
-- [ ] **T016** [P] Create event creation server action in `src/actions/events/create.ts` implementing POST /api/events contract: validate schema, generate QR code, upload to Cloudinary using folder path `{CLOUDINARY_FOLDER}/events/{eventId}/`, save Event to DB
-- [ ] **T017** [P] Create event update server action in `src/actions/events/update.ts` implementing PATCH /api/events/[id] contract: validate partial update, regenerate QR if venue changed (upload to `{CLOUDINARY_FOLDER}/events/{eventId}/`), update DB
-- [ ] **T018** [P] Create QR regeneration server action in `src/actions/events/generate-qr.ts` implementing POST /api/events/[id]/qr contract: generate new QR payload, upload to Cloudinary using folder `{CLOUDINARY_FOLDER}/events/{eventId}/`, log to SecurityLog
-- [ ] **T019** [P] Create event listing server action in `src/actions/events/list.ts`: fetch events with filters (status, createdById), pagination support
-- [ ] **T020** [P] Create event details server action in `src/actions/events/get-by-id.ts`: fetch single event with creator and attendance count
+- [x] **T016** [P] Create event creation server action in `src/actions/events/create.ts` implementing POST /api/events contract: validate schema, generate QR code, upload to Cloudinary using folder path `{CLOUDINARY_FOLDER}/events/{eventId}/`, save Event to DB
+- [x] **T017** [P] Create event update server action in `src/actions/events/update.ts` implementing PATCH /api/events/[id] contract: validate partial update, regenerate QR if venue changed (upload to `{CLOUDINARY_FOLDER}/events/{eventId}/`), update DB
+- [x] **T018** [P] Create QR regeneration server action in `src/actions/events/generate-qr.ts` implementing POST /api/events/[id]/qr contract: generate new QR payload, upload to Cloudinary using folder `{CLOUDINARY_FOLDER}/events/{eventId}/`, log to SecurityLog
+- [x] **T019** [P] Create event listing server action in `src/actions/events/list.ts`: fetch events with filters (status, createdById), pagination support
+- [x] **T020** [P] Create event details server action in `src/actions/events/get-by-id.ts`: fetch single event with creator and attendance count
 
 ## Phase 3.4: Server Actions (Attendance)
 
