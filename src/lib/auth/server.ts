@@ -9,7 +9,7 @@ import { verifyToken, type JWTPayload } from "@/lib/auth/jwt";
  */
 export async function getCurrentUser(): Promise<JWTPayload | null> {
   const cookieStore = await cookies();
-  const accessToken = cookieStore.get("access_token")?.value;
+  const accessToken = cookieStore.get("accessToken")?.value;
 
   if (!accessToken) {
     return null;

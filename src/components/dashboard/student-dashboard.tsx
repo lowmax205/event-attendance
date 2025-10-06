@@ -33,7 +33,7 @@ interface StudentDashboardProps {
   upcomingEvents: UpcomingEvent[];
   currentPage: number;
   totalPages: number;
-  onPageChange: (page: number) => void;
+  onPageChange?: (page: number) => void;
 }
 
 export function StudentDashboard({
@@ -42,7 +42,6 @@ export function StudentDashboard({
   upcomingEvents,
   currentPage,
   totalPages,
-  onPageChange,
 }: StudentDashboardProps) {
   return (
     <div className="space-y-6">
@@ -145,7 +144,6 @@ export function StudentDashboard({
             attendances={attendanceHistory}
             currentPage={currentPage}
             totalPages={totalPages}
-            onPageChange={onPageChange}
           />
         </CardContent>
       </Card>

@@ -72,10 +72,6 @@ export default async function StudentDashboardPage() {
         }))}
         currentPage={pagination.page}
         totalPages={pagination.totalPages}
-        onPageChange={(page) => {
-          // This will be handled client-side by the component
-          console.log("Page change:", page);
-        }}
       />
     </div>
   );

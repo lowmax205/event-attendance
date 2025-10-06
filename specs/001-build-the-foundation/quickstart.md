@@ -530,7 +530,7 @@ Before running these tests, ensure:
    - **Verify**: Section is stored as escaped text or sanitized
 
 6. **CORS policy test**
-   - From a different origin (e.g., http://localhost:3001), try to make API call:
+   - From a different origin (e.g., http://localhost:3000), try to make API call:
      ```javascript
      fetch("http://localhost:3000/api/auth/login", {
        method: "POST",

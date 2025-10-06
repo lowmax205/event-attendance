@@ -18,6 +18,116 @@ async function main() {
   // Hash password for all users (password: "Password123!")
   const hashedPassword = await hash("Password123!", 10);
 
+  // Hash password for test users (password: "Test1234!")
+  const testPasswordHash = await hash("Test1234!", 10);
+
+  // Create Test Users for Manual Testing
+  console.log("🧪 Creating Test Users...");
+
+  // Test User 1: Complete Student
+  const testStudent1 = await prisma.user.create({
+    data: {
+      email: "student@test.com",
+      passwordHash: testPasswordHash,
+      firstName: "John",
+      lastName: "Doe",
+      role: "Student",
+      emailVerified: true,
+      accountStatus: "active",
+      UserProfile: {
+        create: {
+          studentId: "2021-00001",
+          department: "Computer Science",
+          yearLevel: 3,
+          section: "CS-3A",
+          contactNumber: "+63 912 345 6789",
+        },
+      },
+    },
+  });
+
+  // Test User 2: Complete Student
+  const testStudent2 = await prisma.user.create({
+    data: {
+      email: "student2@test.com",
+      passwordHash: testPasswordHash,
+      firstName: "Jane",
+      lastName: "Smith",
+      role: "Student",
+      emailVerified: true,
+      accountStatus: "active",
+      UserProfile: {
+        create: {
+          studentId: "2021-00002",
+          department: "Information Technology",
+          yearLevel: 2,
+          section: "IT-2B",
+          contactNumber: "+63 912 345 6790",
+        },
+      },
+    },
+  });
+
+  // Test User 3: Incomplete Student (no profile)
+  const incompleteStudent = await prisma.user.create({
+    data: {
+      email: "incomplete@test.com",
+      passwordHash: testPasswordHash,
+      firstName: "", // Empty to simulate incomplete profile
+      lastName: "Incomplete",
+      role: "Student",
+      emailVerified: true,
+      accountStatus: "active",
+      // No UserProfile created
+    },
+  });
+
+  // Test User 4: Complete Moderator
+  const testModerator = await prisma.user.create({
+    data: {
+      email: "moderator@test.com",
+      passwordHash: testPasswordHash,
+      firstName: "Michael",
+      lastName: "Johnson",
+      role: "Moderator",
+      emailVerified: true,
+      accountStatus: "active",
+      UserProfile: {
+        create: {
+          studentId: "MOD-2020-001",
+          department: "Student Affairs",
+          yearLevel: 4,
+          section: "N/A",
+          contactNumber: "+63 912 345 6791",
+        },
+      },
+    },
+  });
+
+  // Test User 5: Complete Administrator
+  const testAdmin = await prisma.user.create({
+    data: {
+      email: "admin@test.com",
+      passwordHash: testPasswordHash,
+      firstName: "Sarah",
+      lastName: "Williams",
+      role: "Administrator",
+      emailVerified: true,
+      accountStatus: "active",
+      UserProfile: {
+        create: {
+          studentId: "ADM-2019-001",
+          department: "Administration",
+          yearLevel: 4,
+          section: "N/A",
+          contactNumber: "+63 912 345 6792",
+        },
+      },
+    },
+  });
+
+  console.log("✅ Created 5 test users with password: Test1234!");
+
   // Create Administrator
   console.log("👤 Creating Administrator...");
   const admin = await prisma.user.create({
@@ -370,15 +480,21 @@ async function main() {
   // Summary
   console.log("\n📊 Seed Summary:");
   console.log("================");
-  console.log(`✅ 1 Administrator (admin@snsu.edu.ph)`);
-  console.log(`✅ 2 Moderators (moderator1@, moderator2@snsu.edu.ph)`);
-  console.log(`✅ ${studentData.length} Students (actual SNSU roster)`);
-  console.log(`✅ 5 Events (60-90% attendance rate each)`);
-  console.log(`✅ ${totalAttendances} Attendance records`);
-  console.log(`✅ 3 Security log entries`);
+  console.log(`\n🧪 TEST USERS (Password: Test1234!):`);
+  console.log(`   ✅ student@test.com - Student (Complete)`);
+  console.log(`   ✅ student2@test.com - Student (Complete)`);
+  console.log(`   ✅ incomplete@test.com - Student (Incomplete Profile)`);
+  console.log(`   ✅ moderator@test.com - Moderator (Complete)`);
+  console.log(`   ✅ admin@test.com - Administrator (Complete)`);
+  console.log(`\n📚 DEMO DATA (Password: Password123!):`);
+  console.log(`   ✅ 1 Administrator (admin@snsu.edu.ph)`);
+  console.log(`   ✅ 2 Moderators (moderator1@, moderator2@snsu.edu.ph)`);
+  console.log(`   ✅ ${studentData.length} Students (actual SNSU roster)`);
+  console.log(`   ✅ 5 Events (60-90% attendance rate each)`);
+  console.log(`   ✅ ${totalAttendances} Attendance records`);
+  console.log(`   ✅ 3 Security log entries`);
   console.log(`\n📍 Location: Surigao del Norte State University`);
   console.log(`   Coordinates: 9.787434, 125.494414`);
-  console.log("\n🔑 All users password: Password123!");
   console.log("\n🎉 Database seeding completed successfully!");
 }
 

@@ -19,6 +19,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { format } from "date-fns";
+import { useRouter, useSearchParams } from "next/navigation";
 
 interface AttendanceRecord {
   id: string;
@@ -31,7 +32,7 @@ interface AttendanceHistoryProps {
   attendances: AttendanceRecord[];
   currentPage: number;
   totalPages: number;
-  onPageChange: (page: number) => void;
+  onPageChange?: (page: number) => void;
 }
 
 const statusVariants = {
@@ -47,9 +48,19 @@ export function AttendanceHistory({
   totalPages,
   onPageChange,
 }: AttendanceHistoryProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
-      onPageChange(page);
+      if (onPageChange) {
+        onPageChange(page);
+      } else {
+        // Client-side navigation fallback
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("page", page.toString());
+        router.push(`?${params.toString()}`);
+      }
     }
   };
 
