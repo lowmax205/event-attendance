@@ -56,17 +56,17 @@
 
 ## Phase 3.4: Server Actions (Attendance)
 
-- [ ] **T021** Create QR validation server action in `src/actions/attendance/validate-qr.ts` implementing POST /api/qr/validate contract: parse QR payload, fetch event, check window, check duplicate, return validation result
-- [ ] **T022** Create attendance submission server action in `src/actions/attendance/submit.ts` implementing POST /api/attendance contract: validate location (100m radius), upload 3 images to Cloudinary using folder path `{CLOUDINARY_FOLDER}/attendance/{eventId}/{userId}/`, create Attendance record, log to SecurityLog
-- [ ] **T023** [P] Create attendance verification server action in `src/actions/attendance/verify.ts` implementing PATCH /api/attendance/[id]/verify contract: update verificationStatus, set verifiedById/verifiedAt, log to SecurityLog
-- [ ] **T024** [P] Create duplicate check server action in `src/actions/attendance/check-duplicate.ts`: query Attendance by eventId + userId, return existing record or null
-- [ ] **T025** [P] Create attendance listing server action in `src/actions/attendance/list-by-event.ts`: fetch all attendance for an event with user profiles, support status filter
+- [x] **T021** Create QR validation server action in `src/actions/attendance/validate-qr.ts` implementing POST /api/qr/validate contract: parse QR payload, fetch event, check window, check duplicate, return validation result
+- [x] **T022** Create attendance submission server action in `src/actions/attendance/submit.ts` implementing POST /api/attendance contract: validate location (100m radius), upload 3 images to Cloudinary using folder path `{CLOUDINARY_FOLDER}/attendance/{eventId}/{userId}/`, create Attendance record, log to SecurityLog
+- [x] **T023** [P] Create attendance verification server action in `src/actions/attendance/verify.ts` implementing PATCH /api/attendance/[id]/verify contract: update verificationStatus, set verifiedById/verifiedAt, log to SecurityLog
+- [x] **T024** [P] Create duplicate check server action in `src/actions/attendance/check-duplicate.ts`: query Attendance by eventId + userId, return existing record or null
+- [x] **T025** [P] Create attendance listing server action in `src/actions/attendance/list-by-event.ts`: fetch all attendance for an event with user profiles, support status filter
 
 ## Phase 3.5: Server Actions (Dashboards)
 
-- [ ] **T026** [P] Create student dashboard data action in `src/actions/dashboard/student.ts` implementing GET /api/dashboard/student: fetch attendanceHistory, upcomingEvents, stats per dashboard-data.json contract
-- [ ] **T027** [P] Create moderator dashboard data action in `src/actions/dashboard/moderator.ts` implementing GET /api/dashboard/moderator: fetch myEvents, pendingVerifications, stats per dashboard-data.json contract
-- [ ] **T028** [P] Create admin dashboard data action in `src/actions/dashboard/admin.ts` implementing GET /api/dashboard/administrator: fetch systemStats, recentActivity from SecurityLog, alerts per dashboard-data.json contract
+- [x] **T026** [P] Create student dashboard data action in `src/actions/dashboard/student.ts` implementing GET /api/dashboard/student: fetch attendanceHistory, upcomingEvents, stats per dashboard-data.json contract
+- [x] **T027** [P] Create moderator dashboard data action in `src/actions/dashboard/moderator.ts` implementing GET /api/dashboard/moderator: fetch myEvents, pendingVerifications, stats per dashboard-data.json contract
+- [x] **T028** [P] Create admin dashboard data action in `src/actions/dashboard/admin.ts` implementing GET /api/dashboard/administrator: fetch systemStats, recentActivity from SecurityLog, alerts per dashboard-data.json contract
 
 ## Phase 3.6: UI Components (Attendance)
 
