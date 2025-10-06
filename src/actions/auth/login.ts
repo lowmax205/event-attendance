@@ -38,7 +38,7 @@ export async function login(data: LoginInput): Promise<AuthResponse> {
     // 3. Find user
     const user = await db.user.findUnique({
       where: { email },
-      include: { profile: true },
+      include: { UserProfile: true },
     });
 
     if (!user) {
@@ -90,7 +90,7 @@ export async function login(data: LoginInput): Promise<AuthResponse> {
     });
 
     // 8. Check if user has profile
-    const hasProfile = !!user.profile;
+    const hasProfile = !!user.UserProfile;
 
     return {
       success: true,

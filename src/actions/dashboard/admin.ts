@@ -16,7 +16,7 @@ interface AdminDashboardParams {
 export async function getAdminDashboard(params: AdminDashboardParams = {}) {
   try {
     // Require Administrator role
-    const user = await requireRole(["Administrator"]);
+    await requireRole(["Administrator"]);
 
     const { page = 1, limit = 50 } = params;
     const skip = (page - 1) * limit;

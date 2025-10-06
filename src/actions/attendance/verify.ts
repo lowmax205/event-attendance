@@ -74,14 +74,8 @@ export async function verifyAttendance(attendanceId: string, input: unknown) {
         user: {
           select: {
             email: true,
-          },
-          include: {
-            UserProfile: {
-              select: {
-                firstName: true,
-                lastName: true,
-              },
-            },
+            firstName: true,
+            lastName: true,
           },
         },
         event: {

@@ -105,11 +105,14 @@ export function CameraCapture({
           <div className="relative aspect-video rounded-lg border-2 border-dashed border-muted-foreground/25 bg-muted/50 overflow-hidden">
             {capturedImage ? (
               // Show captured image
-              <img
-                src={capturedImage}
-                alt="Captured"
-                className="w-full h-full object-cover"
-              />
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={capturedImage}
+                  alt="Captured"
+                  className="w-full h-full object-cover"
+                />
+              </>
             ) : stream ? (
               // Show live camera feed
               <video

@@ -8,7 +8,7 @@ datasource db {
 }
 
 model SecurityLog {
-  id        String   @id
+  id        String   @id @default(cuid())
   userId    String?
   ipAddress String?
   userAgent String?
@@ -23,7 +23,7 @@ model SecurityLog {
 }
 
 model Session {
-  id           String   @id
+  id           String   @id @default(cuid())
   userId       String
   refreshToken String   @unique
   ipAddress    String?
@@ -38,7 +38,7 @@ model Session {
 }
 
 model User {
-  id                  String        @id
+  id                  String        @id @default(cuid())
   email               String        @unique
   passwordHash        String
   role                Role          @default(Student)
@@ -59,11 +59,11 @@ model User {
 }
 
 model UserProfile {
-  id            String   @id
+  id            String   @id @default(cuid())
   userId        String   @unique
   section       String?
   department    String
-  updatedAt     DateTime
+  updatedAt     DateTime @updatedAt
   contactNumber String?
   createdAt     DateTime @default(now())
   studentId     String   @unique

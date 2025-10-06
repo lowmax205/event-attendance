@@ -61,7 +61,7 @@
 - [x] **T023** [P] Create attendance verification server action in `src/actions/attendance/verify.ts` implementing PATCH /api/attendance/[id]/verify contract: update verificationStatus, set verifiedById/verifiedAt, optionally accept disputeNote field (text) for rejected records, log to SecurityLog
 - [x] **T024** [P] Create duplicate check server action in `src/actions/attendance/check-duplicate.ts`: query Attendance by eventId + userId, return existing record or null (used by client before showing form)
 - [x] **T025** [P] Create attendance listing server action in `src/actions/attendance/list-by-event.ts`: fetch all attendance for an event with user profiles, support status filter
-- [ ] **T025.1** [P] Create attendance export server action in `src/actions/attendance/export.ts`: fetch attendance records with filters, format as CSV with columns (Student Name, Student ID, Event Name, Event Date, Submitted At, Verification Status, Verified By, Distance), return CSV file download
+- [x] **T025.1** [P] Create attendance export server action in `src/actions/attendance/export.ts`: fetch attendance records with filters, format as CSV with columns (Student Name, Student ID, Event Name, Event Date, Submitted At, Verification Status, Verified By, Distance), return CSV file download
 
 ## Phase 3.5: Server Actions (Dashboards)
 
@@ -79,12 +79,12 @@
 
 ## Phase 3.7: UI Components (Dashboard)
 
-- [ ] **T034** [P] Create student attendance history table in `src/components/dashboard/attendance-history.tsx` displaying eventName, submittedAt, verificationStatus with color badges, pagination using shadcn/ui Table and Pagination
-- [ ] **T035** [P] Create event form component in `src/components/dashboard/event-form.tsx` for create/edit using React Hook Form + Zod, date/time pickers (shadcn/ui Calendar), coordinates input, buffer minutes input
-- [ ] **T036** [P] Create QR code display component in `src/components/dashboard/qr-code-display.tsx` showing QR image, download button, print button, regenerate button (moderator only)
-- [ ] **T037** [P] Create student dashboard layout in `src/components/dashboard/student-dashboard.tsx` with stats cards (shadcn/ui Card), attendance history section, upcoming events section, floating "Scan QR" button
-- [ ] **T038** [P] Create moderator dashboard layout in `src/components/dashboard/moderator-dashboard.tsx` with stats cards, my events table, pending verifications section with photo/signature preview modals
-- [ ] **T039** [P] Create admin dashboard layout in `src/components/dashboard/admin-dashboard.tsx` with system stats, recent activity feed from SecurityLog, alerts section, user role management interface, system configuration panel (GPS radius defaults, buffer time settings), analytics dashboard (total events, attendances, verification rates)
+- [x] **T034** [P] Create student attendance history table in `src/components/dashboard/attendance-history.tsx` displaying eventName, submittedAt, verificationStatus with color badges, pagination using shadcn/ui Table and Pagination
+- [x] **T035** [P] Create event form component in `src/components/dashboard/event-form.tsx` for create/edit using React Hook Form + Zod, date/time pickers (shadcn/ui Calendar), coordinates input, buffer minutes input
+- [x] **T036** [P] Create QR code display component in `src/components/dashboard/qr-code-display.tsx` showing QR image, download button, print button, regenerate button (moderator only)
+- [x] **T037** [P] Create student dashboard layout in `src/components/dashboard/student-dashboard.tsx` with stats cards (shadcn/ui Card), attendance history section, upcoming events section, floating "Scan QR" button
+- [x] **T038** [P] Create moderator dashboard layout in `src/components/dashboard/moderator-dashboard.tsx` with stats cards, my events table, pending verifications section with photo/signature preview modals
+- [x] **T039** [P] Create admin dashboard layout in `src/components/dashboard/admin-dashboard.tsx` with system stats, recent activity feed from SecurityLog, alerts section, user role management interface, system configuration panel (GPS radius defaults, buffer time settings), analytics dashboard (total events, attendances, verification rates)
 
 ## Phase 3.8: Pages (Attendance Flow)
 

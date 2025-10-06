@@ -90,24 +90,6 @@ export async function submitAttendance(input: unknown) {
       };
     }
 
-    // Check for duplicate check-in
-    const existingAttendance = await db.attendance.findUnique({
-      where: {
-        eventId_userId: {
-          eventId: validatedData.eventId,
-          userId: user.userId,
-        },
-      },
-    });
-
-    if (existingAttendance) {
-      return {
-        success: false,
-        error: "You have already checked in to this event",
-        previousCheckIn: existingAttendance.submittedAt.toISOString(),
-      };
-    }
-
     // Calculate distance from venue
     const distance = calculateDistance(
       validatedData.latitude,
