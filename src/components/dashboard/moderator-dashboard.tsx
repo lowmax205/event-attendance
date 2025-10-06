@@ -187,9 +187,9 @@ export function ModeratorDashboard({
             </Table>
           </div>
           {myEvents.length > 5 && (
-            <div className="mt-4 text-center">
+            <div className="mt-4 flex justify-end">
               <Button variant="outline" asChild>
-                <Link href="/dashboard/moderator/events">View All Events</Link>
+                <Link href="/dashboard/moderator/events">View All</Link>
               </Button>
             </div>
           )}

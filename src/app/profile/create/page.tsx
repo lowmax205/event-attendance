@@ -6,8 +6,90 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ProfileForm } from "@/components/profile/profile-form";
+import { getCurrentUser } from "@/lib/auth/server";
+import { db } from "@/lib/db";
+import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
+import { createSession } from "@/lib/auth/session";
 
-export default function CreateProfilePage() {
+export default async function CreateProfilePage() {
+  const user = await getCurrentUser();
+
+  if (!user) {
+    redirect("/auth/login");
+  }
+
+  // Check if user already has a profile
+  const existingProfile = await db.userProfile.findUnique({
+    where: { userId: user.userId },
+  });
+
+  // If user has a profile but token says hasProfile: false, update the session
+  if (existingProfile && !user.hasProfile) {
+    // Get full user details
+    const fullUser = await db.user.findUnique({
+      where: { id: user.userId },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+      },
+    });
+
+    if (fullUser) {
+      // Create new session with hasProfile: true
+      const { accessToken, refreshToken } = await createSession({
+        id: fullUser.id,
+        email: fullUser.email,
+        role: fullUser.role,
+        hasProfile: true,
+      });
+
+      // Update cookies
+      const cookieStore = await cookies();
+      cookieStore.set("accessToken", accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 60 * 60,
+        path: "/",
+      });
+
+      cookieStore.set("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 60 * 60 * 24 * 30,
+        path: "/",
+      });
+
+      // Redirect to dashboard based on role
+      switch (fullUser.role) {
+        case "Student":
+          redirect("/dashboard/student");
+        case "Moderator":
+          redirect("/dashboard/moderator");
+        case "Administrator":
+          redirect("/dashboard/admin");
+        default:
+          redirect("/");
+      }
+    }
+  }
+
+  // If user already has a profile and token is correct, redirect to dashboard
+  if (existingProfile && user.hasProfile) {
+    switch (user.role) {
+      case "Student":
+        redirect("/dashboard/student");
+      case "Moderator":
+        redirect("/dashboard/moderator");
+      case "Administrator":
+        redirect("/dashboard/admin");
+      default:
+        redirect("/");
+    }
+  }
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
       <Card>

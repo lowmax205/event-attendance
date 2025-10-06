@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { db } from "@/lib/db";
 import { verifyToken } from "@/lib/auth/jwt";
 import { profileSchema, type ProfileInput } from "@/lib/validations/auth";
+import { createSession } from "@/lib/auth/session";
 
 interface ProfileResponse {
   success: boolean;
@@ -87,7 +88,50 @@ export async function createProfile(
       },
     });
 
-    // 6. Log security event
+    // 6. Get user details for session update
+    const user = await db.user.findUnique({
+      where: { id: payload.userId },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+      },
+    });
+
+    if (!user) {
+      return {
+        success: false,
+        message: "User not found.",
+      };
+    }
+
+    // 7. Create new session with hasProfile: true
+    const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
+      await createSession({
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        hasProfile: true,
+      });
+
+    // 8. Update cookies with new tokens
+    cookieStore.set("accessToken", newAccessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60, // 1 hour
+      path: "/",
+    });
+
+    cookieStore.set("refreshToken", newRefreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 30, // 30 days
+      path: "/",
+    });
+
+    // 9. Log security event
     await db.securityLog.create({
       data: {
         userId: payload.userId,

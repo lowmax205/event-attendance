@@ -139,6 +139,15 @@ async function main() {
       role: "Administrator",
       emailVerified: true,
       accountStatus: "active",
+      UserProfile: {
+        create: {
+          studentId: "ADM-2020-001",
+          department: "Administration",
+          yearLevel: 4,
+          section: "N/A",
+          contactNumber: "+63 912 345 6800",
+        },
+      },
     },
   });
 
@@ -154,6 +163,15 @@ async function main() {
         role: "Moderator",
         emailVerified: true,
         accountStatus: "active",
+        UserProfile: {
+          create: {
+            studentId: "MOD-2020-002",
+            department: "Student Affairs",
+            yearLevel: 4,
+            section: "N/A",
+            contactNumber: "+63 912 345 6801",
+          },
+        },
       },
     }),
     prisma.user.create({
@@ -165,6 +183,15 @@ async function main() {
         role: "Moderator",
         emailVerified: true,
         accountStatus: "active",
+        UserProfile: {
+          create: {
+            studentId: "MOD-2020-003",
+            department: "Student Affairs",
+            yearLevel: 4,
+            section: "N/A",
+            contactNumber: "+63 912 345 6802",
+          },
+        },
       },
     }),
   ]);
