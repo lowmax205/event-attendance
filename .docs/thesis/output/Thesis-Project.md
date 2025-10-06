@@ -23,7 +23,6 @@
 # TABLE OF CONTENTS
 
 - [**CHAPTER 1: INTRODUCTION**](#chapter-1)
-
   - [Statement of the Problem](#statement-of-the-problem)
   - [General Objectives](#general-objectives)
   - [Specific Objectives](#specific-objectives)
@@ -32,17 +31,14 @@
   - [Definition of Terms](#definition-of-terms)
 
 - [**CHAPTER 2: REVIEW OF RELATED LITERATURE**](#chapter-2)
-
   - [Synthesis of Related Literature](#synthesis-of-related-literature)
 
 - [**CHAPTER 3: TECHNICAL SPECIFICATIONS**](#chapter-3)
-
   - [Theoretical Framework](#theoretical-framework)
   - [Conceptual Framework](#conceptual-framework)
   - [Requirements Analysis](#requirements-analysis)
 
 - [**CHAPTER 4: METHODOLOGY**](#chapter-4)
-
   - [Data Gathering](#data-gathering)
   - [Instruments](#instruments)
   - [Data Collection](#data-collection)
