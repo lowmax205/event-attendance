@@ -98,24 +98,15 @@
 - [x] **T044** Create student dashboard page in `src/app/dashboard/student/page.tsx` fetching data from dashboard/student action, rendering StudentDashboard component
 - [x] **T045** Create student dashboard layout in `src/app/dashboard/student/layout.tsx` with role-based navigation sidebar (shadcn/ui Sidebar), profile dropdown
 - [x] **T046** Create moderator dashboard page in `src/app/dashboard/moderator/page.tsx` fetching data from dashboard/moderator action, rendering ModeratorDashboard component
-- [ ] **T047** Create moderator events list page in `src/app/dashboard/moderator/events/page.tsx` with table of events, create button linking to /dashboard/moderator/events/create
-- [ ] **T048** Create event creation page in `src/app/dashboard/moderator/events/create/page.tsx` rendering EventForm component, calling events/create action, showing generated QR code on success
-- [ ] **T049** Create event edit page in `src/app/dashboard/moderator/events/[id]/edit/page.tsx` pre-filling EventForm with event data, calling events/update action
-- [ ] **T050** Create attendance verification page in `src/app/dashboard/moderator/attendance/page.tsx` listing pending attendances with filters, approve/reject buttons, CSV export button
-- [ ] **T051** Create individual attendance detail page in `src/app/dashboard/moderator/attendance/[id]/page.tsx` showing full-size photos, signature, student info, distance, approve/reject form with disputeNote textarea (required when rejecting per FR-038)
+- [x] **T047** Create moderator events list page in `src/app/dashboard/moderator/events/page.tsx` with table of events, create button linking to /dashboard/moderator/events/create
+- [x] **T048** Create event creation page in `src/app/dashboard/moderator/events/create/page.tsx` rendering EventForm component, calling events/create action, showing generated QR code on success
+- [x] **T049** Create event edit page in `src/app/dashboard/moderator/events/[id]/edit/page.tsx` pre-filling EventForm with event data, calling events/update action
+- [x] **T050** Create attendance verification page in `src/app/dashboard/moderator/attendance/page.tsx` listing pending attendances with filters, approve/reject buttons, CSV export button
+- [x] **T051** Create individual attendance detail page in `src/app/dashboard/moderator/attendance/[id]/page.tsx` showing full-size photos, signature, student info, distance, approve/reject form with disputeNote textarea (required when rejecting per FR-038)
 - [x] **T052** Create moderator dashboard layout in `src/app/dashboard/moderator/layout.tsx` with navigation tabs (Overview, Events, Attendance), breadcrumbs
-- [x] **T044** Create student dashboard page in `src/app/dashboard/student/page.tsx` fetching data from dashboard/student action, rendering StudentDashboard component
-- [x] **T045** Create student dashboard layout in `src/app/dashboard/student/layout.tsx` with role-based navigation sidebar (shadcn/ui Sidebar), profile dropdown
-- [ ] **T046** Create moderator dashboard page in `src/app/dashboard/moderator/page.tsx` fetching data from dashboard/moderator action, rendering ModeratorDashboard component
-- [ ] **T047** Create moderator events list page in `src/app/dashboard/moderator/events/page.tsx` with table of events, create button linking to /dashboard/moderator/events/create
-- [ ] **T048** Create event creation page in `src/app/dashboard/moderator/events/create/page.tsx` rendering EventForm component, calling events/create action, showing generated QR code on success
-- [ ] **T049** Create event edit page in `src/app/dashboard/moderator/events/[id]/edit/page.tsx` pre-filling EventForm with event data, calling events/update action
-- [ ] **T050** Create attendance verification page in `src/app/dashboard/moderator/attendance/page.tsx` listing pending attendances with filters, approve/reject buttons, CSV export button
-- [ ] **T051** Create individual attendance detail page in `src/app/dashboard/moderator/attendance/[id]/page.tsx` showing full-size photos, signature, student info, distance, approve/reject form with disputeNote textarea (required when rejecting per FR-038)
-- [ ] **T052** Create moderator dashboard layout in `src/app/dashboard/moderator/layout.tsx` with navigation tabs (Overview, Events, Attendance), breadcrumbs
-- [ ] **T053** Create admin dashboard page in `src/app/dashboard/administrator/page.tsx` fetching data from dashboard/admin action, rendering AdminDashboard component with system configuration interface
-- [ ] **T054** [P] Create admin users management page in `src/app/dashboard/administrator/users/page.tsx` listing all users with role badges, search/filter, role update form (user role management per FR-040)
-- [ ] **T055** Create admin dashboard layout in `src/app/dashboard/administrator/layout.tsx` with navigation tabs (Overview, Users, System, Analytics), role indicator
+- [x] **T053** Create admin dashboard page in `src/app/dashboard/admin/page.tsx` fetching data from dashboard/admin action, rendering AdminDashboard component with system configuration interface
+- [x] **T054** [P] Create admin users management page in `src/app/dashboard/admin/users/page.tsx` listing all users with role badges, search/filter, role update form (user role management per FR-040)
+- [x] **T055** Create admin dashboard layout in `src/app/dashboard/admin/layout.tsx` with navigation tabs (Overview, Users, System, Analytics), role indicator
 
 ## Phase 3.10: Middleware & Authorization
 

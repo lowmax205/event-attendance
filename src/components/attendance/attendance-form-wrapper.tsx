@@ -130,7 +130,8 @@ export function AttendanceFormWrapper({ event }: AttendanceFormWrapperProps) {
 
       if (!result.success) {
         toast.error(result.error || "Failed to submit attendance", {
-          description: "Please try again or contact support if the issue persists.",
+          description:
+            "Please try again or contact support if the issue persists.",
           action: {
             label: "Retry",
             onClick: () => onSubmit(data),
