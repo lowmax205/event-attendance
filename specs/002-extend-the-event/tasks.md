@@ -56,17 +56,18 @@
 
 ## Phase 3.4: Server Actions (Attendance)
 
-- [x] **T021** Create QR validation server action in `src/actions/attendance/validate-qr.ts` implementing POST /api/qr/validate contract: parse QR payload, fetch event, check window, check duplicate, return validation result
-- [x] **T022** Create attendance submission server action in `src/actions/attendance/submit.ts` implementing POST /api/attendance contract: validate location (100m radius), upload 3 images to Cloudinary using folder path `{CLOUDINARY_FOLDER}/attendance/{eventId}/{userId}/`, create Attendance record, log to SecurityLog
-- [x] **T023** [P] Create attendance verification server action in `src/actions/attendance/verify.ts` implementing PATCH /api/attendance/[id]/verify contract: update verificationStatus, set verifiedById/verifiedAt, log to SecurityLog
-- [x] **T024** [P] Create duplicate check server action in `src/actions/attendance/check-duplicate.ts`: query Attendance by eventId + userId, return existing record or null
+- [x] **T021** Create QR validation server action in `src/actions/attendance/validate-qr.ts` implementing POST /api/qr/validate contract: parse QR payload, fetch event, check window, check duplicate (client-side early exit), return validation result
+- [x] **T022** Create attendance submission server action in `src/actions/attendance/submit.ts` implementing POST /api/attendance contract: validate location (100m radius), upload 3 images to Cloudinary using folder path `{CLOUDINARY_FOLDER}/attendance/{eventId}/{userId}/`, create Attendance record (client already checked for duplicates), log to SecurityLog
+- [x] **T023** [P] Create attendance verification server action in `src/actions/attendance/verify.ts` implementing PATCH /api/attendance/[id]/verify contract: update verificationStatus, set verifiedById/verifiedAt, optionally accept disputeNote field (text) for rejected records, log to SecurityLog
+- [x] **T024** [P] Create duplicate check server action in `src/actions/attendance/check-duplicate.ts`: query Attendance by eventId + userId, return existing record or null (used by client before showing form)
 - [x] **T025** [P] Create attendance listing server action in `src/actions/attendance/list-by-event.ts`: fetch all attendance for an event with user profiles, support status filter
+- [ ] **T025.1** [P] Create attendance export server action in `src/actions/attendance/export.ts`: fetch attendance records with filters, format as CSV with columns (Student Name, Student ID, Event Name, Event Date, Submitted At, Verification Status, Verified By, Distance), return CSV file download
 
 ## Phase 3.5: Server Actions (Dashboards)
 
 - [x] **T026** [P] Create student dashboard data action in `src/actions/dashboard/student.ts` implementing GET /api/dashboard/student: fetch attendanceHistory, upcomingEvents, stats per dashboard-data.json contract
 - [x] **T027** [P] Create moderator dashboard data action in `src/actions/dashboard/moderator.ts` implementing GET /api/dashboard/moderator: fetch myEvents, pendingVerifications, stats per dashboard-data.json contract
-- [x] **T028** [P] Create admin dashboard data action in `src/actions/dashboard/admin.ts` implementing GET /api/dashboard/administrator: fetch systemStats, recentActivity from SecurityLog, alerts per dashboard-data.json contract
+- [x] **T028** [P] Create admin dashboard data action in `src/actions/dashboard/admin.ts` implementing GET /api/dashboard/administrator: fetch systemStats (total events, total attendances, verification rates), recentActivity from SecurityLog, system configuration (GPS radius, buffer times), alerts per dashboard-data.json contract
 
 ## Phase 3.6: UI Components (Attendance)
 
@@ -74,7 +75,7 @@
 - [x] **T030** [P] Create location verifier component in `src/components/attendance/location-verifier.tsx` using useGeolocation hook, display distance from venue, visual feedback for within/outside 100m radius
 - [x] **T031** [P] Create camera capture dialog in `src/components/attendance/camera-capture.tsx` using useCamera hook, video preview, canvas capture to Base64, retake functionality
 - [x] **T032** [P] Create signature canvas component in `src/components/attendance/signature-canvas.tsx` wrapping react-signature-canvas, clear button, export to transparent PNG Base64
-- [x] **T033** Create main attendance form wrapper in `src/components/attendance/attendance-form.tsx` integrating QRScanner → LocationVerifier → CameraCapture (front/back) → SignatureCanvas → submit to attendance/submit action, React Hook Form + Zod validation, step progress indicator
+- [x] **T033** Create main attendance form wrapper in `src/components/attendance/attendance-form.tsx` integrating QRScanner → LocationVerifier → CameraCapture (front/back) → SignatureCanvas → submit to attendance/submit action, React Hook Form + Zod validation, step progress indicator, standardized error messages (title + explanation + suggested action + retry button per FR-043)
 
 ## Phase 3.7: UI Components (Dashboard)
 
@@ -83,7 +84,7 @@
 - [ ] **T036** [P] Create QR code display component in `src/components/dashboard/qr-code-display.tsx` showing QR image, download button, print button, regenerate button (moderator only)
 - [ ] **T037** [P] Create student dashboard layout in `src/components/dashboard/student-dashboard.tsx` with stats cards (shadcn/ui Card), attendance history section, upcoming events section, floating "Scan QR" button
 - [ ] **T038** [P] Create moderator dashboard layout in `src/components/dashboard/moderator-dashboard.tsx` with stats cards, my events table, pending verifications section with photo/signature preview modals
-- [ ] **T039** [P] Create admin dashboard layout in `src/components/dashboard/admin-dashboard.tsx` with system stats, recent activity feed from SecurityLog, alerts section
+- [ ] **T039** [P] Create admin dashboard layout in `src/components/dashboard/admin-dashboard.tsx` with system stats, recent activity feed from SecurityLog, alerts section, user role management interface, system configuration panel (GPS radius defaults, buffer time settings), analytics dashboard (total events, attendances, verification rates)
 
 ## Phase 3.8: Pages (Attendance Flow)
 
@@ -100,12 +101,12 @@
 - [ ] **T047** Create moderator events list page in `src/app/dashboard/moderator/events/page.tsx` with table of events, create button linking to /dashboard/moderator/events/create
 - [ ] **T048** Create event creation page in `src/app/dashboard/moderator/events/create/page.tsx` rendering EventForm component, calling events/create action, showing generated QR code on success
 - [ ] **T049** Create event edit page in `src/app/dashboard/moderator/events/[id]/edit/page.tsx` pre-filling EventForm with event data, calling events/update action
-- [ ] **T050** Create attendance verification page in `src/app/dashboard/moderator/attendance/page.tsx` listing pending attendances with filters, approve/reject buttons
-- [ ] **T051** Create individual attendance detail page in `src/app/dashboard/moderator/attendance/[id]/page.tsx` showing full-size photos, signature, student info, distance, approve/reject form with disputeNote textarea
+- [ ] **T050** Create attendance verification page in `src/app/dashboard/moderator/attendance/page.tsx` listing pending attendances with filters, approve/reject buttons, CSV export button
+- [ ] **T051** Create individual attendance detail page in `src/app/dashboard/moderator/attendance/[id]/page.tsx` showing full-size photos, signature, student info, distance, approve/reject form with disputeNote textarea (required when rejecting per FR-038)
 - [ ] **T052** Create moderator dashboard layout in `src/app/dashboard/moderator/layout.tsx` with navigation tabs (Overview, Events, Attendance), breadcrumbs
-- [ ] **T053** Create admin dashboard page in `src/app/dashboard/administrator/page.tsx` fetching data from dashboard/admin action, rendering AdminDashboard component
-- [ ] **T054** [P] Create admin users management page in `src/app/dashboard/administrator/users/page.tsx` listing all users with role badges, search/filter, role update form (future enhancement placeholder)
-- [ ] **T055** Create admin dashboard layout in `src/app/dashboard/administrator/layout.tsx` with navigation tabs (Overview, Users, System), role indicator
+- [ ] **T053** Create admin dashboard page in `src/app/dashboard/administrator/page.tsx` fetching data from dashboard/admin action, rendering AdminDashboard component with system configuration interface
+- [ ] **T054** [P] Create admin users management page in `src/app/dashboard/administrator/users/page.tsx` listing all users with role badges, search/filter, role update form (user role management per FR-040)
+- [ ] **T055** Create admin dashboard layout in `src/app/dashboard/administrator/layout.tsx` with navigation tabs (Overview, Users, System, Analytics), role indicator
 
 ## Phase 3.10: Middleware & Authorization
 
@@ -115,7 +116,7 @@
 ## Phase 3.11: Polish & Validation
 
 - [ ] **T058** [P] Add loading skeletons to all dashboard pages using shadcn/ui Skeleton component for better perceived performance
-- [ ] **T059** [P] Add toast notifications using shadcn/ui Sonner for success/error feedback on form submissions (event create/update, attendance submit, verification)
+- [ ] **T059** [P] Add toast notifications using shadcn/ui Sonner for success/error feedback on form submissions (event create/update, attendance submit, verification); implement standardized error message pattern from FR-043 (title + explanation + suggested action + retry button)
 - [ ] **T060** [P] Add accessibility attributes: aria-labels for QR scanner, camera capture buttons, form fields; aria-live regions for validation errors; keyboard navigation for signature canvas (Tab to focus, Enter to clear)
 - [ ] **T061** [P] Optimize Cloudinary uploads: set quality=auto, format=auto, add progressive loading for large images
 - [ ] **T062** Add error boundary components in dashboard layouts to catch and display runtime errors gracefully
@@ -145,6 +146,7 @@
 - T015 (online hook) → T040 (attendance page offline banner)
 - T021 (QR validation action) → T040 (validate before showing form)
 - T022 (submit action) → T041 (attendance form page)
+- T025, T025.1 (attendance listing and export) → T050 (moderator attendance page with export button)
 - T026-T028 (dashboard actions) → T044, T046, T053 (dashboard pages)
 - T033 (attendance form) → T041 (attendance form page)
 - T034-T039 (dashboard components) → T044-T055 (dashboard pages)
@@ -214,12 +216,13 @@ Task: "Optimize Cloudinary uploads (quality=auto, format=auto)"
 
 ## Notes
 
-- **Total Tasks**: 65 (T001-T065)
-- **Parallelizable**: 36 tasks marked [P] (55%)
+- **Total Tasks**: 66 (T001-T065 + T025.1)
+- **Parallelizable**: 37 tasks marked [P] (56%)
 - **Estimated Effort**: 40-50 hours for experienced Next.js developer
 - **Testing Strategy**: Manual testing only (per constitution - no automated tests)
 - **Commit Strategy**: Commit after each task, push after each phase
 - **Environment**: Development on localhost:3000, staging deploy after T055, production after T065
+- **Clarifications Applied**: Client-side duplicate prevention, CSV export format, standardized error messages, dispute notes, admin full controls
 
 ## Validation Checklist
 
@@ -232,6 +235,10 @@ Task: "Optimize Cloudinary uploads (quality=auto, format=auto)"
 - [x] Setup tasks (T001-T011) come first
 - [x] Server actions before UI pages (dependencies respected)
 - [x] Polish tasks (T058-T065) come last
+- [x] CSV export action added (T025.1) per FR-039
+- [x] Dispute note field included in verification (T023, T051) per FR-038
+- [x] Standardized error pattern referenced (T033, T059) per FR-043
+- [x] Admin controls detailed (T028, T039, T053-T055) per FR-040
 
 ---
 

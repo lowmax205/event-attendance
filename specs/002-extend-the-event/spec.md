@@ -58,6 +58,14 @@
 
 ---
 
+## Clarifications
+
+### Session 2025-10-06
+
+- Q: What export format(s) should the moderator attendance export feature support? → A: CSV only (simple, universal compatibility)
+
+---
+
 ## User Scenarios & Testing _(mandatory)_
 
 ### Primary User Story
@@ -181,13 +189,12 @@ The student arrives at an event venue, scans a QR code displayed at the entrance
 - **FR-035**: Moderator dashboard MUST allow creation and editing of events (name, date/time, location, buffer windows)
 - **FR-036**: Moderator dashboard MUST allow generation and management of event QR codes
 - **FR-037**: Moderator dashboard MUST display attendance records with search and filter capabilities
-- **FR-038**: Moderator dashboard MUST allow verification and approval of attendance records
-- **FR-039**: Moderator dashboard MUST provide dispute resolution tools for contested attendance
-- **FR-040**: Moderator dashboard MUST allow export of attendance data in standard formats
-- **FR-041**: Admin dashboard MUST display system-wide controls and full attendance data access
-- **FR-042**: Admin dashboard MUST allow user role management and system configuration
-- **FR-043**: System MUST redirect users to their role-appropriate dashboard after login
-- **FR-044**: System MUST prevent users from accessing dashboards above their permission level
+- **FR-038**: Moderator dashboard MUST allow verification and approval of attendance records with ability to add dispute notes when rejecting (dispute note is a text field where moderator can document reason for rejection or contested attendance details)
+- **FR-039**: Moderator dashboard MUST allow export of attendance data in CSV format with columns: Student Name, Student ID, Event Name, Event Date, Submitted At, Verification Status, Verified By, Distance (meters)
+- **FR-040**: Admin dashboard MUST display system-wide controls including: view all events across all creators, view all attendance records with advanced filters, user role assignment and modification, system configuration settings (default GPS accuracy radius, default buffer time windows), and analytics dashboard (total events, total attendances, verification rates)
+- **FR-041**: System MUST redirect users to their role-appropriate dashboard after login
+- **FR-042**: System MUST prevent users from accessing dashboards above their permission level
+- **FR-043**: System MUST display error messages following a standardized pattern: error title describing the issue, explanation of why the error occurred, suggested action to resolve, and retry or alternative action button (applies to FR-004, FR-006, FR-008, FR-010, FR-014)
 
 #### Dependencies and Assumptions
 
