@@ -1,8 +1,8 @@
 {
   "servers": {
-    "neondatabase/mcp-server-neon": {
-      "type": "sse",
-      "url": "https://mcp.neon.tech/sse"
+    "Neon": {
+      "url": "https://mcp.neon.tech/mcp",
+      "type": "http"
     },
     "cloudflare/workers-bindings": {
       "type": "sse",

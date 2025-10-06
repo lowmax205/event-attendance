@@ -27,17 +27,17 @@
 
 ## Phase 3.1: Setup & Dependencies
 
-- [ ] **T001** Install new dependencies: `npm install qrcode html5-qrcode react-signature-canvas cloudinary @types/qrcode`
-- [ ] **T002** [P] Verify Cloudinary environment variables exist in `.env`: `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_SECRET_KEY`, `CLOUDINARY_FOLDER`, `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` (add NEXT_PUBLIC_ variant for client-side access)
-- [ ] **T003** [P] Extend Prisma schema in `prisma/schema.prisma` with Event model, EventStatus enum, and indexes per data-model.md
-- [ ] **T004** [P] Extend Prisma schema in `prisma/schema.prisma` with Attendance model, VerificationStatus enum, unique constraint (eventId, userId), and indexes per data-model.md
-- [ ] **T005** [P] Extend User model in `prisma/schema.prisma` with relations: `createdEvents Event[] @relation("EventCreator")`, `attendances Attendance[]`, `verifiedAttendances Attendance[] @relation("AttendanceVerifier")`
-- [ ] **T006** Create Prisma migration: `npx prisma migrate dev --name add_event_attendance_models`
-- [ ] **T007** [P] Create Cloudinary utility library in `src/lib/cloudinary.ts` with functions: `uploadPhoto(base64: string, folder: string)`, `uploadSignature(base64: string, folder: string)`, `deleteImage(publicId: string)`. All uploads MUST use `CLOUDINARY_FOLDER` environment variable as root folder prefix (e.g., `{CLOUDINARY_FOLDER}/attendance/{eventId}/...`) to separate from other API content
-- [ ] **T008** [P] Create geolocation utility in `src/lib/geolocation.ts` with Haversine distance calculation function: `calculateDistance(lat1, lon1, lat2, lon2): number`
-- [ ] **T009** [P] Create QR generator wrapper in `src/lib/qr-generator.ts` with function: `generateQRCode(payload: string): Promise<string>` returning data URL
-- [ ] **T010** [P] Create Zod validation schemas in `src/lib/validations/event.ts` for event creation and update per event-create.json and event-update.json contracts
-- [ ] **T011** [P] Create Zod validation schemas in `src/lib/validations/attendance.ts` for attendance submission per attendance-submit.json contract
+- [x] **T001** Install new dependencies: `npm install qrcode html5-qrcode react-signature-canvas cloudinary @types/qrcode`
+- [x] **T002** [P] Verify Cloudinary environment variables exist in `.env`: `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_SECRET_KEY`, `CLOUDINARY_FOLDER`, `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` (add NEXT_PUBLIC_ variant for client-side access)
+- [x] **T003** [P] Extend Prisma schema in `prisma/schema.prisma` with Event model, EventStatus enum, and indexes per data-model.md
+- [x] **T004** [P] Extend Prisma schema in `prisma/schema.prisma` with Attendance model, VerificationStatus enum, unique constraint (eventId, userId), and indexes per data-model.md
+- [x] **T005** [P] Extend User model in `prisma/schema.prisma` with relations: `createdEvents Event[] @relation("EventCreator")`, `attendances Attendance[]`, `verifiedAttendances Attendance[] @relation("AttendanceVerifier")`
+- [x] **T006** Create Prisma migration: `npx prisma migrate dev --name add_event_attendance_models` ✓ *Migration created and applied successfully*
+- [x] **T007** [P] Create Cloudinary utility library in `src/lib/cloudinary.ts` with functions: `uploadPhoto(base64: string, folder: string)`, `uploadSignature(base64: string, folder: string)`, `deleteImage(publicId: string)`. All uploads MUST use `CLOUDINARY_FOLDER` environment variable as root folder prefix (e.g., `{CLOUDINARY_FOLDER}/attendance/{eventId}/...`) to separate from other API content
+- [x] **T008** [P] Create geolocation utility in `src/lib/geolocation.ts` with Haversine distance calculation function: `calculateDistance(lat1, lon1, lat2, lon2): number`
+- [x] **T009** [P] Create QR generator wrapper in `src/lib/qr-generator.ts` with function: `generateQRCode(payload: string): Promise<string>` returning data URL
+- [x] **T010** [P] Create Zod validation schemas in `src/lib/validations/event.ts` for event creation and update per event-create.json and event-update.json contracts
+- [x] **T011** [P] Create Zod validation schemas in `src/lib/validations/attendance.ts` for attendance submission per attendance-submit.json contract
 
 ## Phase 3.2: Custom React Hooks
 
