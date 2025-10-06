@@ -1,0 +1,44 @@
+Thesis Title: A Comprehensive Mobile-Based Approach to School Event Attendance Monitoring
+
+Researcher and Developer:
+Nilo Jr. Olang
+Cricedine P. Peñaranda
+
+Deployment Location: Surigao del Norte State University (SNSU)
+
+Managed By: University Student Council (USC)
+
+Approved to Gather Information By: John Baltazar B. Cervantes
+
+Respondents: 1000 respondents for the survey
+
+Methodology: Quantitative
+
+System Development Methodologies:
+AGILE
+RAD (Rapid Application Development)
+
+Significance To:
+University
+Administrators
+Students
+Future Researchers
+
+System Main Features:
+GPS Tracking using Mobile Devices
+Camera Selfie with Event Background
+QR Code Scanning for Every Event
+Dashboard Management
+User Profile/Authentication
+Real-time Attendance Tracking
+Export Data (Attendance Records with Template for SNSU)
+Export System Logs
+
+Development Requirements:
+GitHub: A platform for version control and collaborative development.
+Django: A high-level Python web framework for rapid development and clean, pragmatic design.
+Render: A cloud platform for deploying web applications and APIs.
+PostgreSQL: A powerful, open-source object-relational database system.
+TailwindCSS: A utility-first CSS framework for building custom user interfaces quickly.
+Mapbox API: A service for integrating maps and location data into applications.
+Cloudinary: A cloud-based service for managing and optimizing media assets.
