@@ -26,7 +26,7 @@ import {
 import { AuthModalTrigger } from "@/components/auth/auth-modal";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuth } from "@/hooks/use-auth";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { format } from "date-fns";
 
 interface Event {
@@ -42,6 +42,12 @@ export function Navigation() {
   const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
   const { user, logout, isLoading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+
+  // Check if we're on profile or dashboard pages
+  const isOnProfilePage =
+    pathname === "/profile" || pathname === "/profile/create";
+  const isOnDashboardPage = pathname?.startsWith("/dashboard") || false;
 
   // Fetch upcoming/ongoing events when user is authenticated
   useEffect(() => {
@@ -218,21 +224,25 @@ export function Navigation() {
                       </p>
                     </div>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
-                      <Link href="/profile" className="cursor-pointer">
-                        <User className="h-4 w-4 mr-2" />
-                        Profile
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link
-                        href={getDashboardRoute()}
-                        className="cursor-pointer"
-                      >
-                        <LayoutDashboard className="h-4 w-4 mr-2" />
-                        Dashboard
-                      </Link>
-                    </DropdownMenuItem>
+                    {!isOnProfilePage && (
+                      <DropdownMenuItem asChild>
+                        <Link href="/profile" className="cursor-pointer">
+                          <User className="h-4 w-4 mr-2" />
+                          Profile
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+                    {!isOnDashboardPage && (
+                      <DropdownMenuItem asChild>
+                        <Link
+                          href={getDashboardRoute()}
+                          className="cursor-pointer"
+                        >
+                          <LayoutDashboard className="h-4 w-4 mr-2" />
+                          Dashboard
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onClick={handleLogout}
@@ -296,14 +306,28 @@ export function Navigation() {
                     </div>
 
                     {/* Dashboard Link */}
-                    <Link
-                      href={getDashboardRoute()}
-                      onClick={() => setIsOpen(false)}
-                      className="flex items-center gap-3 text-lg font-medium text-foreground/80 hover:text-foreground transition-colors min-h-[44px]"
-                    >
-                      <LayoutDashboard className="h-5 w-5" />
-                      Dashboard
-                    </Link>
+                    {!isOnDashboardPage && (
+                      <Link
+                        href={getDashboardRoute()}
+                        onClick={() => setIsOpen(false)}
+                        className="flex items-center gap-3 text-lg font-medium text-foreground/80 hover:text-foreground transition-colors min-h-[44px]"
+                      >
+                        <LayoutDashboard className="h-5 w-5" />
+                        Dashboard
+                      </Link>
+                    )}
+
+                    {/* Profile Link */}
+                    {!isOnProfilePage && (
+                      <Link
+                        href="/profile"
+                        onClick={() => setIsOpen(false)}
+                        className="flex items-center gap-3 text-lg font-medium text-foreground/80 hover:text-foreground transition-colors min-h-[44px]"
+                      >
+                        <User className="h-5 w-5" />
+                        Profile
+                      </Link>
+                    )}
 
                     {/* Home Link */}
                     <Link

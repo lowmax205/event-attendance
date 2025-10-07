@@ -178,24 +178,6 @@ export default function RoadMapPage() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Contributing Section */}
-      <Card className="mt-12 bg-gradient-to-br from-primary/10 to-secondary/10">
-        <CardHeader>
-          <CardTitle>Want to Contribute?</CardTitle>
-          <CardDescription>
-            This is an open-source project and we welcome contributions!
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Check out our GitHub repository to report issues, suggest features,
-            or submit pull requests. Whether you&apos;re fixing bugs, improving
-            documentation, or adding new features, we appreciate your help in
-            making this project better.
-          </p>
-        </CardContent>
-      </Card>
     </div>
   );
 }

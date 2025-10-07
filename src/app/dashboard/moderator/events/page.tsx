@@ -13,7 +13,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, QrCode } from "lucide-react";
+import { Plus, Edit } from "lucide-react";
+import { QRCodeModal } from "@/components/events/qr-code-modal";
 
 /**
  * Moderator events list page
@@ -132,11 +133,13 @@ export default async function ModeratorEventsPage() {
                             <Edit className="h-4 w-4" />
                           </Button>
                         </Link>
-                        <Link href={`/events/${event.id}`}>
-                          <Button variant="outline" size="sm">
-                            <QrCode className="h-4 w-4" />
-                          </Button>
-                        </Link>
+                        {event.qrCodeUrl && (
+                          <QRCodeModal
+                            eventId={event.id}
+                            eventName={event.name}
+                            qrCodeUrl={event.qrCodeUrl}
+                          />
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
