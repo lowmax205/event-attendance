@@ -3,12 +3,16 @@ import { z } from "zod";
 /**
  * Zod schema for attendance submission
  * Based on attendance-submit.json contract
+ * Supports both check-in and check-out
  */
 export const submitAttendanceSchema = z.object({
   eventId: z
     .string()
     .cuid("Invalid event ID format")
     .min(1, "Event ID is required"),
+  attendanceType: z.enum(["check-in", "check-out"], {
+    message: "Attendance type must be either 'check-in' or 'check-out'",
+  }),
   latitude: z
     .number()
     .min(-90, "Latitude must be between -90 and 90")

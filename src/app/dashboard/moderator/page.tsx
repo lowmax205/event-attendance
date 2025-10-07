@@ -69,11 +69,20 @@ export default async function ModeratorDashboardPage() {
           id: item.id,
           studentName: item.studentName,
           eventName: item.eventName,
-          submittedAt: new Date(item.submittedAt),
-          frontPhotoUrl: item.frontPhotoUrl,
-          backPhotoUrl: item.backPhotoUrl,
-          signatureUrl: item.signatureUrl,
-          distanceFromVenue: item.distanceFromVenue,
+          checkInSubmittedAt: item.checkInSubmittedAt
+            ? new Date(item.checkInSubmittedAt)
+            : null,
+          checkOutSubmittedAt: item.checkOutSubmittedAt
+            ? new Date(item.checkOutSubmittedAt)
+            : null,
+          checkInFrontPhoto: item.checkInFrontPhoto,
+          checkInBackPhoto: item.checkInBackPhoto,
+          checkInSignature: item.checkInSignature,
+          checkOutFrontPhoto: item.checkOutFrontPhoto,
+          checkOutBackPhoto: item.checkOutBackPhoto,
+          checkOutSignature: item.checkOutSignature,
+          checkInDistance: item.checkInDistance,
+          checkOutDistance: item.checkOutDistance,
         }))}
       />
     </div>

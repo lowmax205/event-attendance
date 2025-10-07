@@ -21,21 +21,66 @@ export async function createEvent(input: unknown) {
     // Validate input
     const validatedData = createEventSchema.parse(input);
 
-    // Validate buffer window doesn't extend into the past (FR-035.1)
-    const checkInTime = new Date(validatedData.startDateTime);
-    checkInTime.setMinutes(
-      checkInTime.getMinutes() - (validatedData.checkInBufferMins ?? 30),
-    );
-
-    if (checkInTime < new Date()) {
+    // Validate that the event end time is after start time
+    if (
+      new Date(validatedData.endDateTime) <=
+      new Date(validatedData.startDateTime)
+    ) {
       return {
         success: false,
-        error: "Invalid buffer window",
+        error: "Invalid event times",
+        details: [
+          {
+            field: "endDateTime",
+            message: "End time must be after start time.",
+          },
+        ],
+      };
+    }
+
+    // Calculate attendance windows:
+    // Check-IN: Opens at event START, closes START + checkInBufferMins
+    // Check-OUT: Opens at END - checkOutBufferMins, closes at END
+    const checkInWindowCloses = new Date(validatedData.startDateTime);
+    checkInWindowCloses.setMinutes(
+      checkInWindowCloses.getMinutes() +
+        (validatedData.checkInBufferMins ?? 30),
+    );
+
+    const checkOutWindowOpens = new Date(validatedData.endDateTime);
+    checkOutWindowOpens.setMinutes(
+      checkOutWindowOpens.getMinutes() -
+        (validatedData.checkOutBufferMins ?? 30),
+    );
+
+    // Validate that check-in window closes before check-out window opens
+    // (there should be time between check-in closing and check-out opening)
+    if (checkInWindowCloses >= checkOutWindowOpens) {
+      return {
+        success: false,
+        error: "Invalid buffer configuration",
         details: [
           {
             field: "checkInBufferMins",
             message:
-              "Check-in buffer extends into the past. The start time minus buffer must be in the future.",
+              "Event duration is too short for the buffer times. The check-in window must close before the check-out window opens.",
+          },
+        ],
+      };
+    }
+
+    // Only validate that the event hasn't completely ended
+    const now = new Date();
+    const eventEnd = new Date(validatedData.endDateTime);
+    if (eventEnd < now) {
+      return {
+        success: false,
+        error: "Invalid event time",
+        details: [
+          {
+            field: "endDateTime",
+            message:
+              "The event has already ended. Please set a future end time.",
           },
         ],
       };

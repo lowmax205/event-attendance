@@ -1,11 +1,11 @@
 {
   "name": "event-attendance",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
-    "start": "next start",
+    "preview": "next start -p 8080",
     "build:preview": "next build && next start -p 8080",
     "lint": "eslint && prettier --check .",
     "lint:fix": "eslint --fix && prettier --write .",
@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
-    "@prisma/client": "^6.16.3",
+    "@prisma/client": "^6.17.0",
     "@radix-ui/react-alert-dialog": "^1.1.15",
     "@radix-ui/react-avatar": "^1.1.10",
     "@radix-ui/react-dialog": "^1.1.15",
@@ -41,6 +41,7 @@
     "html5-qrcode": "^2.3.8",
     "jose": "^6.1.0",
     "lucide-react": "^0.544.0",
+    "mapbox-gl": "^3.15.0",
     "next": "15.5.4",
     "next-themes": "^0.4.6",
     "prisma": "^6.16.3",
@@ -49,6 +50,7 @@
     "react-day-picker": "^9.11.0",
     "react-dom": "18.3.1",
     "react-hook-form": "^7.64.0",
+    "react-map-gl": "^8.1.0",
     "react-signature-canvas": "^1.1.0-alpha.2",
     "simple-icons": "^15.16.1",
     "sonner": "^2.0.7",

@@ -47,7 +47,7 @@ export async function getStudentDashboard(params: StudentDashboardParams = {}) {
         },
       },
       orderBy: {
-        submittedAt: "desc",
+        checkInSubmittedAt: "desc",
       },
       skip,
       take: limit,
@@ -110,7 +110,8 @@ export async function getStudentDashboard(params: StudentDashboardParams = {}) {
           id: attendance.id,
           eventName: attendance.event.name,
           eventStartDateTime: attendance.event.startDateTime,
-          submittedAt: attendance.submittedAt,
+          checkInSubmittedAt: attendance.checkInSubmittedAt,
+          checkOutSubmittedAt: attendance.checkOutSubmittedAt,
           verificationStatus: attendance.verificationStatus,
           disputeNote: attendance.disputeNote,
         })),

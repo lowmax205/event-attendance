@@ -65,7 +65,7 @@ export function useGeolocation(): UseGeolocationReturn {
         setLoading(false);
       },
       {
-        enableHighAccuracy: true, // Use GPS for better accuracy
+        enableHighAccuracy: true, // Prefer GPS, but allow Wi-Fi positioning as fallback on mobile devices
         timeout: 10000, // 10 second timeout
         maximumAge: 0, // Don't use cached position
       },
@@ -78,4 +78,27 @@ export function useGeolocation(): UseGeolocationReturn {
     loading,
     requestPermission,
   };
+}
+
+/**
+ * Custom hook to detect if user is on a mobile device
+ * @returns Boolean indicating if device is mobile
+ */
+export function useIsMobile(): boolean {
+  if (typeof window === "undefined") return false;
+
+  const windowWithOpera = window as Window & { opera?: string };
+  const userAgent =
+    navigator.userAgent || navigator.vendor || windowWithOpera.opera || "";
+
+  // Check for mobile devices
+  const isMobileDevice =
+    /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(
+      userAgent.toLowerCase(),
+    );
+
+  // Also check screen size as backup
+  const isSmallScreen = window.innerWidth <= 768;
+
+  return isMobileDevice || isSmallScreen;
 }

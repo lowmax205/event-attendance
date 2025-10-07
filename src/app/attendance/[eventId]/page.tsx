@@ -72,7 +72,7 @@ export default async function AttendanceFormPage({
     );
   }
 
-  // Check if already checked in
+  // Check existing attendance record
   const existingAttendance = await db.attendance.findUnique({
     where: {
       eventId_userId: {
@@ -82,24 +82,57 @@ export default async function AttendanceFormPage({
     },
     select: {
       id: true,
-      submittedAt: true,
+      checkInSubmittedAt: true,
+      checkOutSubmittedAt: true,
       verificationStatus: true,
     },
   });
 
-  if (existingAttendance) {
-    redirect(`/attendance/${eventId}/success`);
-  }
-
-  // Calculate check-in window
-  const opensAt = new Date(
-    event.startDateTime.getTime() - event.checkInBufferMins * 60 * 1000,
-  );
-  const closesAt = new Date(
-    event.endDateTime.getTime() + event.checkOutBufferMins * 60 * 1000,
-  );
+  // Calculate attendance windows
+  // Check-IN: Event START to START + checkInBufferMins
+  // Check-OUT: END - checkOutBufferMins to END
   const now = new Date();
-  const isOpen = now >= opensAt && now <= closesAt;
+  const checkInOpens = event.startDateTime;
+  const checkInCloses = new Date(
+    event.startDateTime.getTime() + event.checkInBufferMins * 60 * 1000,
+  );
+  const checkOutOpens = new Date(
+    event.endDateTime.getTime() - event.checkOutBufferMins * 60 * 1000,
+  );
+  const checkOutCloses = event.endDateTime;
+
+  // Determine current attendance phase
+  const isCheckInWindow = now >= checkInOpens && now <= checkInCloses;
+  const isCheckOutWindow = now >= checkOutOpens && now <= checkOutCloses;
+  const hasCheckedIn = existingAttendance?.checkInSubmittedAt != null;
+  const hasCheckedOut = existingAttendance?.checkOutSubmittedAt != null;
+
+  // Determine attendance type needed
+  let attendanceType: "check-in" | "check-out" | null = null;
+  let errorMessage: string | null = null;
+
+  if (isCheckInWindow && !hasCheckedIn) {
+    attendanceType = "check-in";
+  } else if (isCheckOutWindow && hasCheckedIn && !hasCheckedOut) {
+    attendanceType = "check-out";
+  } else if (hasCheckedIn && hasCheckedOut) {
+    // Both completed - redirect to success
+    redirect(`/attendance/${eventId}/success`);
+  } else if (!isCheckInWindow && !isCheckOutWindow) {
+    // Neither window is open
+    if (now < checkInOpens) {
+      errorMessage = `Check-in opens at ${checkInOpens.toLocaleString()}`;
+    } else if (now > checkInCloses && now < checkOutOpens) {
+      errorMessage = `Check-out opens at ${checkOutOpens.toLocaleString()}`;
+    } else {
+      errorMessage = `Event has ended at ${checkOutCloses.toLocaleString()}`;
+    }
+  } else if (isCheckOutWindow && !hasCheckedIn) {
+    errorMessage =
+      "You must check in during the check-in window before you can check out.";
+  } else if (isCheckInWindow && hasCheckedIn) {
+    errorMessage = `You have already checked in. Check-out opens at ${checkOutOpens.toLocaleString()}`;
+  }
 
   // Check if event is accessible
   if (event.status === "Cancelled") {
@@ -123,17 +156,33 @@ export default async function AttendanceFormPage({
     );
   }
 
-  if (!isOpen) {
-    const message =
-      now < opensAt
-        ? `Check-in opens at ${opensAt.toLocaleString()}`
-        : `Check-in closed at ${closesAt.toLocaleString()}`;
-
+  if (errorMessage) {
     return (
       <div className="container max-w-2xl mx-auto px-4 py-8">
         <div className="rounded-lg border border-warning bg-warning/10 p-6">
-          <h2 className="text-lg font-semibold mb-2">Check-In Not Available</h2>
-          <p className="text-sm text-muted-foreground mb-4">{message}</p>
+          <h2 className="text-lg font-semibold mb-2">
+            Attendance Not Available
+          </h2>
+          <p className="text-sm text-muted-foreground mb-4">{errorMessage}</p>
+          <a
+            href="/dashboard"
+            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          >
+            Back to Dashboard
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  if (!attendanceType) {
+    return (
+      <div className="container max-w-2xl mx-auto px-4 py-8">
+        <div className="rounded-lg border border-warning bg-warning/10 p-6">
+          <h2 className="text-lg font-semibold mb-2">No Action Required</h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            There is no attendance action available at this time.
+          </p>
           <a
             href="/dashboard"
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
@@ -146,6 +195,18 @@ export default async function AttendanceFormPage({
   }
 
   // Render attendance form
+  // Normalize role to lowercase and map "administrator" to "admin"
+  let mappedRole: "student" | "moderator" | "admin" = "student";
+  const roleLower = user.role.toLowerCase();
+
+  if (roleLower === "administrator") {
+    mappedRole = "admin";
+  } else if (roleLower === "moderator") {
+    mappedRole = "moderator";
+  } else {
+    mappedRole = "student";
+  }
+
   return (
     <AttendanceFormWrapper
       event={{
@@ -159,6 +220,8 @@ export default async function AttendanceFormPage({
         venueLatitude: event.venueLatitude,
         venueLongitude: event.venueLongitude,
       }}
+      attendanceType={attendanceType}
+      userRole={mappedRole}
     />
   );
 }

@@ -61,11 +61,13 @@ export default async function AttendanceSuccessPage({
     },
     select: {
       id: true,
-      submittedAt: true,
+      checkInSubmittedAt: true,
+      checkOutSubmittedAt: true,
       verificationStatus: true,
       verifiedAt: true,
       disputeNote: true,
-      distanceFromVenue: true,
+      checkInDistance: true,
+      checkOutDistance: true,
     },
   });
 
@@ -204,23 +206,58 @@ export default async function AttendanceSuccessPage({
           <CardTitle>Attendance Details</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Submitted At:</span>
-            <span className="text-sm font-medium">
-              {new Date(attendance.submittedAt).toLocaleString("en-US", {
-                dateStyle: "medium",
-                timeStyle: "short",
-              })}
-            </span>
-          </div>
-
-          {attendance.distanceFromVenue !== null && (
+          {attendance.checkInSubmittedAt && (
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">
-                Distance from Venue:
+                Check-In At:
               </span>
               <span className="text-sm font-medium">
-                {attendance.distanceFromVenue.toFixed(0)} meters
+                {new Date(attendance.checkInSubmittedAt).toLocaleString(
+                  "en-US",
+                  {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  },
+                )}
+              </span>
+            </div>
+          )}
+
+          {attendance.checkOutSubmittedAt && (
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">
+                Check-Out At:
+              </span>
+              <span className="text-sm font-medium">
+                {new Date(attendance.checkOutSubmittedAt).toLocaleString(
+                  "en-US",
+                  {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  },
+                )}
+              </span>
+            </div>
+          )}
+
+          {attendance.checkInDistance !== null && (
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">
+                Check-In Distance:
+              </span>
+              <span className="text-sm font-medium">
+                {attendance.checkInDistance.toFixed(0)} meters
+              </span>
+            </div>
+          )}
+
+          {attendance.checkOutDistance !== null && (
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">
+                Check-Out Distance:
+              </span>
+              <span className="text-sm font-medium">
+                {attendance.checkOutDistance.toFixed(0)} meters
               </span>
             </div>
           )}

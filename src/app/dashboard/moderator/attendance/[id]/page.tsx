@@ -29,13 +29,20 @@ type AttendanceDetail = {
   eventVenue: string;
   eventStartDate: Date;
   eventEndDate: Date;
-  submittedAt: Date;
-  latitude: number;
-  longitude: number;
-  distanceFromVenue: number;
-  frontPhotoUrl: string;
-  backPhotoUrl: string;
-  signatureUrl: string;
+  checkInSubmittedAt: Date | null;
+  checkInLatitude: number | null;
+  checkInLongitude: number | null;
+  checkInDistance: number | null;
+  checkInFrontPhoto: string | null;
+  checkInBackPhoto: string | null;
+  checkInSignature: string | null;
+  checkOutSubmittedAt: Date | null;
+  checkOutLatitude: number | null;
+  checkOutLongitude: number | null;
+  checkOutDistance: number | null;
+  checkOutFrontPhoto: string | null;
+  checkOutBackPhoto: string | null;
+  checkOutSignature: string | null;
   verificationStatus: AttendanceStatus;
   verifiedByName?: string;
   verifiedAt?: Date;
@@ -116,13 +123,20 @@ export default function AttendanceDetailPage() {
           eventVenue: record.event.venueName,
           eventStartDate: record.event.startDateTime,
           eventEndDate: record.event.endDateTime,
-          submittedAt: record.submittedAt,
-          latitude: record.latitude,
-          longitude: record.longitude,
-          distanceFromVenue: record.distanceFromVenue,
-          frontPhotoUrl: record.frontPhotoUrl,
-          backPhotoUrl: record.backPhotoUrl,
-          signatureUrl: record.signatureUrl,
+          checkInSubmittedAt: record.checkInSubmittedAt,
+          checkInLatitude: record.checkInLatitude,
+          checkInLongitude: record.checkInLongitude,
+          checkInDistance: record.checkInDistance,
+          checkInFrontPhoto: record.checkInFrontPhoto,
+          checkInBackPhoto: record.checkInBackPhoto,
+          checkInSignature: record.checkInSignature,
+          checkOutSubmittedAt: record.checkOutSubmittedAt,
+          checkOutLatitude: record.checkOutLatitude,
+          checkOutLongitude: record.checkOutLongitude,
+          checkOutDistance: record.checkOutDistance,
+          checkOutFrontPhoto: record.checkOutFrontPhoto,
+          checkOutBackPhoto: record.checkOutBackPhoto,
+          checkOutSignature: record.checkOutSignature,
           verificationStatus: record.verificationStatus as AttendanceStatus,
           verifiedByName: record.verifiedBy
             ? `${record.verifiedBy.firstName} ${record.verifiedBy.lastName}`
@@ -308,41 +322,129 @@ export default function AttendanceDetailPage() {
         {/* Submission Details */}
         <Card>
           <CardHeader>
-            <CardTitle>Submission Details</CardTitle>
+            <CardTitle>Check-In Details</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label className="text-muted-foreground">Submitted At</Label>
-                <p className="font-medium">
-                  {format(attendance.submittedAt, "MMM d, yyyy HH:mm:ss")}
-                </p>
-              </div>
-              <div>
-                <Label className="text-muted-foreground">
-                  Distance from Venue
-                </Label>
-                <p className="font-medium">
-                  {attendance.distanceFromVenue.toFixed(2)} meters
-                </p>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label className="text-muted-foreground">Latitude</Label>
-                <p className="font-medium">{attendance.latitude.toFixed(6)}</p>
-              </div>
-              <div>
-                <Label className="text-muted-foreground">Longitude</Label>
-                <p className="font-medium">{attendance.longitude.toFixed(6)}</p>
-              </div>
-            </div>
-            {attendance.verifiedByName && (
+            {attendance.checkInSubmittedAt ? (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-muted-foreground">
+                      Check-In Time
+                    </Label>
+                    <p className="font-medium">
+                      {format(
+                        new Date(attendance.checkInSubmittedAt),
+                        "MMM d, yyyy HH:mm:ss",
+                      )}
+                    </p>
+                  </div>
+                  {attendance.checkInDistance !== null && (
+                    <div>
+                      <Label className="text-muted-foreground">
+                        Distance from Venue
+                      </Label>
+                      <p className="font-medium">
+                        {attendance.checkInDistance.toFixed(2)} meters
+                      </p>
+                    </div>
+                  )}
+                </div>
+                {attendance.checkInLatitude !== null &&
+                  attendance.checkInLongitude !== null && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-muted-foreground">
+                          Latitude
+                        </Label>
+                        <p className="font-medium">
+                          {attendance.checkInLatitude.toFixed(6)}
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-muted-foreground">
+                          Longitude
+                        </Label>
+                        <p className="font-medium">
+                          {attendance.checkInLongitude.toFixed(6)}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                No check-in data available
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Check-Out Details */}
+        {attendance.checkOutSubmittedAt && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Check-Out Details</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-muted-foreground">Verified By</Label>
-                  <p className="font-medium">{attendance.verifiedByName}</p>
+                  <Label className="text-muted-foreground">
+                    Check-Out Time
+                  </Label>
+                  <p className="font-medium">
+                    {format(
+                      new Date(attendance.checkOutSubmittedAt),
+                      "MMM d, yyyy HH:mm:ss",
+                    )}
+                  </p>
                 </div>
+                {attendance.checkOutDistance !== null && (
+                  <div>
+                    <Label className="text-muted-foreground">
+                      Distance from Venue
+                    </Label>
+                    <p className="font-medium">
+                      {attendance.checkOutDistance.toFixed(2)} meters
+                    </p>
+                  </div>
+                )}
+              </div>
+              {attendance.checkOutLatitude !== null &&
+                attendance.checkOutLongitude !== null && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-muted-foreground">Latitude</Label>
+                      <p className="font-medium">
+                        {attendance.checkOutLatitude.toFixed(6)}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-muted-foreground">Longitude</Label>
+                      <p className="font-medium">
+                        {attendance.checkOutLongitude.toFixed(6)}
+                      </p>
+                    </div>
+                  </div>
+                )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Verification Info */}
+        {(attendance.verifiedByName || attendance.verifiedAt) && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Verification Information</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4">
+                {attendance.verifiedByName && (
+                  <div>
+                    <Label className="text-muted-foreground">Verified By</Label>
+                    <p className="font-medium">{attendance.verifiedByName}</p>
+                  </div>
+                )}
                 {attendance.verifiedAt && (
                   <div>
                     <Label className="text-muted-foreground">Verified At</Label>
@@ -352,59 +454,131 @@ export default function AttendanceDetailPage() {
                   </div>
                 )}
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Photos */}
         <Card>
           <CardHeader>
-            <CardTitle>Submitted Photos</CardTitle>
+            <CardTitle>Check-In Photos</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <Label className="mb-2 block">Front Photo</Label>
-                <div className="relative aspect-[3/4] w-full overflow-hidden rounded-lg border bg-muted">
-                  <Image
-                    src={attendance.frontPhotoUrl}
-                    alt="Front photo"
-                    fill
-                    className="object-cover"
-                  />
-                </div>
+            {attendance.checkInFrontPhoto || attendance.checkInBackPhoto ? (
+              <div className="grid md:grid-cols-2 gap-4">
+                {attendance.checkInFrontPhoto && (
+                  <div>
+                    <Label className="mb-2 block">Front Photo</Label>
+                    <div className="relative aspect-[3/4] w-full overflow-hidden rounded-lg border bg-muted">
+                      <Image
+                        src={attendance.checkInFrontPhoto}
+                        alt="Check-in front photo"
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  </div>
+                )}
+                {attendance.checkInBackPhoto && (
+                  <div>
+                    <Label className="mb-2 block">Back Photo</Label>
+                    <div className="relative aspect-[3/4] w-full overflow-hidden rounded-lg border bg-muted">
+                      <Image
+                        src={attendance.checkInBackPhoto}
+                        alt="Check-in back photo"
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
-              <div>
-                <Label className="mb-2 block">Back Photo</Label>
-                <div className="relative aspect-[3/4] w-full overflow-hidden rounded-lg border bg-muted">
-                  <Image
-                    src={attendance.backPhotoUrl}
-                    alt="Back photo"
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-              </div>
-            </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                No check-in photos available
+              </p>
+            )}
           </CardContent>
         </Card>
+
+        {(attendance.checkOutFrontPhoto || attendance.checkOutBackPhoto) && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Check-Out Photos</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-2 gap-4">
+                {attendance.checkOutFrontPhoto && (
+                  <div>
+                    <Label className="mb-2 block">Front Photo</Label>
+                    <div className="relative aspect-[3/4] w-full overflow-hidden rounded-lg border bg-muted">
+                      <Image
+                        src={attendance.checkOutFrontPhoto}
+                        alt="Check-out front photo"
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  </div>
+                )}
+                {attendance.checkOutBackPhoto && (
+                  <div>
+                    <Label className="mb-2 block">Back Photo</Label>
+                    <div className="relative aspect-[3/4] w-full overflow-hidden rounded-lg border bg-muted">
+                      <Image
+                        src={attendance.checkOutBackPhoto}
+                        alt="Check-out back photo"
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Signature */}
         <Card>
           <CardHeader>
-            <CardTitle>Signature</CardTitle>
+            <CardTitle>Check-In Signature</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="relative h-40 w-full overflow-hidden rounded-lg border bg-white">
-              <Image
-                src={attendance.signatureUrl}
-                alt="Signature"
-                fill
-                className="object-contain"
-              />
-            </div>
+            {attendance.checkInSignature ? (
+              <div className="relative h-40 w-full overflow-hidden rounded-lg border bg-white">
+                <Image
+                  src={attendance.checkInSignature}
+                  alt="Check-in signature"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                No check-in signature available
+              </p>
+            )}
           </CardContent>
         </Card>
+
+        {attendance.checkOutSignature && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Check-Out Signature</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="relative h-40 w-full overflow-hidden rounded-lg border bg-white">
+                <Image
+                  src={attendance.checkOutSignature}
+                  alt="Check-out signature"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Verification Actions */}
         {attendance.verificationStatus === "Pending" && (

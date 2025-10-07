@@ -38,52 +38,46 @@ model Session {
 }
 
 model User {
-  id                  String        @id @default(cuid())
-  email               String        @unique
+  id                  String         @id @default(cuid())
+  email               String         @unique
   passwordHash        String
-  role                Role          @default(Student)
-  accountStatus       String        @default("active")
-  emailVerified       Boolean       @default(false)
-  createdAt           DateTime      @default(now())
+  role                Role           @default(Student)
+  accountStatus       String         @default("active")
+  emailVerified       Boolean        @default(false)
+  createdAt           DateTime       @default(now())
   lastLoginAt         DateTime?
   firstName           String
   lastName            String
+  attendances         Attendance[]
+  verifiedAttendances Attendance[]   @relation("AttendanceVerifier")
+  createdEvents       Event[]        @relation("EventCreator")
   SecurityLog         SecurityLog[]
   Session             Session[]
-  UserProfile         UserProfile?
-  createdEvents       Event[]       @relation("EventCreator")
-  attendances         Attendance[]
-  verifiedAttendances Attendance[]  @relation("AttendanceVerifier")
   systemConfigUpdates SystemConfig[] @relation("SystemConfigUpdater")
+  UserProfile         UserProfile?
 
   @@index([email])
 }
 
 model UserProfile {
-  id               String   @id @default(cuid())
-  userId           String   @unique
-  section          String?
-  department       String
-  updatedAt        DateTime @updatedAt
-  contactNumber    String?
-  createdAt        DateTime @default(now())
-  studentId        String   @unique
-  yearLevel        Int
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  section           String?
+  department        String
+  updatedAt         DateTime @updatedAt
+  contactNumber     String?
+  createdAt         DateTime @default(now())
+  studentId         String   @unique
+  yearLevel         Int
+  documentUrls      String[] @default([])
   profilePictureUrl String?
-  documentUrls     String[] @default([])
-  User             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-enum Role {
-  Student
-  Moderator
-  Administrator
+  User              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Event {
   id                 String       @id @default(cuid())
   name               String
-  description        String?      @db.Text
+  description        String?
   startDateTime      DateTime
   endDateTime        DateTime
   venueLatitude      Float
@@ -98,13 +92,66 @@ model Event {
   createdById        String
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
-
-  createdBy          User         @relation("EventCreator", fields: [createdById], references: [id])
   attendances        Attendance[]
+  createdBy          User         @relation("EventCreator", fields: [createdById], references: [id])
 
   @@index([startDateTime, endDateTime])
   @@index([status])
   @@index([createdById])
+}
+
+model Attendance {
+  id                  String             @id @default(cuid())
+  eventId             String
+  userId              String
+  verificationStatus  VerificationStatus @default(Pending)
+  verifiedById        String?
+  verifiedAt          DateTime?
+  disputeNote         String?
+  checkInBackPhoto    String?
+  checkInDistance     Float?
+  checkInFrontPhoto   String?
+  checkInIpAddress    String?
+  checkInLatitude     Float?
+  checkInLongitude    Float?
+  checkInSignature    String?
+  checkInSubmittedAt  DateTime?
+  checkInUserAgent    String?
+  checkOutBackPhoto   String?
+  checkOutDistance    Float?
+  checkOutFrontPhoto  String?
+  checkOutIpAddress   String?
+  checkOutLatitude    Float?
+  checkOutLongitude   Float?
+  checkOutSignature   String?
+  checkOutSubmittedAt DateTime?
+  checkOutUserAgent   String?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @default(now()) @updatedAt
+  event               Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user                User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  verifiedBy          User?              @relation("AttendanceVerifier", fields: [verifiedById], references: [id])
+
+  @@unique([eventId, userId])
+  @@index([userId, checkInSubmittedAt])
+  @@index([eventId, verificationStatus])
+  @@index([verificationStatus])
+}
+
+model SystemConfig {
+  id                        String   @id @default(cuid())
+  defaultGpsRadiusMeters    Int      @default(100)
+  defaultCheckInBufferMins  Int      @default(30)
+  defaultCheckOutBufferMins Int      @default(30)
+  updatedAt                 DateTime @updatedAt
+  updatedById               String
+  updatedBy                 User     @relation("SystemConfigUpdater", fields: [updatedById], references: [id])
+}
+
+enum Role {
+  Student
+  Moderator
+  Administrator
 }
 
 enum EventStatus {
@@ -113,48 +160,9 @@ enum EventStatus {
   Cancelled
 }
 
-model Attendance {
-  id                 String             @id @default(cuid())
-  eventId            String
-  userId             String
-  submittedAt        DateTime           @default(now())
-  latitude           Float
-  longitude          Float
-  distanceFromVenue  Float
-  frontPhotoUrl      String
-  backPhotoUrl       String
-  signatureUrl       String
-  verificationStatus VerificationStatus @default(Pending)
-  verifiedById       String?
-  verifiedAt         DateTime?
-  disputeNote        String?            @db.Text
-  ipAddress          String?
-  userAgent          String?
-
-  event              Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  verifiedBy         User?              @relation("AttendanceVerifier", fields: [verifiedById], references: [id])
-
-  @@unique([eventId, userId])
-  @@index([userId, submittedAt])
-  @@index([eventId, verificationStatus])
-  @@index([verificationStatus])
-}
-
 enum VerificationStatus {
   Pending
   Approved
   Rejected
   Disputed
-}
-
-model SystemConfig {
-  id                       String   @id @default(cuid())
-  defaultGpsRadiusMeters   Int      @default(100)
-  defaultCheckInBufferMins Int      @default(30)
-  defaultCheckOutBufferMins Int     @default(30)
-  updatedAt                DateTime @updatedAt
-  updatedById              String
-
-  updatedBy                User     @relation("SystemConfigUpdater", fields: [updatedById], references: [id])
 }

@@ -61,7 +61,12 @@ export default async function StudentDashboardPage() {
         attendanceHistory={attendanceHistory.map((item) => ({
           id: item.id,
           eventName: item.eventName,
-          submittedAt: new Date(item.submittedAt),
+          checkInSubmittedAt: item.checkInSubmittedAt
+            ? new Date(item.checkInSubmittedAt)
+            : null,
+          checkOutSubmittedAt: item.checkOutSubmittedAt
+            ? new Date(item.checkOutSubmittedAt)
+            : null,
           verificationStatus: item.verificationStatus,
         }))}
         upcomingEvents={upcomingEvents.map((event) => ({

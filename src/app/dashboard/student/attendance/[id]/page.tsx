@@ -94,7 +94,18 @@ async function AttendanceDetailPage({ params }: PageProps) {
         <CardHeader>
           <CardTitle>Attendance Details</CardTitle>
           <CardDescription>
-            Submitted on {new Date(attendance.submittedAt).toLocaleString()}
+            {attendance.checkInSubmittedAt && (
+              <span>
+                Check-In:{" "}
+                {new Date(attendance.checkInSubmittedAt).toLocaleString()}
+              </span>
+            )}
+            {attendance.checkOutSubmittedAt && (
+              <span className="ml-4">
+                Check-Out:{" "}
+                {new Date(attendance.checkOutSubmittedAt).toLocaleString()}
+              </span>
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -122,14 +133,26 @@ async function AttendanceDetailPage({ params }: PageProps) {
                   {new Date(attendance.event.startDateTime).toLocaleString()}
                 </dd>
               </div>
-              <div>
-                <dt className="text-sm font-medium text-muted-foreground">
-                  Distance from Venue
-                </dt>
-                <dd className="text-sm">
-                  {attendance.distanceFromVenue.toFixed(1)} meters
-                </dd>
-              </div>
+              {attendance.checkInDistance !== null && (
+                <div>
+                  <dt className="text-sm font-medium text-muted-foreground">
+                    Check-In Distance
+                  </dt>
+                  <dd className="text-sm">
+                    {attendance.checkInDistance.toFixed(1)} meters
+                  </dd>
+                </div>
+              )}
+              {attendance.checkOutDistance !== null && (
+                <div>
+                  <dt className="text-sm font-medium text-muted-foreground">
+                    Check-Out Distance
+                  </dt>
+                  <dd className="text-sm">
+                    {attendance.checkOutDistance.toFixed(1)} meters
+                  </dd>
+                </div>
+              )}
             </dl>
           </div>
 
@@ -165,45 +188,113 @@ async function AttendanceDetailPage({ params }: PageProps) {
 
           {/* Photos */}
           <div>
-            <h3 className="text-lg font-semibold mb-2">Submitted Photos</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm font-medium mb-2">Front Photo</p>
-                <div className="relative aspect-square rounded-md overflow-hidden border">
-                  <Image
-                    src={attendance.frontPhotoUrl}
-                    alt="Front photo"
-                    fill
-                    className="object-cover"
-                  />
-                </div>
+            <h3 className="text-lg font-semibold mb-2">Check-In Photos</h3>
+            {attendance.checkInFrontPhoto || attendance.checkInBackPhoto ? (
+              <div className="grid grid-cols-2 gap-4">
+                {attendance.checkInFrontPhoto && (
+                  <div>
+                    <p className="text-sm font-medium mb-2">Front Photo</p>
+                    <div className="relative aspect-square rounded-md overflow-hidden border">
+                      <Image
+                        src={attendance.checkInFrontPhoto}
+                        alt="Check-in front photo"
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  </div>
+                )}
+                {attendance.checkInBackPhoto && (
+                  <div>
+                    <p className="text-sm font-medium mb-2">Back Photo</p>
+                    <div className="relative aspect-square rounded-md overflow-hidden border">
+                      <Image
+                        src={attendance.checkInBackPhoto}
+                        alt="Check-in back photo"
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
-              <div>
-                <p className="text-sm font-medium mb-2">Back Photo</p>
-                <div className="relative aspect-square rounded-md overflow-hidden border">
-                  <Image
-                    src={attendance.backPhotoUrl}
-                    alt="Back photo"
-                    fill
-                    className="object-cover"
-                  />
-                </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                No check-in photos available
+              </p>
+            )}
+          </div>
+
+          {/* Check-Out Photos */}
+          {(attendance.checkOutFrontPhoto || attendance.checkOutBackPhoto) && (
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Check-Out Photos</h3>
+              <div className="grid grid-cols-2 gap-4">
+                {attendance.checkOutFrontPhoto && (
+                  <div>
+                    <p className="text-sm font-medium mb-2">Front Photo</p>
+                    <div className="relative aspect-square rounded-md overflow-hidden border">
+                      <Image
+                        src={attendance.checkOutFrontPhoto}
+                        alt="Check-out front photo"
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  </div>
+                )}
+                {attendance.checkOutBackPhoto && (
+                  <div>
+                    <p className="text-sm font-medium mb-2">Back Photo</p>
+                    <div className="relative aspect-square rounded-md overflow-hidden border">
+                      <Image
+                        src={attendance.checkOutBackPhoto}
+                        alt="Check-out back photo"
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
-          </div>
+          )}
 
           {/* Signature */}
           <div>
-            <h3 className="text-lg font-semibold mb-2">Digital Signature</h3>
-            <div className="relative w-full max-w-md h-32 rounded-md overflow-hidden border bg-white">
-              <Image
-                src={attendance.signatureUrl}
-                alt="Digital signature"
-                fill
-                className="object-contain"
-              />
-            </div>
+            <h3 className="text-lg font-semibold mb-2">Check-In Signature</h3>
+            {attendance.checkInSignature ? (
+              <div className="relative w-full max-w-md h-32 rounded-md overflow-hidden border bg-white">
+                <Image
+                  src={attendance.checkInSignature}
+                  alt="Check-in signature"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                No check-in signature available
+              </p>
+            )}
           </div>
+
+          {/* Check-Out Signature */}
+          {attendance.checkOutSignature && (
+            <div>
+              <h3 className="text-lg font-semibold mb-2">
+                Check-Out Signature
+              </h3>
+              <div className="relative w-full max-w-md h-32 rounded-md overflow-hidden border bg-white">
+                <Image
+                  src={attendance.checkOutSignature}
+                  alt="Check-out signature"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+            </div>
+          )}
 
           {/* Appeal Form - Only show for Rejected status */}
           {attendance.verificationStatus === "Rejected" && (

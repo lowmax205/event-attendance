@@ -12,7 +12,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { MapPin, CheckCircle2, XCircle, Loader2 } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
+import mapboxgl from "mapbox-gl";
+import "mapbox-gl/dist/mapbox-gl.css";
+
+mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || "";
+
+// Helper function to convert meters to pixels at max zoom
+function metersToPixelsAtMaxZoom(meters: number, latitude: number) {
+  return meters / 0.075 / Math.cos((latitude * Math.PI) / 180);
+}
 
 interface LocationVerifierProps {
   venueLat: number;
@@ -21,10 +30,6 @@ interface LocationVerifierProps {
   onVerified: (latitude: number, longitude: number, distance: number) => void;
 }
 
-/**
- * Location verifier component
- * Verifies user is within 100m of venue
- */
 export function LocationVerifier({
   venueLat,
   venueLon,
@@ -32,6 +37,11 @@ export function LocationVerifier({
   onVerified,
 }: LocationVerifierProps) {
   const { coords, error, loading, requestPermission } = useGeolocation();
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
+  const userMarker = useRef<mapboxgl.Marker | null>(null);
+  const venueMarker = useRef<mapboxgl.Marker | null>(null);
+  const [mapInitialized, setMapInitialized] = useState(false);
 
   // Calculate distance when coordinates are available
   const distance = coords
@@ -39,6 +49,115 @@ export function LocationVerifier({
     : null;
 
   const isWithinRange = distance !== null && distance <= 100;
+
+  // Initialize map
+  useEffect(() => {
+    if (!mapContainer.current || map.current) return;
+
+    map.current = new mapboxgl.Map({
+      container: mapContainer.current,
+      style: "mapbox://styles/mapbox/streets-v12",
+      center: [venueLon, venueLat],
+      zoom: 16,
+    });
+
+    map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
+
+    // Add venue marker (red)
+    venueMarker.current = new mapboxgl.Marker({ color: "#ef4444" })
+      .setLngLat([venueLon, venueLat])
+      .setPopup(
+        new mapboxgl.Popup({ offset: 25 }).setHTML(
+          `<div class="p-2">
+            <strong>${venueName}</strong>
+            <p class="text-sm text-gray-600">Event Venue</p>
+          </div>`,
+        ),
+      )
+      .addTo(map.current);
+
+    // Draw 100m radius circle around venue
+    map.current.on("load", () => {
+      if (!map.current) return;
+
+      // Add circle source and layer
+      map.current.addSource("venue-radius", {
+        type: "geojson",
+        data: {
+          type: "Feature",
+          properties: {},
+          geometry: {
+            type: "Point",
+            coordinates: [venueLon, venueLat],
+          },
+        },
+      });
+
+      // Add circle layer (100m radius)
+      map.current.addLayer({
+        id: "venue-circle",
+        type: "circle",
+        source: "venue-radius",
+        paint: {
+          "circle-radius": {
+            stops: [
+              [0, 0],
+              [20, metersToPixelsAtMaxZoom(100, venueLat)],
+            ],
+            base: 2,
+          },
+          "circle-color": "#22c55e",
+          "circle-opacity": 0.1,
+          "circle-stroke-width": 2,
+          "circle-stroke-color": "#22c55e",
+          "circle-stroke-opacity": 0.8,
+        },
+      });
+
+      setMapInitialized(true);
+    });
+
+    return () => {
+      map.current?.remove();
+      map.current = null;
+    };
+  }, [venueLat, venueLon, venueName]);
+
+  // Update user marker when coordinates change
+  useEffect(() => {
+    if (!map.current || !coords || !mapInitialized) return;
+
+    // Remove old user marker if exists
+    if (userMarker.current) {
+      userMarker.current.remove();
+    }
+
+    // Add new user marker (blue)
+    userMarker.current = new mapboxgl.Marker({ color: "#3b82f6" })
+      .setLngLat([coords.longitude, coords.latitude])
+      .setPopup(
+        new mapboxgl.Popup({ offset: 25 }).setHTML(
+          `<div class="p-2">
+            <strong>Your Location</strong>
+            <p class="text-sm text-gray-600">
+              ${distance !== null ? `${distance.toFixed(1)}m from venue` : ""}
+            </p>
+          </div>`,
+        ),
+      )
+      .addTo(map.current);
+
+    // Fit map to show both markers
+    const bounds = new mapboxgl.LngLatBounds();
+    bounds.extend([venueLon, venueLat]);
+    bounds.extend([coords.longitude, coords.latitude]);
+
+    map.current.fitBounds(bounds, {
+      padding: 80,
+      maxZoom: 17,
+      duration: 1000,
+    });
+  }, [coords, venueLat, venueLon, distance, mapInitialized]);
 
   // Auto-verify when within range
   useEffect(() => {
@@ -95,6 +214,31 @@ export function LocationVerifier({
               (max 100m).
             </AlertDescription>
           </Alert>
+        )}
+
+        {/* Map Visualization */}
+        {coords && (
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold">Location Map</h3>
+            <div
+              ref={mapContainer}
+              className="w-full h-[350px] rounded-lg border overflow-hidden"
+            />
+            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-blue-500" />
+                <span>Your Location</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-red-500" />
+                <span>Event Venue</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full border-2 border-green-500" />
+                <span>100m Radius</span>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Location details */}

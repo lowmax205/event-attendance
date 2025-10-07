@@ -23,7 +23,8 @@ interface UpcomingEvent {
 interface AttendanceRecord {
   id: string;
   eventName: string;
-  submittedAt: Date;
+  checkInSubmittedAt: Date | null;
+  checkOutSubmittedAt: Date | null;
   verificationStatus: "Pending" | "Approved" | "Rejected" | "Disputed";
 }
 

@@ -71,9 +71,9 @@ export default function AttendanceVerificationPage() {
           studentName: `${item.user.firstName} ${item.user.lastName}`,
           studentNumber: item.user.UserProfile?.studentId || "N/A",
           eventName: "Event", // We'll need to fetch event name separately
-          checkInTime: item.submittedAt,
+          checkInTime: item.checkInSubmittedAt || new Date(),
           verificationStatus: item.verificationStatus as AttendanceStatus,
-          photoFrontUrl: item.frontPhotoUrl,
+          photoFrontUrl: item.checkInFrontPhoto,
         }));
 
         setAttendances(records);

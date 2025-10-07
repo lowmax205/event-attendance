@@ -87,7 +87,7 @@ export async function getModeratorDashboard(
         },
       },
       orderBy: {
-        submittedAt: "asc",
+        checkInSubmittedAt: "asc",
       },
       take: 10, // Show top 10 pending
     });
@@ -131,11 +131,16 @@ export async function getModeratorDashboard(
       eventName: attendance.event.name,
       studentName: `${attendance.user.firstName} ${attendance.user.lastName}`,
       studentEmail: attendance.user.email,
-      submittedAt: attendance.submittedAt,
-      distanceFromVenue: attendance.distanceFromVenue,
-      frontPhotoUrl: attendance.frontPhotoUrl,
-      backPhotoUrl: attendance.backPhotoUrl,
-      signatureUrl: attendance.signatureUrl,
+      checkInSubmittedAt: attendance.checkInSubmittedAt,
+      checkOutSubmittedAt: attendance.checkOutSubmittedAt,
+      checkInDistance: attendance.checkInDistance,
+      checkOutDistance: attendance.checkOutDistance,
+      checkInFrontPhoto: attendance.checkInFrontPhoto,
+      checkInBackPhoto: attendance.checkInBackPhoto,
+      checkInSignature: attendance.checkInSignature,
+      checkOutFrontPhoto: attendance.checkOutFrontPhoto,
+      checkOutBackPhoto: attendance.checkOutBackPhoto,
+      checkOutSignature: attendance.checkOutSignature,
     }));
 
     return {

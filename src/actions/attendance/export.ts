@@ -26,7 +26,7 @@ export async function exportAttendance(filters: ExportFilters = {}) {
     const where: {
       eventId?: string;
       verificationStatus?: "Pending" | "Approved" | "Rejected" | "Disputed";
-      submittedAt?: {
+      checkInSubmittedAt?: {
         gte?: Date;
         lte?: Date;
       };
@@ -41,12 +41,12 @@ export async function exportAttendance(filters: ExportFilters = {}) {
     }
 
     if (startDate || endDate) {
-      where.submittedAt = {};
+      where.checkInSubmittedAt = {};
       if (startDate) {
-        where.submittedAt.gte = startDate;
+        where.checkInSubmittedAt.gte = startDate;
       }
       if (endDate) {
-        where.submittedAt.lte = endDate;
+        where.checkInSubmittedAt.lte = endDate;
       }
     }
 
@@ -79,7 +79,7 @@ export async function exportAttendance(filters: ExportFilters = {}) {
         },
       },
       orderBy: {
-        submittedAt: "desc",
+        checkInSubmittedAt: "desc",
       },
     });
 
@@ -89,10 +89,12 @@ export async function exportAttendance(filters: ExportFilters = {}) {
       "Student ID",
       "Event Name",
       "Event Date",
-      "Submitted At",
+      "Check-In Time",
+      "Check-Out Time",
       "Verification Status",
       "Verified By",
-      "Distance (meters)",
+      "Check-In Distance (m)",
+      "Check-Out Distance (m)",
     ];
 
     // CSV Rows
@@ -103,22 +105,34 @@ export async function exportAttendance(filters: ExportFilters = {}) {
       const eventDate = attendance.event.startDateTime
         .toISOString()
         .split("T")[0];
-      const submittedAt = attendance.submittedAt.toISOString();
+      const checkInTime = attendance.checkInSubmittedAt
+        ? attendance.checkInSubmittedAt.toISOString()
+        : "N/A";
+      const checkOutTime = attendance.checkOutSubmittedAt
+        ? attendance.checkOutSubmittedAt.toISOString()
+        : "Not checked out";
       const verificationStatus = attendance.verificationStatus;
       const verifiedBy = attendance.verifiedBy
         ? `${attendance.verifiedBy.firstName} ${attendance.verifiedBy.lastName}`
         : "N/A";
-      const distance = attendance.distanceFromVenue.toFixed(1);
+      const checkInDistance = attendance.checkInDistance
+        ? attendance.checkInDistance.toFixed(1)
+        : "N/A";
+      const checkOutDistance = attendance.checkOutDistance
+        ? attendance.checkOutDistance.toFixed(1)
+        : "N/A";
 
       return [
         studentName,
         studentId,
         eventName,
         eventDate,
-        submittedAt,
+        checkInTime,
+        checkOutTime,
         verificationStatus,
         verifiedBy,
-        distance,
+        checkInDistance,
+        checkOutDistance,
       ];
     });
 

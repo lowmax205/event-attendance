@@ -42,11 +42,16 @@ interface PendingVerification {
   id: string;
   studentName: string;
   eventName: string;
-  submittedAt: Date;
-  frontPhotoUrl: string;
-  backPhotoUrl: string;
-  signatureUrl: string;
-  distanceFromVenue: number;
+  checkInSubmittedAt: Date | null;
+  checkOutSubmittedAt: Date | null;
+  checkInFrontPhoto: string | null;
+  checkInBackPhoto: string | null;
+  checkInSignature: string | null;
+  checkOutFrontPhoto: string | null;
+  checkOutBackPhoto: string | null;
+  checkOutSignature: string | null;
+  checkInDistance: number | null;
+  checkOutDistance: number | null;
 }
 
 interface ModeratorDashboardProps {
@@ -221,13 +226,34 @@ export function ModeratorDashboard({
                     <p className="text-sm text-muted-foreground">
                       {verification.eventName}
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                      Submitted:{" "}
-                      {new Date(verification.submittedAt).toLocaleString()}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Distance: {verification.distanceFromVenue.toFixed(1)}m
-                    </p>
+                    {verification.checkInSubmittedAt && (
+                      <p className="text-xs text-muted-foreground">
+                        Check-In:{" "}
+                        {new Date(
+                          verification.checkInSubmittedAt,
+                        ).toLocaleString()}
+                      </p>
+                    )}
+                    {verification.checkOutSubmittedAt && (
+                      <p className="text-xs text-muted-foreground">
+                        Check-Out:{" "}
+                        {new Date(
+                          verification.checkOutSubmittedAt,
+                        ).toLocaleString()}
+                      </p>
+                    )}
+                    {verification.checkInDistance !== null && (
+                      <p className="text-xs text-muted-foreground">
+                        Check-In Distance:{" "}
+                        {verification.checkInDistance.toFixed(1)}m
+                      </p>
+                    )}
+                    {verification.checkOutDistance !== null && (
+                      <p className="text-xs text-muted-foreground">
+                        Check-Out Distance:{" "}
+                        {verification.checkOutDistance.toFixed(1)}m
+                      </p>
+                    )}
                   </div>
                   <div className="flex gap-2">
                     <Dialog>
@@ -247,44 +273,110 @@ export function ModeratorDashboard({
                         </DialogHeader>
                         {selectedVerification && (
                           <div className="space-y-4">
+                            <h3 className="font-semibold">Check-In</h3>
                             <div className="grid gap-4 md:grid-cols-2">
+                              {selectedVerification.checkInFrontPhoto && (
+                                <div>
+                                  <p className="mb-2 text-sm font-medium">
+                                    Front Photo
+                                  </p>
+                                  <Image
+                                    src={selectedVerification.checkInFrontPhoto}
+                                    alt="Check-in front photo"
+                                    width={300}
+                                    height={300}
+                                    className="rounded-lg border"
+                                  />
+                                </div>
+                              )}
+                              {selectedVerification.checkInBackPhoto && (
+                                <div>
+                                  <p className="mb-2 text-sm font-medium">
+                                    Back Photo
+                                  </p>
+                                  <Image
+                                    src={selectedVerification.checkInBackPhoto}
+                                    alt="Check-in back photo"
+                                    width={300}
+                                    height={300}
+                                    className="rounded-lg border"
+                                  />
+                                </div>
+                              )}
+                            </div>
+                            {selectedVerification.checkInSignature && (
                               <div>
                                 <p className="mb-2 text-sm font-medium">
-                                  Front Photo
+                                  Signature
                                 </p>
                                 <Image
-                                  src={selectedVerification.frontPhotoUrl}
-                                  alt="Front photo"
-                                  width={300}
-                                  height={300}
-                                  className="rounded-lg border"
+                                  src={selectedVerification.checkInSignature}
+                                  alt="Check-in signature"
+                                  width={400}
+                                  height={150}
+                                  className="rounded-lg border bg-white"
                                 />
                               </div>
-                              <div>
-                                <p className="mb-2 text-sm font-medium">
-                                  Back Photo
-                                </p>
-                                <Image
-                                  src={selectedVerification.backPhotoUrl}
-                                  alt="Back photo"
-                                  width={300}
-                                  height={300}
-                                  className="rounded-lg border"
-                                />
-                              </div>
-                            </div>
-                            <div>
-                              <p className="mb-2 text-sm font-medium">
-                                Signature
-                              </p>
-                              <Image
-                                src={selectedVerification.signatureUrl}
-                                alt="Signature"
-                                width={400}
-                                height={150}
-                                className="rounded-lg border bg-white"
-                              />
-                            </div>
+                            )}
+                            {(selectedVerification.checkOutFrontPhoto ||
+                              selectedVerification.checkOutBackPhoto ||
+                              selectedVerification.checkOutSignature) && (
+                              <>
+                                <h3 className="font-semibold mt-6">
+                                  Check-Out
+                                </h3>
+                                <div className="grid gap-4 md:grid-cols-2">
+                                  {selectedVerification.checkOutFrontPhoto && (
+                                    <div>
+                                      <p className="mb-2 text-sm font-medium">
+                                        Front Photo
+                                      </p>
+                                      <Image
+                                        src={
+                                          selectedVerification.checkOutFrontPhoto
+                                        }
+                                        alt="Check-out front photo"
+                                        width={300}
+                                        height={300}
+                                        className="rounded-lg border"
+                                      />
+                                    </div>
+                                  )}
+                                  {selectedVerification.checkOutBackPhoto && (
+                                    <div>
+                                      <p className="mb-2 text-sm font-medium">
+                                        Back Photo
+                                      </p>
+                                      <Image
+                                        src={
+                                          selectedVerification.checkOutBackPhoto
+                                        }
+                                        alt="Check-out back photo"
+                                        width={300}
+                                        height={300}
+                                        className="rounded-lg border"
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+                                {selectedVerification.checkOutSignature && (
+                                  <div>
+                                    <p className="mb-2 text-sm font-medium">
+                                      Signature
+                                    </p>
+                                    <Image
+                                      src={
+                                        selectedVerification.checkOutSignature
+                                      }
+                                      alt="Check-out signature"
+                                      width={400}
+                                      height={150}
+                                      className="rounded-lg border bg-white"
+                                    />
+                                  </div>
+                                )}
+                              </>
+                            )}
                           </div>
                         )}
                       </DialogContent>

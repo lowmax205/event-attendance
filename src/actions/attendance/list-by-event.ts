@@ -70,7 +70,7 @@ export async function listAttendanceByEvent(
         },
       },
       orderBy: {
-        submittedAt: "desc",
+        checkInSubmittedAt: "desc",
       },
       skip,
       take: limit,

@@ -30,12 +30,17 @@ export async function checkDuplicateAttendance(
       },
       select: {
         id: true,
-        submittedAt: true,
+        checkInSubmittedAt: true,
+        checkOutSubmittedAt: true,
         verificationStatus: true,
-        frontPhotoUrl: true,
-        backPhotoUrl: true,
-        signatureUrl: true,
-        distanceFromVenue: true,
+        checkInFrontPhoto: true,
+        checkInBackPhoto: true,
+        checkInSignature: true,
+        checkOutFrontPhoto: true,
+        checkOutBackPhoto: true,
+        checkOutSignature: true,
+        checkInDistance: true,
+        checkOutDistance: true,
       },
     });
 

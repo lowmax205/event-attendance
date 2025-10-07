@@ -449,13 +449,18 @@ async function main() {
         data: {
           eventId: event.id,
           userId: student.id,
-          submittedAt,
-          latitude: event.venueLatitude + latOffset,
-          longitude: event.venueLongitude + lngOffset,
-          distanceFromVenue,
-          frontPhotoUrl: `https://res.cloudinary.com/demo/image/upload/sample_front_${totalAttendances + 1}.jpg`,
-          backPhotoUrl: `https://res.cloudinary.com/demo/image/upload/sample_back_${totalAttendances + 1}.jpg`,
-          signatureUrl: `https://res.cloudinary.com/demo/image/upload/sample_signature_${totalAttendances + 1}.png`,
+          // Check-in data (seed data represents completed check-ins)
+          checkInSubmittedAt: submittedAt,
+          checkInLatitude: event.venueLatitude + latOffset,
+          checkInLongitude: event.venueLongitude + lngOffset,
+          checkInDistance: distanceFromVenue,
+          checkInFrontPhoto: `https://res.cloudinary.com/demo/image/upload/sample_front_${totalAttendances + 1}.jpg`,
+          checkInBackPhoto: `https://res.cloudinary.com/demo/image/upload/sample_back_${totalAttendances + 1}.jpg`,
+          checkInSignature: `https://res.cloudinary.com/demo/image/upload/sample_signature_${totalAttendances + 1}.png`,
+          checkInIpAddress: `192.168.1.${Math.floor(Math.random() * 254) + 1}`,
+          checkInUserAgent:
+            "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15",
+          // Verification data
           verificationStatus,
           verifiedById,
           verifiedAt,
@@ -463,9 +468,6 @@ async function main() {
             verificationStatus === "Rejected"
               ? "Location verification failed - distance exceeds 100m threshold"
               : null,
-          ipAddress: `192.168.1.${Math.floor(Math.random() * 254) + 1}`,
-          userAgent:
-            "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15",
         },
       });
       totalAttendances++;

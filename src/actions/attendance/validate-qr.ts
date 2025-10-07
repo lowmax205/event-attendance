@@ -106,7 +106,8 @@ export async function validateQR(input: unknown) {
         },
       },
       select: {
-        submittedAt: true,
+        checkInSubmittedAt: true,
+        checkOutSubmittedAt: true,
         verificationStatus: true,
       },
     });

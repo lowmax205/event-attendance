@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createEventSchema, updateEventSchema } from "@/lib/validations/event";
 import { Button } from "@/components/ui/button";
+import { MapLocationPicker } from "@/components/dashboard/map-location-picker";
 import {
   Form,
   FormControl,
@@ -23,7 +24,7 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Clock } from "lucide-react";
 
 type EventFormData = {
   name: string;
@@ -130,11 +131,28 @@ export function EventForm({
                     <Calendar
                       mode="single"
                       selected={field.value ? new Date(field.value) : undefined}
-                      onSelect={(date) => field.onChange(date?.toISOString())}
-                      disabled={(date) => date < new Date()}
+                      onSelect={(date) => {
+                        if (date) {
+                          // Preserve time if already set, otherwise use current time
+                          if (field.value) {
+                            const existingDate = new Date(field.value);
+                            date.setHours(
+                              existingDate.getHours(),
+                              existingDate.getMinutes(),
+                            );
+                          } else {
+                            const now = new Date();
+                            date.setHours(now.getHours(), now.getMinutes());
+                          }
+                          field.onChange(date.toISOString());
+                        }
+                      }}
+                      disabled={(date) =>
+                        date < new Date(new Date().setHours(0, 0, 0, 0))
+                      }
                       initialFocus
                     />
-                    <div className="border-t p-3">
+                    <div className="border-t p-3 space-y-2">
                       <Input
                         type="time"
                         value={
@@ -143,14 +161,30 @@ export function EventForm({
                             : ""
                         }
                         onChange={(e) => {
-                          if (field.value) {
-                            const date = new Date(field.value);
-                            const [hours, minutes] = e.target.value.split(":");
-                            date.setHours(parseInt(hours), parseInt(minutes));
-                            field.onChange(date.toISOString());
-                          }
+                          const currentDate = field.value
+                            ? new Date(field.value)
+                            : new Date();
+                          const [hours, minutes] = e.target.value.split(":");
+                          currentDate.setHours(
+                            parseInt(hours),
+                            parseInt(minutes),
+                          );
+                          field.onChange(currentDate.toISOString());
                         }}
                       />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={() => {
+                          const now = new Date();
+                          field.onChange(now.toISOString());
+                        }}
+                      >
+                        <Clock className="mr-2 h-4 w-4" />
+                        Now
+                      </Button>
                     </div>
                   </PopoverContent>
                 </Popover>
@@ -188,11 +222,29 @@ export function EventForm({
                     <Calendar
                       mode="single"
                       selected={field.value ? new Date(field.value) : undefined}
-                      onSelect={(date) => field.onChange(date?.toISOString())}
-                      disabled={(date) => date < new Date()}
+                      onSelect={(date) => {
+                        if (date) {
+                          // Preserve time if already set, otherwise use current time + 2 hours
+                          if (field.value) {
+                            const existingDate = new Date(field.value);
+                            date.setHours(
+                              existingDate.getHours(),
+                              existingDate.getMinutes(),
+                            );
+                          } else {
+                            const now = new Date();
+                            now.setHours(now.getHours() + 2);
+                            date.setHours(now.getHours(), now.getMinutes());
+                          }
+                          field.onChange(date.toISOString());
+                        }
+                      }}
+                      disabled={(date) =>
+                        date < new Date(new Date().setHours(0, 0, 0, 0))
+                      }
                       initialFocus
                     />
-                    <div className="border-t p-3">
+                    <div className="border-t p-3 space-y-2">
                       <Input
                         type="time"
                         value={
@@ -201,14 +253,36 @@ export function EventForm({
                             : ""
                         }
                         onChange={(e) => {
-                          if (field.value) {
-                            const date = new Date(field.value);
-                            const [hours, minutes] = e.target.value.split(":");
-                            date.setHours(parseInt(hours), parseInt(minutes));
-                            field.onChange(date.toISOString());
-                          }
+                          const currentDate = field.value
+                            ? new Date(field.value)
+                            : new Date();
+                          const [hours, minutes] = e.target.value.split(":");
+                          currentDate.setHours(
+                            parseInt(hours),
+                            parseInt(minutes),
+                          );
+                          field.onChange(currentDate.toISOString());
                         }}
                       />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={() => {
+                          const startTime = form.watch("startDateTime");
+                          const baseTime = startTime
+                            ? new Date(startTime)
+                            : new Date();
+                          const endTime = new Date(
+                            baseTime.getTime() + 2 * 60 * 60 * 1000,
+                          ); // +2 hours
+                          field.onChange(endTime.toISOString());
+                        }}
+                      >
+                        <Clock className="mr-2 h-4 w-4" />
+                        +2 Hours
+                      </Button>
                     </div>
                   </PopoverContent>
                 </Popover>
@@ -298,6 +372,18 @@ export function EventForm({
                   <FormMessage />
                 </FormItem>
               )}
+            />
+          </div>
+
+          {/* Map Location Picker */}
+          <div className="pt-4">
+            <MapLocationPicker
+              onLocationSelect={(lat, lng) => {
+                form.setValue("venueLatitude", lat);
+                form.setValue("venueLongitude", lng);
+              }}
+              initialLatitude={form.watch("venueLatitude")}
+              initialLongitude={form.watch("venueLongitude")}
             />
           </div>
         </div>

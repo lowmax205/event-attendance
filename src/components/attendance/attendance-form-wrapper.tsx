@@ -9,6 +9,7 @@ import { Logo } from "@/components/logo";
 import { LocationVerifier } from "./location-verifier";
 import { CameraCapture } from "./camera-capture";
 import { SignatureCanvasComponent } from "./signature-canvas";
+import { DeviceAccessControl } from "./device-access-control";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -33,6 +34,7 @@ import { z } from "zod";
 // Form validation schema
 const attendanceFormSchema = z.object({
   eventId: z.string().min(1, "Event ID is required"),
+  attendanceType: z.enum(["check-in", "check-out"]),
   latitude: z.number(),
   longitude: z.number(),
   frontPhoto: z.string().min(1, "Front photo is required"),
@@ -64,9 +66,15 @@ interface EventData {
 
 interface AttendanceFormWrapperProps {
   event: EventData;
+  attendanceType: "check-in" | "check-out";
+  userRole: "student" | "moderator" | "admin";
 }
 
-export function AttendanceFormWrapper({ event }: AttendanceFormWrapperProps) {
+export function AttendanceFormWrapper({
+  event,
+  attendanceType,
+  userRole,
+}: AttendanceFormWrapperProps) {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -77,6 +85,7 @@ export function AttendanceFormWrapper({ event }: AttendanceFormWrapperProps) {
     resolver: zodResolver(attendanceFormSchema),
     defaultValues: {
       eventId: event.id,
+      attendanceType: attendanceType,
       latitude: 0,
       longitude: 0,
       frontPhoto: "",
@@ -122,6 +131,7 @@ export function AttendanceFormWrapper({ event }: AttendanceFormWrapperProps) {
     try {
       const result = await submitAttendance({
         eventId: data.eventId,
+        attendanceType: data.attendanceType,
         latitude: data.latitude,
         longitude: data.longitude,
         frontPhoto: data.frontPhoto,
@@ -170,277 +180,309 @@ export function AttendanceFormWrapper({ event }: AttendanceFormWrapperProps) {
   const progress = (currentStep / STEPS.length) * 100;
 
   return (
-    <div className="container max-w-4xl mx-auto px-4 py-8 space-y-6">
-      {/* Logo */}
-      <div className="flex justify-center mb-6">
-        <Logo href="/" size="lg" />
-      </div>
-
-      {/* Header */}
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">{event.name}</h1>
-        <p className="text-muted-foreground">{event.description}</p>
-        <div className="flex flex-wrap gap-2">
-          <Badge variant="outline">{event.venueName}</Badge>
-          <Badge variant="outline">
-            {new Date(event.startDateTime).toLocaleDateString()}
-          </Badge>
+    <DeviceAccessControl userRole={userRole} requireMobile={true}>
+      <div className="container max-w-4xl mx-auto px-4 py-8 space-y-6">
+        {/* Logo */}
+        <div className="flex justify-center mb-6">
+          <Logo href="/" size="lg" />
         </div>
-      </div>
 
-      {/* Progress Indicator */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">
-            Step {currentStep} of {STEPS.length}: {STEPS[currentStep - 1].name}
-          </CardTitle>
-          <CardDescription>
-            {STEPS[currentStep - 1].description}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Progress value={progress} className="h-2" />
-        </CardContent>
-      </Card>
+        {/* Header */}
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight">{event.name}</h1>
+          <p className="text-muted-foreground">{event.description}</p>
+          <div className="flex flex-wrap gap-2">
+            <Badge
+              variant={attendanceType === "check-in" ? "default" : "secondary"}
+              className="text-sm font-semibold"
+            >
+              {attendanceType === "check-in" ? "CHECK-IN" : "CHECK-OUT"}
+            </Badge>
+            <Badge variant="outline">{event.venueName}</Badge>
+            <Badge variant="outline">
+              {new Date(event.startDateTime).toLocaleDateString()}
+            </Badge>
+          </div>
+        </div>
 
-      {/* Step Content */}
-      <Card>
-        <CardContent className="pt-6">
-          {/* Step 1: Location Verification */}
-          {currentStep === 1 && (
-            <div className="space-y-4">
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  You must be within 100 meters of the event venue to check in.
-                  Please enable location permissions when prompted.
-                </AlertDescription>
-              </Alert>
-              <LocationVerifier
-                venueLat={event.venueLatitude}
-                venueLon={event.venueLongitude}
-                venueName={event.venueName}
-                onVerified={handleLocationVerified}
-              />
-            </div>
-          )}
+        {/* Attendance Type Alert */}
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            {attendanceType === "check-in" ? (
+              <span>
+                You are <strong>checking in</strong> to this event. Complete all
+                steps to mark your arrival.
+              </span>
+            ) : (
+              <span>
+                You are <strong>checking out</strong> from this event. Complete
+                all steps to mark your departure.
+              </span>
+            )}
+          </AlertDescription>
+        </Alert>
 
-          {/* Step 2: Front Photo */}
-          {currentStep === 2 && (
-            <div className="space-y-4">
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  Take a clear front-facing photo. Make sure your face is
-                  visible and well-lit.
-                </AlertDescription>
-              </Alert>
-              {form.watch("frontPhoto") ? (
-                <div className="space-y-4">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={form.watch("frontPhoto")}
-                    alt="Front photo"
-                    className="w-full max-w-md mx-auto rounded-lg border"
-                  />
-                  <div className="flex justify-center gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => setFrontCameraOpen(true)}
-                    >
-                      Retake Photo
-                    </Button>
-                    <Button onClick={() => setCurrentStep(3)}>
-                      Continue
-                      <ChevronRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex justify-center">
-                  <Button onClick={() => setFrontCameraOpen(true)} size="lg">
-                    Take Front Photo
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
+        {/* Progress Indicator */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">
+              Step {currentStep} of {STEPS.length}:{" "}
+              {STEPS[currentStep - 1].name}
+            </CardTitle>
+            <CardDescription>
+              {STEPS[currentStep - 1].description}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Progress value={progress} className="h-2" />
+          </CardContent>
+        </Card>
 
-          {/* Step 3: Back Photo */}
-          {currentStep === 3 && (
-            <div className="space-y-4">
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  Take a back-facing photo showing the event venue or
-                  surrounding area.
-                </AlertDescription>
-              </Alert>
-              {form.watch("backPhoto") ? (
-                <div className="space-y-4">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={form.watch("backPhoto")}
-                    alt="Back photo"
-                    className="w-full max-w-md mx-auto rounded-lg border"
-                  />
-                  <div className="flex justify-center gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => setBackCameraOpen(true)}
-                    >
-                      Retake Photo
-                    </Button>
-                    <Button onClick={() => setCurrentStep(4)}>
-                      Continue
-                      <ChevronRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex justify-center">
-                  <Button onClick={() => setBackCameraOpen(true)} size="lg">
-                    Take Back Photo
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Step 4: Signature */}
-          {currentStep === 4 && (
-            <div className="space-y-4">
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  Sign your name in the box below to confirm your attendance.
-                </AlertDescription>
-              </Alert>
-              <SignatureCanvasComponent onSignature={handleSignature} />
-              {form.watch("signature") && (
-                <div className="flex justify-center">
-                  <Button onClick={() => setCurrentStep(5)}>
-                    Continue
-                    <ChevronRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Step 5: Review & Submit */}
-          {currentStep === 5 && (
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <Alert>
-                <CheckCircle2 className="h-4 w-4" />
-                <AlertDescription>
-                  Review your attendance submission before submitting.
-                </AlertDescription>
-              </Alert>
-
+        {/* Step Content */}
+        <Card>
+          <CardContent className="pt-6">
+            {/* Step 1: Location Verification */}
+            {currentStep === 1 && (
               <div className="space-y-4">
-                <div>
-                  <h3 className="font-semibold mb-2">Event Details</h3>
-                  <p className="text-sm text-muted-foreground">{event.name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {event.venueName}
-                  </p>
-                </div>
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    You must be within 100 meters of the event venue to check
+                    in. Please enable location permissions when prompted.
+                  </AlertDescription>
+                </Alert>
+                <LocationVerifier
+                  venueLat={event.venueLatitude}
+                  venueLon={event.venueLongitude}
+                  venueName={event.venueName}
+                  onVerified={handleLocationVerified}
+                />
+              </div>
+            )}
 
-                <div>
-                  <h3 className="font-semibold mb-2">Location</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Latitude: {form.watch("latitude").toFixed(6)}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Longitude: {form.watch("longitude").toFixed(6)}
-                  </p>
-                </div>
+            {/* Step 2: Front Photo */}
+            {currentStep === 2 && (
+              <div className="space-y-4">
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    Take a clear front-facing photo. Make sure your face is
+                    visible and well-lit.
+                  </AlertDescription>
+                </Alert>
+                {form.watch("frontPhoto") ? (
+                  <div className="space-y-4">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={form.watch("frontPhoto")}
+                      alt="Front photo"
+                      className="w-full max-w-md mx-auto rounded-lg border"
+                    />
+                    <div className="flex justify-center gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => setFrontCameraOpen(true)}
+                      >
+                        Retake Photo
+                      </Button>
+                      <Button onClick={() => setCurrentStep(3)}>
+                        Continue
+                        <ChevronRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex justify-center">
+                    <Button onClick={() => setFrontCameraOpen(true)} size="lg">
+                      Take Front Photo
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
 
-                <div>
-                  <h3 className="font-semibold mb-2">Photos</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm font-medium mb-2">Front Photo</p>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={form.watch("frontPhoto")}
-                        alt="Front"
-                        className="w-full rounded-lg border"
-                      />
+            {/* Step 3: Back Photo */}
+            {currentStep === 3 && (
+              <div className="space-y-4">
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    Take a back-facing photo showing the event venue or
+                    surrounding area.
+                  </AlertDescription>
+                </Alert>
+                {form.watch("backPhoto") ? (
+                  <div className="space-y-4">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={form.watch("backPhoto")}
+                      alt="Back photo"
+                      className="w-full max-w-md mx-auto rounded-lg border"
+                    />
+                    <div className="flex justify-center gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => setBackCameraOpen(true)}
+                      >
+                        Retake Photo
+                      </Button>
+                      <Button onClick={() => setCurrentStep(4)}>
+                        Continue
+                        <ChevronRight className="ml-2 h-4 w-4" />
+                      </Button>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium mb-2">Back Photo</p>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={form.watch("backPhoto")}
-                        alt="Back"
-                        className="w-full rounded-lg border"
-                      />
+                  </div>
+                ) : (
+                  <div className="flex justify-center">
+                    <Button onClick={() => setBackCameraOpen(true)} size="lg">
+                      Take Back Photo
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Step 4: Signature */}
+            {currentStep === 4 && (
+              <div className="space-y-4">
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    Sign your name in the box below to confirm your attendance.
+                  </AlertDescription>
+                </Alert>
+                <SignatureCanvasComponent onSignature={handleSignature} />
+                {form.watch("signature") && (
+                  <div className="flex justify-center">
+                    <Button onClick={() => setCurrentStep(5)}>
+                      Continue
+                      <ChevronRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Step 5: Review & Submit */}
+            {currentStep === 5 && (
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-6"
+              >
+                <Alert>
+                  <CheckCircle2 className="h-4 w-4" />
+                  <AlertDescription>
+                    Review your attendance submission before submitting.
+                  </AlertDescription>
+                </Alert>
+
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-semibold mb-2">Event Details</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {event.name}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {event.venueName}
+                    </p>
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold mb-2">Location</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Latitude: {form.watch("latitude").toFixed(6)}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Longitude: {form.watch("longitude").toFixed(6)}
+                    </p>
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold mb-2">Photos</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm font-medium mb-2">Front Photo</p>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={form.watch("frontPhoto")}
+                          alt="Front"
+                          className="w-full rounded-lg border"
+                        />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium mb-2">Back Photo</p>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={form.watch("backPhoto")}
+                          alt="Back"
+                          className="w-full rounded-lg border"
+                        />
+                      </div>
                     </div>
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold mb-2">Signature</h3>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={form.watch("signature")}
+                      alt="Signature"
+                      className="w-full max-w-xs rounded-lg border bg-white"
+                    />
                   </div>
                 </div>
 
-                <div>
-                  <h3 className="font-semibold mb-2">Signature</h3>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={form.watch("signature")}
-                    alt="Signature"
-                    className="w-full max-w-xs rounded-lg border bg-white"
-                  />
+                <div className="flex justify-between pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={goToPreviousStep}
+                    disabled={isSubmitting}
+                  >
+                    <ChevronLeft className="mr-2 h-4 w-4" />
+                    Back
+                  </Button>
+                  <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    Submit Attendance
+                  </Button>
                 </div>
-              </div>
+              </form>
+            )}
+          </CardContent>
+        </Card>
 
-              <div className="flex justify-between pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={goToPreviousStep}
-                  disabled={isSubmitting}
-                >
-                  <ChevronLeft className="mr-2 h-4 w-4" />
-                  Back
-                </Button>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  )}
-                  Submit Attendance
-                </Button>
-              </div>
-            </form>
-          )}
-        </CardContent>
-      </Card>
+        {/* Navigation */}
+        {currentStep > 1 && currentStep < 5 && (
+          <div className="flex justify-between">
+            <Button variant="outline" onClick={goToPreviousStep}>
+              <ChevronLeft className="mr-2 h-4 w-4" />
+              Back
+            </Button>
+          </div>
+        )}
 
-      {/* Navigation */}
-      {currentStep > 1 && currentStep < 5 && (
-        <div className="flex justify-between">
-          <Button variant="outline" onClick={goToPreviousStep}>
-            <ChevronLeft className="mr-2 h-4 w-4" />
-            Back
-          </Button>
-        </div>
-      )}
-
-      {/* Camera Modals */}
-      <CameraCapture
-        open={frontCameraOpen}
-        onOpenChange={setFrontCameraOpen}
-        onCapture={handleFrontPhoto}
-        title="Take Front Photo"
-        description="Take a clear front-facing photo. Make sure your face is visible and well-lit."
-        facingMode="user"
-      />
-      <CameraCapture
-        open={backCameraOpen}
-        onOpenChange={setBackCameraOpen}
-        onCapture={handleBackPhoto}
-        title="Take Back Photo"
-        description="Take a back-facing photo showing the event venue or surrounding area."
-        facingMode="environment"
-      />
-    </div>
+        {/* Camera Modals */}
+        <CameraCapture
+          open={frontCameraOpen}
+          onOpenChange={setFrontCameraOpen}
+          onCapture={handleFrontPhoto}
+          title="Take Front Photo"
+          description="Take a clear front-facing photo. Make sure your face is visible and well-lit."
+          facingMode="user"
+        />
+        <CameraCapture
+          open={backCameraOpen}
+          onOpenChange={setBackCameraOpen}
+          onCapture={handleBackPhoto}
+          title="Take Back Photo"
+          description="Take a back-facing photo showing the event venue or surrounding area."
+          facingMode="environment"
+        />
+      </div>
+    </DeviceAccessControl>
   );
 }

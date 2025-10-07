@@ -24,7 +24,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 interface AttendanceRecord {
   id: string;
   eventName: string;
-  submittedAt: Date;
+  checkInSubmittedAt: Date | null;
+  checkOutSubmittedAt: Date | null;
   verificationStatus: "Pending" | "Approved" | "Rejected" | "Disputed";
 }
 
@@ -71,14 +72,15 @@ export function AttendanceHistory({
           <TableHeader>
             <TableRow>
               <TableHead>Event Name</TableHead>
-              <TableHead>Submitted At</TableHead>
+              <TableHead>Check-In</TableHead>
+              <TableHead>Check-Out</TableHead>
               <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {attendances.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={3} className="h-24 text-center">
+                <TableCell colSpan={4} className="h-24 text-center">
                   No attendance records found.
                 </TableCell>
               </TableRow>
@@ -89,7 +91,14 @@ export function AttendanceHistory({
                     {attendance.eventName}
                   </TableCell>
                   <TableCell>
-                    {format(new Date(attendance.submittedAt), "PPp")}
+                    {attendance.checkInSubmittedAt
+                      ? format(new Date(attendance.checkInSubmittedAt), "PPp")
+                      : "N/A"}
+                  </TableCell>
+                  <TableCell>
+                    {attendance.checkOutSubmittedAt
+                      ? format(new Date(attendance.checkOutSubmittedAt), "PPp")
+                      : "Not checked out"}
                   </TableCell>
                   <TableCell>
                     <Badge
