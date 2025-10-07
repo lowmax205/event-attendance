@@ -51,6 +51,14 @@
 ### Session 2025-10-06
 
 - Q: What is the acceptable location accuracy radius for verifying a student is at the event venue? → A: 100 meters - Medium precision (suitable for campus quad or building cluster)
+
+### Session 2025-10-07
+
+- Q: What valid range should admins be allowed to set for the default GPS accuracy radius? → A: 10-500 meters (Medium - suitable for small campus or event complex)
+- Q: What time period filters should the analytics dashboard support? → A: All-time + Last 7/30/90 days (standard analytics preset periods)
+- Q: How should the system handle events where the check-in buffer extends into the past (e.g., event created with start time in 1 hour but 2-hour buffer)? → A: Block event creation (Strict - prevent impossible buffer windows)
+- Q: How should students be able to appeal a rejected attendance verification? → A: Appeal button on student dashboard with message field (Simple UI addition to student dashboard)
+- Q: How should the system transition events from Active to Completed status after they end? → A: Immediate on event end (Real-time trigger - requires event listeners/timers)
 - Q: Should students with incomplete profiles be allowed to check in to events? → A: Block check-in - Prevent students from checking in if their profile is incomplete; display error message directing them to complete profile first
 - Q: Should the system support offline mode for attendance check-ins (queue for later submission), or require real-time connectivity? → A: Real-time only - Require active internet connection; display error if offline and prevent check-in attempt
 - Q: Are events time-bound? Can students check in before or after the scheduled event times? → A: Custom buffer windows before/after (configurable per event)
@@ -130,6 +138,7 @@ The student arrives at an event venue, scans a QR code displayed at the entrance
 - **What happens when location verification fails but the student is actually at the venue?** The system should display an error and allow retry. Moderators may need manual verification capability if the issue persists due to GPS inaccuracy beyond the 100-meter radius.
 - **What happens when signature canvas is left blank?** The system should require a signature before allowing submission.
 - **What happens when a student without the required permissions tries to access moderator or admin dashboards?** The system should display an access denied message and redirect to their appropriate dashboard.
+- **What happens when a moderator tries to create an event with a check-in buffer that extends into the past?** The system should block event creation and display a validation error message indicating that the start time minus buffer must be in the future.
 
 ## Requirements _(mandatory)_
 
@@ -185,13 +194,20 @@ The student arrives at an event venue, scans a QR code displayed at the entrance
 - **FR-031**: System MUST provide three distinct dashboard layouts for Student, Moderator, and Admin roles
 - **FR-032**: System MUST restrict dashboard access based on user role
 - **FR-033**: Student dashboard MUST display the student's attendance history showing event name, date, and status
+- **FR-033.1**: Student dashboard MUST allow students to appeal rejected attendances by clicking an "Request Review" button and providing an appeal message (transitions status to Disputed for admin review)
 - **FR-034**: Student dashboard MUST provide quick access to the QR code scanner
 - **FR-035**: Moderator dashboard MUST allow creation and editing of events (name, date/time, location, buffer windows)
+- **FR-035.1**: System MUST validate that event start time minus check-in buffer is not in the past at creation time (prevent impossible buffer windows)
 - **FR-036**: Moderator dashboard MUST allow generation and management of event QR codes
 - **FR-037**: Moderator dashboard MUST display attendance records with search and filter capabilities
 - **FR-038**: Moderator dashboard MUST allow verification and approval of attendance records with ability to add dispute notes when rejecting (dispute note is a text field where moderator can document reason for rejection or contested attendance details)
 - **FR-039**: Moderator dashboard MUST allow export of attendance data in CSV format with columns: Student Name, Student ID, Event Name, Event Date, Submitted At, Verification Status, Verified By, Distance (meters)
 - **FR-040**: Admin dashboard MUST display system-wide controls including: view all events across all creators, view all attendance records with advanced filters, user role assignment and modification, system configuration settings (default GPS accuracy radius, default buffer time windows), and analytics dashboard (total events, total attendances, verification rates)
+- **FR-040.1**: System configuration MUST allow admins to set default GPS accuracy radius with valid range of 10-500 meters (default: 100 meters)
+- **FR-040.2**: System configuration MUST allow admins to set default check-in and check-out buffer times with valid range of 0-120 minutes (default: 30 minutes each)
+- **FR-040.3**: System configuration changes MUST be logged to audit trail with admin user ID and timestamp
+- **FR-040.4**: Admin analytics dashboard MUST display the following metrics: Total Events (count of all events), Total Attendances (count of all attendance records), Verification Rate (percentage calculated as Approved Attendances / Total Attendances × 100%), Pending Verification Count (attendances with status=Pending), and Top 5 Events by Attendance Count
+- **FR-040.5**: Admin analytics dashboard MUST support time period filters: All-time (default), Last 7 days, Last 30 days, and Last 90 days
 - **FR-041**: System MUST redirect users to their role-appropriate dashboard after login
 - **FR-042**: System MUST prevent users from accessing dashboards above their permission level
 - **FR-043**: System MUST display error messages following a standardized pattern: error title describing the issue, explanation of why the error occurred, suggested action to resolve, and retry or alternative action button (applies to FR-004, FR-006, FR-008, FR-010, FR-014)
@@ -204,6 +220,7 @@ The student arrives at an event venue, scans a QR code displayed at the entrance
 - **Dependency**: Role assignment system must be functional
 - **Assumption**: Students are using devices with camera and GPS capabilities
 - **Assumption**: Image storage service is configured and accessible
+- **Technical Requirement**: System MUST implement real-time event status monitoring to automatically transition Event status from Active to Completed immediately when endDateTime + checkOutBufferMins expires
 
 ### Key Entities
 

@@ -5,7 +5,9 @@ import { requireRole } from "@/lib/auth/server";
 import { createEventSchema } from "@/lib/validations/event";
 import { generateQRCode, generateQRPayload } from "@/lib/qr-generator";
 import { uploadQRCode } from "@/lib/cloudinary";
+import { logAction } from "@/lib/security/audit-log";
 import { ZodError } from "zod";
+import { headers } from "next/headers";
 
 /**
  * Create a new event with QR code generation
@@ -18,6 +20,26 @@ export async function createEvent(input: unknown) {
 
     // Validate input
     const validatedData = createEventSchema.parse(input);
+
+    // Validate buffer window doesn't extend into the past (FR-035.1)
+    const checkInTime = new Date(validatedData.startDateTime);
+    checkInTime.setMinutes(
+      checkInTime.getMinutes() - (validatedData.checkInBufferMins ?? 30)
+    );
+
+    if (checkInTime < new Date()) {
+      return {
+        success: false,
+        error: "Invalid buffer window",
+        details: [
+          {
+            field: "checkInBufferMins",
+            message:
+              "Check-in buffer extends into the past. The start time minus buffer must be in the future.",
+          },
+        ],
+      };
+    }
 
     // Create event in database first to get ID
     const event = await db.event.create({
@@ -49,7 +71,7 @@ export async function createEvent(input: unknown) {
     const qrCodeUrl = await uploadQRCode(
       qrDataUrl,
       cloudinaryFolder,
-      `qr_${Date.now()}`,
+      `qr_${Date.now()}`
     );
 
     // Update event with QR code information
@@ -60,6 +82,20 @@ export async function createEvent(input: unknown) {
         qrCodeUrl,
       },
     });
+
+    // Log security action
+    const headersList = await headers();
+    await logAction(
+      "event.created",
+      user.userId,
+      "Event",
+      event.id,
+      { eventName: validatedData.name, venueName: validatedData.venueName },
+      headersList.get("x-forwarded-for") ||
+        headersList.get("x-real-ip") ||
+        undefined,
+      headersList.get("user-agent") || undefined
+    );
 
     return {
       success: true,

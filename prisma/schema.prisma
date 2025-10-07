@@ -54,6 +54,7 @@ model User {
   createdEvents       Event[]       @relation("EventCreator")
   attendances         Attendance[]
   verifiedAttendances Attendance[]  @relation("AttendanceVerifier")
+  systemConfigUpdates SystemConfig[] @relation("SystemConfigUpdater")
 
   @@index([email])
 }
@@ -145,4 +146,15 @@ enum VerificationStatus {
   Approved
   Rejected
   Disputed
+}
+
+model SystemConfig {
+  id                       String   @id @default(cuid())
+  defaultGpsRadiusMeters   Int      @default(100)
+  defaultCheckInBufferMins Int      @default(30)
+  defaultCheckOutBufferMins Int     @default(30)
+  updatedAt                DateTime @updatedAt
+  updatedById              String
+
+  updatedBy                User     @relation("SystemConfigUpdater", fields: [updatedById], references: [id])
 }

@@ -1,8 +1,8 @@
 
 # Implementation Plan: QR-Based Attendance and Role-Based Dashboards
 
-**Branch**: `002-extend-the-event` | **Date**: 2025-10-06 | **Spec**: [spec.md](./spec.md)
-**Input**: Feature specification from `/specs/002-extend-the-event/spec.md`
+**Branch**: `002-extend-the-event` | **Date**: 2025-10-07 | **Spec**: [spec.md](./spec.md)
+**Input**: Feature specification from `/specs/002-extend-the-event/spec.md` (updated with clarifications 2025-10-07)
 
 ## Execution Flow (/plan command scope)
 ```
@@ -32,7 +32,15 @@
 
 ## Summary
 
-This feature extends the Event Attendance System with core attendance functionality built on Phase 1's authentication foundation. It implements a streamlined 3-click QR-based attendance process (location verification → photo capture → digital signature) and role-based dashboards for Students, Moderators, and Admins. The attendance system uses Cloudinary for image storage, browser Geolocation API for venue verification (100m radius), HTML5 Canvas API for signatures, and enforces real-time connectivity with profile completeness validation. Client-side duplicate check-in prevention occurs before displaying the attendance form. Moderators gain full event management capabilities including QR generation, attendance verification with dispute notes, and CSV data export, while students access their attendance history and quick QR scanning. Admins have full system controls including user role management, system configuration (GPS radius defaults, buffer times), and analytics dashboard.
+This feature extends the Event Attendance System with core attendance functionality built on Phase 1's authentication foundation. It implements a streamlined 3-click QR-based attendance process (location verification → photo capture → digital signature) and role-based dashboards for Students, Moderators, and Admins. The attendance system uses Cloudinary for image storage, browser Geolocation API for venue verification (100m radius), HTML5 Canvas API for signatures, and enforces real-time connectivity with profile completeness validation. Client-side duplicate check-in prevention occurs before displaying the attendance form.
+
+Moderators gain full event management capabilities including QR generation, attendance verification with dispute notes, and CSV data export. Event creation includes strict validation to prevent impossible buffer windows (start time minus buffer must be in the future).
+
+Students access their attendance history, quick QR scanning, and can appeal rejected attendances via a "Request Review" button that transitions the status to Disputed for admin review.
+
+Admins have full system controls including user role management, configurable system settings with validation (GPS radius: 10-500m default 100m, buffer times: 0-120 min default 30min), and analytics dashboard displaying Total Events, Total Attendances, Verification Rate (% calculation), Pending Count, and Top 5 Events. Analytics support time-period filtering: All-time (default), Last 7/30/90 days.
+
+Event lifecycle includes real-time status monitoring to automatically transition from Active to Completed immediately when endDateTime + checkOutBufferMins expires (requires event listeners/timers implementation).
 
 ## Technical Context
 
@@ -44,7 +52,7 @@ This feature extends the Event Attendance System with core attendance functional
 **Project Type**: Web application (Next.js full-stack monolith)  
 **Performance Goals**: <2s page load on 3G, LCP <2.5s, FID <100ms, CLS <0.1; QR scan-to-form <500ms  
 **Constraints**: Real-time connectivity required (no offline mode), 100m GPS accuracy, WCAG 2.1 AA accessibility, Cloudinary image optimization  
-**Scale/Scope**: ~10k students, ~500 events/year, ~50k attendance records/year; 12 new pages, 8 new components, 15 new API routes, 2 new Prisma models
+**Scale/Scope**: ~10k students, ~500 events/year, ~50k attendance records/year; 12 new pages, 8 new components, 15 new API routes, 2 new Prisma models (Event, Attendance), plus SystemConfig and SecurityLog models for admin features; 7 additional functional requirements from 2025-10-07 clarifications (student appeal workflow, event buffer validation, system configuration with ranges, analytics metrics/filters, real-time event status monitoring)
 
 
 ## Constitution Check
@@ -252,13 +260,22 @@ prisma/
 ## Phase 2: Task Planning Approach
 *This section describes what the /tasks command will do - DO NOT execute during /plan*
 
+**IMPORTANT**: Spec updated with clarifications on 2025-10-07. The /tasks command MUST incorporate these new requirements:
+- **FR-033.1**: Student appeal mechanism (Request Review button, appeal action, Disputed status transition)
+- **FR-035.1**: Event buffer validation (prevent start time - buffer < now())
+- **FR-040.1-3**: System configuration (SystemConfig Prisma model with GPS radius 10-500m, buffer times 0-120min, audit logging)
+- **FR-040.4-5**: Analytics metrics (Verification Rate %, Top 5 Events, time filters: All-time/7/30/90 days)
+- **Technical Requirement**: Real-time event status monitoring (Active→Completed transition on event end)
+- **Supporting**: SecurityLog Prisma model for audit trail across event/attendance actions
+
 **Task Generation Strategy**:
 - Load `.specify/templates/tasks-template.md` as base
-- Generate tasks from Phase 1 design docs (contracts, data model, quickstart)
+- Generate tasks from Phase 1 design docs (contracts, data model, quickstart) PLUS clarified requirements above
 - Each contract → contract test task [P]
-- Each entity → model creation task [P] 
+- Each entity (Event, Attendance, SystemConfig, SecurityLog) → model creation task [P] 
 - Each user story → integration test task
 - Implementation tasks to make tests pass
+- Add tasks for: SystemConfig CRUD, student appeal UI/action, event buffer validation, analytics with filters, status monitoring service
 
 **Ordering Strategy**:
 - TDD order: Tests before implementation 
@@ -306,8 +323,10 @@ No violations detected. All constitutional requirements satisfied.
 **Gate Status**:
 - [x] Initial Constitution Check: PASS
 - [x] Post-Design Constitution Check: PASS (no new violations introduced)
-- [x] All NEEDS CLARIFICATION resolved (via /clarify session 2025-10-06)
+- [x] All NEEDS CLARIFICATION resolved (via /clarify sessions 2025-10-06 and 2025-10-07)
+- [x] Clarifications integrated: 7 new functional requirements added (FR-033.1, FR-035.1, FR-040.1-5, plus Technical Requirement for real-time event status monitoring)
 - [x] Complexity deviations documented (none)
+- [ ] Tasks.md requires update to reflect clarified requirements (SystemConfig model, SecurityLog model, student appeal UI, event buffer validation, analytics details, status monitoring)
 
 ---
 

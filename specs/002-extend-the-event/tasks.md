@@ -30,9 +30,11 @@
 - [x] **T001** Install new dependencies: `npm install qrcode html5-qrcode react-signature-canvas cloudinary @types/qrcode`
 - [x] **T002** [P] Verify Cloudinary environment variables exist in `.env`: `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_SECRET_KEY`, `CLOUDINARY_FOLDER`, `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` (add NEXT_PUBLIC_ variant for client-side access)
 - [x] **T003** [P] Extend Prisma schema in `prisma/schema.prisma` with Event model, EventStatus enum, and indexes per data-model.md
+- [x] **T003.1** [P] Create SystemConfig Prisma model in `prisma/schema.prisma` with fields: `id` (String @id @default(cuid())), `defaultGpsRadiusMeters` (Int @default(100), valid range 10-500), `defaultCheckInBufferMins` (Int @default(30), valid range 0-120), `defaultCheckOutBufferMins` (Int @default(30), valid range 0-120), `updatedAt` (DateTime @updatedAt), `updatedById` (String, User FK) per FR-040.1, FR-040.2
+- [x] **T003.2** [P] Create SecurityLog Prisma model in `prisma/schema.prisma` with fields: `id` (String @id @default(cuid())), `action` (String), `userId` (String, User FK), `entityType` (String), `entityId` (String), `metadata` (Json), `ipAddress` (String?), `userAgent` (String?), `createdAt` (DateTime @default(now())), indexes on (userId, createdAt) and (entityType, entityId) for audit trail per FR-040.3
 - [x] **T004** [P] Extend Prisma schema in `prisma/schema.prisma` with Attendance model, VerificationStatus enum, unique constraint (eventId, userId), and indexes per data-model.md
 - [x] **T005** [P] Extend User model in `prisma/schema.prisma` with relations: `createdEvents Event[] @relation("EventCreator")`, `attendances Attendance[]`, `verifiedAttendances Attendance[] @relation("AttendanceVerifier")`
-- [x] **T006** Create Prisma migration: `npx prisma migrate dev --name add_event_attendance_models` ✓ *Migration created and applied successfully*
+- [x] **T006** Create Prisma migration: `npx prisma migrate dev --name add_event_attendance_systemconfig_securitylog_models` to include Event, Attendance, SystemConfig, and SecurityLog models (depends on T003, T003.1, T003.2, T004, T005)
 - [x] **T007** [P] Create Cloudinary utility library in `src/lib/cloudinary.ts` with functions: `uploadPhoto(base64: string, folder: string)`, `uploadSignature(base64: string, folder: string)`, `deleteImage(publicId: string)`. All uploads MUST use `CLOUDINARY_FOLDER` environment variable as root folder prefix (e.g., `{CLOUDINARY_FOLDER}/attendance/{eventId}/...`) to separate from other API content
 - [x] **T008** [P] Create geolocation utility in `src/lib/geolocation.ts` with Haversine distance calculation function: `calculateDistance(lat1, lon1, lat2, lon2): number`
 - [x] **T009** [P] Create QR generator wrapper in `src/lib/qr-generator.ts` with function: `generateQRCode(payload: string): Promise<string>` returning data URL
@@ -48,17 +50,19 @@
 
 ## Phase 3.3: Server Actions (Event Management)
 
-- [x] **T016** [P] Create event creation server action in `src/actions/events/create.ts` implementing POST /api/events contract: validate schema, generate QR code, upload to Cloudinary using folder path `{CLOUDINARY_FOLDER}/events/{eventId}/`, save Event to DB
+- [x] **T016** [P] Create event creation server action in `src/actions/events/create.ts` implementing POST /api/events contract: validate schema, validate that (startDateTime - checkInBufferMins) >= now() to prevent impossible buffer windows per FR-035.1, generate QR code, upload to Cloudinary using folder path `{CLOUDINARY_FOLDER}/events/{eventId}/`, save Event to DB, log to SecurityLog
 - [x] **T017** [P] Create event update server action in `src/actions/events/update.ts` implementing PATCH /api/events/[id] contract: validate partial update, regenerate QR if venue changed (upload to `{CLOUDINARY_FOLDER}/events/{eventId}/`), update DB
 - [x] **T018** [P] Create QR regeneration server action in `src/actions/events/generate-qr.ts` implementing POST /api/events/[id]/qr contract: generate new QR payload, upload to Cloudinary using folder `{CLOUDINARY_FOLDER}/events/{eventId}/`, log to SecurityLog
 - [x] **T019** [P] Create event listing server action in `src/actions/events/list.ts`: fetch events with filters (status, createdById), pagination support
 - [x] **T020** [P] Create event details server action in `src/actions/events/get-by-id.ts`: fetch single event with creator and attendance count
+- [x] **T020.1** [P] Create security logging utility in `src/lib/security/audit-log.ts` with function `logAction(action: string, userId: string, entityType: string, entityId: string, metadata?: object, ipAddress?: string, userAgent?: string): Promise<void>` to write to SecurityLog model; integrate into T016, T018, T022, T023 for audit trail per FR-040.3
 
 ## Phase 3.4: Server Actions (Attendance)
 
 - [x] **T021** Create QR validation server action in `src/actions/attendance/validate-qr.ts` implementing POST /api/qr/validate contract: parse QR payload, fetch event, check window, check duplicate (client-side early exit), return validation result
 - [x] **T022** Create attendance submission server action in `src/actions/attendance/submit.ts` implementing POST /api/attendance contract: validate location (100m radius), upload 3 images to Cloudinary using folder path `{CLOUDINARY_FOLDER}/attendance/{eventId}/{userId}/`, create Attendance record (client already checked for duplicates), log to SecurityLog
 - [x] **T023** [P] Create attendance verification server action in `src/actions/attendance/verify.ts` implementing PATCH /api/attendance/[id]/verify contract: update verificationStatus, set verifiedById/verifiedAt, optionally accept disputeNote field (text) for rejected records, log to SecurityLog
+- [x] **T023.1** [P] Create student appeal action in `src/actions/attendance/appeal.ts`: accept `attendanceId` and `appealMessage` parameters, verify attendance belongs to current user and status is Rejected, update verificationStatus to Disputed, log to SecurityLog with appeal details per FR-033.1
 - [x] **T024** [P] Create duplicate check server action in `src/actions/attendance/check-duplicate.ts`: query Attendance by eventId + userId, return existing record or null (used by client before showing form)
 - [x] **T025** [P] Create attendance listing server action in `src/actions/attendance/list-by-event.ts`: fetch all attendance for an event with user profiles, support status filter
 - [x] **T025.1** [P] Create attendance export server action in `src/actions/attendance/export.ts`: fetch attendance records with filters, format as CSV with columns (Student Name, Student ID, Event Name, Event Date, Submitted At, Verification Status, Verified By, Distance), return CSV file download
@@ -68,6 +72,7 @@
 - [x] **T026** [P] Create student dashboard data action in `src/actions/dashboard/student.ts` implementing GET /api/dashboard/student: fetch attendanceHistory, upcomingEvents, stats per dashboard-data.json contract
 - [x] **T027** [P] Create moderator dashboard data action in `src/actions/dashboard/moderator.ts` implementing GET /api/dashboard/moderator: fetch myEvents, pendingVerifications, stats per dashboard-data.json contract
 - [x] **T028** [P] Create admin dashboard data action in `src/actions/dashboard/admin.ts` implementing GET /api/dashboard/administrator: fetch systemStats (total events, total attendances, verification rates), recentActivity from SecurityLog, system configuration (GPS radius, buffer times), alerts per dashboard-data.json contract
+- [x] **T028.1** [P] Create system config CRUD actions in `src/actions/admin/system-config.ts`: getSystemConfig() to fetch single record, updateSystemConfig() to validate GPS radius (10-500m) and buffer times (0-120min) per FR-040.1-3, log changes to SecurityLog
 
 ## Phase 3.6: UI Components (Attendance)
 
@@ -80,11 +85,11 @@
 ## Phase 3.7: UI Components (Dashboard)
 
 - [x] **T034** [P] Create student attendance history table in `src/components/dashboard/attendance-history.tsx` displaying eventName, submittedAt, verificationStatus with color badges, pagination using shadcn/ui Table and Pagination
-- [x] **T035** [P] Create event form component in `src/components/dashboard/event-form.tsx` for create/edit using React Hook Form + Zod, date/time pickers (shadcn/ui Calendar), coordinates input, buffer minutes input
+- [x] **T035** [P] Create event form component in `src/components/dashboard/event-form.tsx` for create/edit using React Hook Form + Zod, date/time pickers (shadcn/ui Calendar), coordinates input, buffer minutes input, validate (startDateTime - checkInBufferMins) >= now() to prevent impossible buffer windows per FR-035.1
 - [x] **T036** [P] Create QR code display component in `src/components/dashboard/qr-code-display.tsx` showing QR image, download button, print button, regenerate button (moderator only)
 - [x] **T037** [P] Create student dashboard layout in `src/components/dashboard/student-dashboard.tsx` with stats cards (shadcn/ui Card), attendance history section, upcoming events section, floating "Scan QR" button
 - [x] **T038** [P] Create moderator dashboard layout in `src/components/dashboard/moderator-dashboard.tsx` with stats cards, my events table, pending verifications section with photo/signature preview modals
-- [x] **T039** [P] Create admin dashboard layout in `src/components/dashboard/admin-dashboard.tsx` with system stats, recent activity feed from SecurityLog, alerts section, user role management interface, system configuration panel (GPS radius defaults, buffer time settings), analytics dashboard (total events, attendances, verification rates)
+- [x] **T039** [P] Create admin dashboard layout in `src/components/dashboard/admin-dashboard.tsx` with system stats, recent activity feed from SecurityLog, alerts section, user role management interface, system configuration panel (GPS radius defaults, buffer time settings), analytics dashboard with time period filter dropdown (All-time/Last 7/30/90 days) displaying verification rate (Approved/Total×100%), Top 5 Events by attendance count per FR-040.4-5
 
 ## Phase 3.8: Pages (Attendance Flow)
 
@@ -96,6 +101,7 @@
 
 - [x] **T043** Create role-based dashboard redirect in `src/app/dashboard/page.tsx` checking user role from session, redirecting to /dashboard/student, /dashboard/moderator, or /dashboard/administrator
 - [x] **T044** Create student dashboard page in `src/app/dashboard/student/page.tsx` fetching data from dashboard/student action, rendering StudentDashboard component
+- [x] **T044.1** [P] Create student appeal page in `src/app/dashboard/student/attendance/[id]/page.tsx` displaying attendance details (event name, submission time, photos, signature, verification status), "Request Review" button visible only when status=Rejected, appeal message textarea, submit to attendance/appeal action per FR-033.1
 - [x] **T045** Create student dashboard layout in `src/app/dashboard/student/layout.tsx` with role-based navigation sidebar (shadcn/ui Sidebar), profile dropdown
 - [x] **T046** Create moderator dashboard page in `src/app/dashboard/moderator/page.tsx` fetching data from dashboard/moderator action, rendering ModeratorDashboard component
 - [x] **T047** Create moderator events list page in `src/app/dashboard/moderator/events/page.tsx` with table of events, create button linking to /dashboard/moderator/events/create
@@ -123,6 +129,7 @@
 - [ ] **T063** Manually test all 10 scenarios from quickstart.md: Scenario 1 (successful check-in), Scenario 2 (duplicate prevention), Scenario 3 (location failure), Scenario 4 (profile incomplete), Scenario 5 (window closed), Scenario 6 (offline detection), Scenario 7 (dashboard access), Scenario 8 (moderator verify), Scenario 9 (moderator reject), Scenario 10 (event creation)
 - [ ] **T064** Run Lighthouse audit on /attendance and /dashboard/student pages: target Performance ≥90, Accessibility ≥95, Best Practices ≥90
 - [ ] **T065** Performance validation: measure attendance submission end-to-end time (<5 seconds with 3 uploads), dashboard load time (<500ms), QR validation latency (<200ms)
+- [x] **T065.1** [P] Create event status monitoring service in `src/lib/events/status-monitor.ts` implementing real-time listener or timer-based check for events where (endDateTime + checkOutBufferMins < now() AND status=Active), auto-transition to Completed status per Technical Requirement for immediate status changes
 
 ## Dependencies
 
@@ -216,18 +223,18 @@ Task: "Optimize Cloudinary uploads (quality=auto, format=auto)"
 
 ## Notes
 
-- **Total Tasks**: 66 (T001-T065 + T025.1)
-- **Parallelizable**: 37 tasks marked [P] (56%)
-- **Estimated Effort**: 40-50 hours for experienced Next.js developer
+- **Total Tasks**: 73 (T001-T065 + T003.1, T003.2, T020.1, T023.1, T028.1, T044.1, T065.1, T025.1)
+- **Parallelizable**: 44 tasks marked [P] (60%)
+- **Estimated Effort**: 45-55 hours for experienced Next.js developer
 - **Testing Strategy**: Manual testing only (per constitution - no automated tests)
 - **Commit Strategy**: Commit after each task, push after each phase
 - **Environment**: Development on localhost:3000, staging deploy after T055, production after T065
-- **Clarifications Applied**: Client-side duplicate prevention, CSV export format, standardized error messages, dispute notes, admin full controls
+- **Clarifications Applied**: Client-side duplicate prevention, CSV export format, standardized error messages, dispute notes, admin full controls, student appeal workflow (FR-033.1), buffer validation (FR-035.1), system configuration ranges (FR-040.1-3), analytics metrics (FR-040.4-5), real-time event status monitoring
 
 ## Validation Checklist
 
 - [x] All 7 contracts have corresponding server actions (T016-T028)
-- [x] All 2 entities (Event, Attendance) have Prisma models (T003, T004)
+- [x] All 4 entities (Event, Attendance, SystemConfig, SecurityLog) have Prisma models (T003, T004, T003.1, T003.2)
 - [x] All 10 quickstart scenarios covered by implementation tasks
 - [x] Parallel tasks ([P]) are truly independent (different files)
 - [x] Each task specifies exact file path
@@ -238,7 +245,11 @@ Task: "Optimize Cloudinary uploads (quality=auto, format=auto)"
 - [x] CSV export action added (T025.1) per FR-039
 - [x] Dispute note field included in verification (T023, T051) per FR-038
 - [x] Standardized error pattern referenced (T033, T059) per FR-043
-- [x] Admin controls detailed (T028, T039, T053-T055) per FR-040
+- [x] Admin controls detailed (T028, T028.1, T039, T053-T055) per FR-040
+- [x] Student appeal workflow implemented (T023.1, T044.1) per FR-033.1
+- [x] Buffer validation added client and server-side (T016, T035) per FR-035.1
+- [x] Security audit logging integrated (T003.2, T020.1) for all critical actions
+- [x] Real-time event status monitoring service (T065.1) for auto-transitions
 
 ---
 
