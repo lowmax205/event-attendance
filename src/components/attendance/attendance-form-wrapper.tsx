@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { Logo } from "@/components/logo";
 import { LocationVerifier } from "./location-verifier";
 import { CameraCapture } from "./camera-capture";
 import { SignatureCanvasComponent } from "./signature-canvas";
@@ -170,6 +171,11 @@ export function AttendanceFormWrapper({ event }: AttendanceFormWrapperProps) {
 
   return (
     <div className="container max-w-4xl mx-auto px-4 py-8 space-y-6">
+      {/* Logo */}
+      <div className="flex justify-center mb-6">
+        <Logo href="/" size="lg" />
+      </div>
+
       {/* Header */}
       <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight">{event.name}</h1>

@@ -15,6 +15,7 @@ import {
   Map,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Logo } from "@/components/logo";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   DropdownMenu,
@@ -100,10 +101,7 @@ export function Navigation() {
       <nav className="border-b bg-background sticky top-0 z-50">
         <div className="container mx-auto px-4">
           <div className="flex h-16 items-center justify-between">
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="h-8 w-8 rounded bg-primary" />
-              <span className="font-bold text-lg">Event Attendance</span>
-            </Link>
+            <Logo href="/" />
             <div className="animate-pulse h-8 w-20 bg-muted rounded" />
           </div>
         </div>
@@ -116,13 +114,7 @@ export function Navigation() {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link
-            href={user ? getDashboardRoute() : "/"}
-            className="flex items-center space-x-2"
-          >
-            <div className="h-8 w-8 rounded bg-primary" />
-            <span className="font-bold text-lg">Event Attendance</span>
-          </Link>
+          <Logo href={user ? getDashboardRoute() : "/"} />
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-4">

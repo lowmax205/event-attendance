@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Navigation } from "@/components/navigation";
+import { Footer } from "@/components/footer";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -30,7 +31,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}
       >
         <ThemeProvider
           attribute="class"
@@ -40,7 +41,8 @@ export default function RootLayout({
         >
           <AuthProvider>
             <Navigation />
-            <main>{children}</main>
+            <main className="flex-1">{children}</main>
+            <Footer />
             <Toaster />
           </AuthProvider>
         </ThemeProvider>
