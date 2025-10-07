@@ -1,0 +1,254 @@
+{
+  "endpoint": "/api/export/attendance/xlsx",
+  "method": "POST",
+  "feature": "Data Export (FR-043 to FR-052)",
+  "description": "Export attendance records to Excel (.xlsx) format with filtering capabilities. Creates audit trail via ExportRecord.",
+  "authentication": {
+    "required": true,
+    "roles": ["ADMIN", "MODERATOR"]
+  },
+  "requestSchema": {
+    "eventIds": {
+      "type": "array",
+      "items": "string (cuid)",
+      "required": false,
+      "validation": "minItems: 1, maxItems: 50",
+      "description": "Filter by specific event IDs (FR-048). Empty = all events."
+    },
+    "startDate": {
+      "type": "string",
+      "required": false,
+      "validation": "ISO 8601 date",
+      "description": "Filter attendances submitted on/after this date (FR-048)"
+    },
+    "endDate": {
+      "type": "string",
+      "required": false,
+      "validation": "ISO 8601 date",
+      "description": "Filter attendances submitted on/before this date (FR-048)"
+    },
+    "status": {
+      "type": "string",
+      "required": false,
+      "validation": "enum: [PENDING, APPROVED, REJECTED, DISPUTED]",
+      "description": "Filter by attendance status (FR-048)"
+    },
+    "studentName": {
+      "type": "string",
+      "required": false,
+      "validation": "minLength: 2",
+      "description": "Filter by student name (partial match, case-insensitive) (FR-048)"
+    }
+  },
+  "responseSchema": {
+    "success": true,
+    "data": {
+      "exportId": "clx234export",
+      "format": "XLSX",
+      "recordCount": 523,
+      "fileSize": 87234,
+      "downloadUrl": "https://yourapp.com/api/download/clx234export",
+      "expiresAt": "2025-10-09T11:30:00Z"
+    },
+    "message": "Export generated successfully. Download link expires in 24 hours."
+  },
+  "errorResponses": [
+    {
+      "status": 400,
+      "body": {
+        "success": false,
+        "error": "Export exceeds maximum record limit (10,000 records). Please refine your filters."
+      },
+      "condition": "Filtered query returns >10,000 records"
+    },
+    {
+      "status": 403,
+      "body": {
+        "success": false,
+        "error": "Forbidden: Moderators can only export attendance for their own events"
+      },
+      "condition": "currentUser.role === MODERATOR && eventIds contains event not created by currentUser"
+    },
+    {
+      "status": 500,
+      "body": {
+        "success": false,
+        "error": "Export generation failed",
+        "details": "File system error or xlsx library error"
+      }
+    }
+  ],
+  "excelStructure": {
+    "headers": [
+      "Student Number",
+      "Student Name",
+      "Department",
+      "Course",
+      "Year Level",
+      "Section",
+      "Event Name",
+      "Event Date",
+      "Venue Location",
+      "Check-In Time",
+      "Check-Out Time",
+      "Submission Time",
+      "Status",
+      "Verified By",
+      "Verified At",
+      "Distance from Venue (m)",
+      "Front Photo URL",
+      "Back Photo URL",
+      "Signature URL",
+      "Dispute Notes",
+      "Appeal Message",
+      "Resolution Notes"
+    ],
+    "formatting": {
+      "headerRow": {
+        "bold": true,
+        "backgroundColor": "#4F46E5",
+        "fontColor": "#FFFFFF"
+      },
+      "dateColumns": [
+        "Event Date",
+        "Check-In Time",
+        "Check-Out Time",
+        "Submission Time",
+        "Verified At"
+      ],
+      "dateFormat": "YYYY-MM-DD HH:mm:ss",
+      "statusColors": {
+        "APPROVED": "#10B981",
+        "REJECTED": "#EF4444",
+        "PENDING": "#F59E0B",
+        "DISPUTED": "#8B5CF6"
+      }
+    }
+  },
+  "testCases": [
+    {
+      "name": "Export all attendances (admin)",
+      "request": {
+        "user": {
+          "id": "clx456admin",
+          "role": "ADMIN"
+        },
+        "body": {}
+      },
+      "expectedStatus": 200,
+      "expectedData": {
+        "format": "XLSX",
+        "recordCount": ">= 0",
+        "downloadUrl": "string (valid URL)"
+      }
+    },
+    {
+      "name": "Export with event filter",
+      "request": {
+        "body": {
+          "eventIds": ["clx789event1", "clx790event2"]
+        }
+      },
+      "expectedStatus": 200,
+      "expectedData": {
+        "recordCount": "count matching eventIds filter"
+      }
+    },
+    {
+      "name": "Export with date range filter",
+      "request": {
+        "body": {
+          "startDate": "2025-10-01",
+          "endDate": "2025-10-31"
+        }
+      },
+      "expectedStatus": 200,
+      "expectedData": {
+        "recordCount": "count where submittedAt between dates"
+      }
+    },
+    {
+      "name": "Export with status filter (APPROVED only)",
+      "request": {
+        "body": {
+          "status": "APPROVED"
+        }
+      },
+      "expectedStatus": 200,
+      "expectedData": {
+        "recordCount": "count where status=APPROVED"
+      }
+    },
+    {
+      "name": "Moderator exports only own events",
+      "request": {
+        "user": {
+          "id": "clx123moderator",
+          "role": "MODERATOR"
+        },
+        "body": {
+          "eventIds": ["clx789event"]
+        }
+      },
+      "preconditions": {
+        "event": {
+          "id": "clx789event",
+          "createdById": "clx123moderator"
+        }
+      },
+      "expectedStatus": 200
+    },
+    {
+      "name": "Moderator cannot export other moderator's event",
+      "request": {
+        "user": {
+          "id": "clx123moderator",
+          "role": "MODERATOR"
+        },
+        "body": {
+          "eventIds": ["clx999otherevent"]
+        }
+      },
+      "preconditions": {
+        "event": {
+          "id": "clx999otherevent",
+          "createdById": "clx888othermoderator"
+        }
+      },
+      "expectedStatus": 403,
+      "expectedError": "Forbidden: Moderators can only export attendance for their own events"
+    },
+    {
+      "name": "Reject export exceeding 10k records",
+      "request": {
+        "body": {
+          "startDate": "2020-01-01",
+          "endDate": "2030-12-31"
+        }
+      },
+      "preconditions": {
+        "database": "Contains >10,000 attendance records matching filter"
+      },
+      "expectedStatus": 400,
+      "expectedError": "Export exceeds maximum record limit (10,000 records). Please refine your filters."
+    }
+  ],
+  "implementationNotes": {
+    "library": "Use `xlsx` (SheetJS) library to generate .xlsx file server-side (researched in research.md).",
+    "database": "Query Attendance with joins to User (student), UserProfile, Event. Apply filters (eventIds, dates, status, studentName). For MODERATOR, add WHERE clause: event.createdById = currentUser.id. Count records first, reject if >10,000.",
+    "fileGeneration": "Create workbook with single sheet. Add header row with styling (bold, colored background). Map each attendance record to row with formatted dates, status colors. Save to temp file or buffer.",
+    "storage": "Store generated file in temp directory or cloud storage (e.g., Cloudinary, S3). Generate signed download URL with 24hr expiration.",
+    "auditTrail": "Create ExportRecord with: exportedById, format=XLSX, filters (JSON), recordCount, status=COMPLETED, fileSize, downloadUrl, expiresAt. Log to SecurityLog with eventType=DATA_EXPORTED, metadata={exportId, recordCount, filters}.",
+    "cleanup": "Schedule cleanup job to delete expired export files after 24 hours."
+  },
+  "relatedRequirements": [
+    "FR-043: Export to Excel",
+    "FR-044: Download .xlsx file",
+    "FR-045: Auto-detect Excel format",
+    "FR-046: Include all fields",
+    "FR-047: Proper Excel formatting",
+    "FR-048: Filter before export",
+    "FR-051: Error handling",
+    "FR-052: Audit trail"
+  ]
+}

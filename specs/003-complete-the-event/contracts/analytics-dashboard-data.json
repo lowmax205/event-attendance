@@ -1,0 +1,251 @@
+{
+  "endpoint": "/api/admin/analytics/dashboard",
+  "method": "GET",
+  "feature": "Analytics Dashboard (FR-053 to FR-065)",
+  "description": "Retrieve comprehensive analytics data for admin dashboard with charts and key metrics. Cached with 5-minute TTL via Redis.",
+  "authentication": {
+    "required": true,
+    "roles": ["ADMIN"]
+  },
+  "queryParameters": {
+    "startDate": {
+      "type": "string",
+      "required": false,
+      "validation": "ISO 8601 date",
+      "default": "30 days ago",
+      "description": "Filter data from this date (inclusive)"
+    },
+    "endDate": {
+      "type": "string",
+      "required": false,
+      "validation": "ISO 8601 date",
+      "default": "today",
+      "description": "Filter data until this date (inclusive)"
+    },
+    "refresh": {
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "description": "Force cache refresh (bypass Redis cache)"
+    }
+  },
+  "responseSchema": {
+    "success": true,
+    "data": {
+      "keyMetrics": {
+        "totalEvents": 45,
+        "totalAttendances": 2387,
+        "verificationRate": 92.3,
+        "pendingCount": 87
+      },
+      "charts": {
+        "attendanceTrends": {
+          "type": "line",
+          "data": [
+            {
+              "date": "2025-10-01",
+              "count": 123
+            },
+            {
+              "date": "2025-10-02",
+              "count": 145
+            }
+          ]
+        },
+        "topEvents": {
+          "type": "bar",
+          "data": [
+            {
+              "eventName": "CS Orientation",
+              "attendanceCount": 234
+            },
+            {
+              "eventName": "IT Seminar",
+              "attendanceCount": 198
+            }
+          ]
+        },
+        "eventStatusDistribution": {
+          "type": "pie",
+          "data": [
+            {
+              "status": "UPCOMING",
+              "count": 12
+            },
+            {
+              "status": "ONGOING",
+              "count": 3
+            },
+            {
+              "status": "COMPLETED",
+              "count": 28
+            },
+            {
+              "status": "CANCELLED",
+              "count": 2
+            }
+          ]
+        },
+        "verificationStatusDistribution": {
+          "type": "pie",
+          "data": [
+            {
+              "status": "APPROVED",
+              "count": 2203
+            },
+            {
+              "status": "REJECTED",
+              "count": 97
+            },
+            {
+              "status": "PENDING",
+              "count": 87
+            }
+          ]
+        },
+        "departmentBreakdown": {
+          "type": "bar",
+          "data": [
+            {
+              "department": "Computer Science",
+              "count": 567
+            },
+            {
+              "department": "Information Technology",
+              "count": 432
+            },
+            {
+              "department": "Engineering",
+              "count": 389
+            }
+          ]
+        },
+        "courseBreakdown": {
+          "type": "bar",
+          "data": [
+            {
+              "course": "BSCS",
+              "count": 567
+            },
+            {
+              "course": "BSIT",
+              "count": 432
+            },
+            {
+              "course": "BSCpE",
+              "count": 298
+            }
+          ]
+        }
+      },
+      "metadata": {
+        "generatedAt": "2025-10-08T11:30:00Z",
+        "cacheHit": true,
+        "cacheTTL": 300,
+        "queryTimeMs": 42
+      }
+    }
+  },
+  "errorResponses": [
+    {
+      "status": 400,
+      "body": {
+        "success": false,
+        "error": "Invalid date range: startDate must be before endDate"
+      }
+    },
+    {
+      "status": 403,
+      "body": {
+        "success": false,
+        "error": "Forbidden: Admin access required"
+      }
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Get dashboard data with default 30-day range",
+      "request": {
+        "queryParams": {}
+      },
+      "expectedStatus": 200,
+      "expectedData": {
+        "keyMetrics": {
+          "totalEvents": "number",
+          "totalAttendances": "number",
+          "verificationRate": "number between 0-100",
+          "pendingCount": "number"
+        },
+        "charts": {
+          "attendanceTrends": {
+            "type": "line",
+            "data": "array of date/count objects"
+          }
+        }
+      }
+    },
+    {
+      "name": "Get dashboard data with custom date range",
+      "request": {
+        "queryParams": {
+          "startDate": "2025-10-01",
+          "endDate": "2025-10-31"
+        }
+      },
+      "expectedStatus": 200,
+      "expectedData": {
+        "keyMetrics": {
+          "totalEvents": "count where createdAt in range",
+          "totalAttendances": "count where submittedAt in range"
+        }
+      }
+    },
+    {
+      "name": "Force cache refresh",
+      "request": {
+        "queryParams": {
+          "refresh": true
+        }
+      },
+      "expectedStatus": 200,
+      "expectedData": {
+        "metadata": {
+          "cacheHit": false
+        }
+      }
+    },
+    {
+      "name": "Reject invalid date range",
+      "request": {
+        "queryParams": {
+          "startDate": "2025-10-31",
+          "endDate": "2025-10-01"
+        }
+      },
+      "expectedStatus": 400,
+      "expectedError": "Invalid date range: startDate must be before endDate"
+    }
+  ],
+  "implementationNotes": {
+    "caching": "Use Redis to cache analytics data with key format: `analytics:dashboard:{startDate}:{endDate}`, TTL 300s (5 minutes). On cache hit, return cached data + metadata.cacheHit=true. On cache miss or refresh=true, execute queries and store in cache.",
+    "database": "Use Prisma aggregations for key metrics (count, groupBy). Execute chart queries in parallel using Promise.all() for performance. Queries documented in data-model.md (Analytics Aggregation Queries section).",
+    "performance": "Target response time: <500ms (cache hit), <2s (cache miss). Use database indexes on submittedAt, status, createdAt, department, course.",
+    "security": "Admin-only endpoint. Log to SecurityLog with eventType=ANALYTICS_ACCESSED, metadata={dateRange, cacheHit}.",
+    "chartLibrary": "Data structure optimized for Recharts library (researched in research.md). Return data in format compatible with Recharts LineChart, BarChart, PieChart components."
+  },
+  "relatedRequirements": [
+    "FR-053: Admin analytics dashboard",
+    "FR-054: Key metrics display",
+    "FR-055: Admin filters by date range",
+    "FR-056: Attendance trends line chart",
+    "FR-057: Top events bar chart",
+    "FR-058: Event status pie chart",
+    "FR-059: Verification status pie chart",
+    "FR-060: Charts use Recharts library",
+    "FR-061: Charts are responsive",
+    "FR-062: Charts are accessible",
+    "FR-063: Charts are interactive",
+    "FR-064: Department breakdown",
+    "FR-065: Course breakdown"
+  ]
+}

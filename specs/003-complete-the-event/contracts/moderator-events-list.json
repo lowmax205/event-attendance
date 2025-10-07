@@ -1,0 +1,167 @@
+{
+  "endpoint": "/api/moderator/events",
+  "method": "GET",
+  "feature": "Event Management (FR-026 to FR-028)",
+  "description": "Retrieve paginated list of events created by the current moderator. Moderator-only endpoint with automatic scope filtering.",
+  "authentication": {
+    "required": true,
+    "roles": ["MODERATOR", "ADMIN"]
+  },
+  "queryParameters": {
+    "page": {
+      "type": "number",
+      "required": false,
+      "default": 1,
+      "validation": "min: 1",
+      "description": "Page number for pagination"
+    },
+    "limit": {
+      "type": "number",
+      "required": false,
+      "default": 20,
+      "validation": "min: 10, max: 100",
+      "description": "Records per page"
+    },
+    "status": {
+      "type": "string",
+      "required": false,
+      "validation": "enum: [UPCOMING, ONGOING, COMPLETED, CANCELLED]",
+      "description": "Filter by event status (FR-027)"
+    },
+    "startDate": {
+      "type": "string",
+      "required": false,
+      "validation": "ISO 8601 date",
+      "description": "Filter events starting on/after this date (FR-028)"
+    },
+    "endDate": {
+      "type": "string",
+      "required": false,
+      "validation": "ISO 8601 date",
+      "description": "Filter events starting on/before this date (FR-028)"
+    },
+    "sortBy": {
+      "type": "string",
+      "required": false,
+      "default": "startDateTime",
+      "validation": "enum: [name, startDateTime, createdAt]",
+      "description": "Sort field"
+    },
+    "sortOrder": {
+      "type": "string",
+      "required": false,
+      "default": "asc",
+      "validation": "enum: [asc, desc]",
+      "description": "Sort direction"
+    }
+  },
+  "responseSchema": {
+    "success": true,
+    "data": {
+      "events": [
+        {
+          "id": "clx789event",
+          "name": "CS Department Orientation",
+          "description": "Welcome event for new CS students",
+          "startDateTime": "2025-10-15T09:00:00Z",
+          "endDateTime": "2025-10-15T12:00:00Z",
+          "venueLocation": "CS Auditorium",
+          "status": "UPCOMING",
+          "createdById": "clx123moderator",
+          "createdAt": "2025-10-08T08:00:00Z",
+          "updatedAt": "2025-10-08T08:00:00Z",
+          "_count": {
+            "attendances": 45
+          }
+        }
+      ],
+      "pagination": {
+        "page": 1,
+        "limit": 20,
+        "total": 12,
+        "totalPages": 1
+      }
+    }
+  },
+  "errorResponses": [
+    {
+      "status": 403,
+      "body": {
+        "success": false,
+        "error": "Forbidden: Moderator or Admin access required"
+      }
+    },
+    {
+      "status": 400,
+      "body": {
+        "success": false,
+        "error": "Invalid date range: startDate must be before endDate"
+      }
+    }
+  ],
+  "testCases": [
+    {
+      "name": "List moderator's own events",
+      "request": {
+        "user": {
+          "id": "clx123moderator",
+          "role": "MODERATOR"
+        },
+        "queryParams": {}
+      },
+      "expectedStatus": 200,
+      "expectedData": {
+        "events": "array where all events.createdById === clx123moderator"
+      }
+    },
+    {
+      "name": "Filter by UPCOMING status",
+      "request": {
+        "queryParams": {
+          "status": "UPCOMING"
+        }
+      },
+      "expectedStatus": 200,
+      "expectedData": {
+        "events": "array where all events.status === UPCOMING"
+      }
+    },
+    {
+      "name": "Filter by date range",
+      "request": {
+        "queryParams": {
+          "startDate": "2025-10-01",
+          "endDate": "2025-10-31"
+        }
+      },
+      "expectedStatus": 200,
+      "expectedData": {
+        "events": "array where all events.startDateTime >= 2025-10-01 AND startDateTime <= 2025-10-31"
+      }
+    },
+    {
+      "name": "Admin sees all events (no scope restriction)",
+      "request": {
+        "user": {
+          "id": "clx456admin",
+          "role": "ADMIN"
+        },
+        "queryParams": {}
+      },
+      "expectedStatus": 200,
+      "expectedData": {
+        "events": "array (not filtered by createdById)"
+      }
+    }
+  ],
+  "implementationNotes": {
+    "database": "Use Prisma `findMany` with WHERE clause: `createdById: currentUser.id` (if MODERATOR), `deletedAt: null`, plus optional status/date filters. For ADMIN, omit createdById filter.",
+    "performance": "Use index on `createdById` and `status, startDateTime` (already defined in data model).",
+    "security": "RBAC enforcement: MODERATOR sees only own events (FR-026), ADMIN sees all events."
+  },
+  "relatedRequirements": [
+    "FR-026: Moderators access only own events",
+    "FR-027: Moderators filter by event status",
+    "FR-028: Moderators filter by date range"
+  ]
+}

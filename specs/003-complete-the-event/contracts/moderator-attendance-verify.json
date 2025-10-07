@@ -1,0 +1,218 @@
+{
+  "endpoint": "/api/moderator/attendance/:attendanceId/verify",
+  "method": "PATCH",
+  "feature": "Attendance Management (FR-033 to FR-035)",
+  "description": "Verify (approve/reject) a pending attendance submission. Moderator can only verify for own events, Admin can verify all.",
+  "authentication": {
+    "required": true,
+    "roles": ["MODERATOR", "ADMIN"]
+  },
+  "urlParameters": {
+    "attendanceId": {
+      "type": "string",
+      "required": true,
+      "validation": "cuid format",
+      "description": "Attendance record ID"
+    }
+  },
+  "requestSchema": {
+    "status": {
+      "type": "string",
+      "required": true,
+      "validation": "enum: [APPROVED, REJECTED]",
+      "description": "Verification decision"
+    },
+    "disputeNotes": {
+      "type": "string",
+      "required": false,
+      "validation": "maxLength: 1000, required if status=REJECTED",
+      "description": "Reason for rejection (FR-034). Required when rejecting."
+    },
+    "resolutionNotes": {
+      "type": "string",
+      "required": false,
+      "validation": "maxLength: 1000",
+      "description": "Additional notes for verification (optional)"
+    }
+  },
+  "responseSchema": {
+    "success": true,
+    "data": {
+      "attendance": {
+        "id": "clx101attendance",
+        "status": "APPROVED",
+        "verifiedById": "clx123moderator",
+        "verifiedAt": "2025-10-08T11:00:00Z",
+        "disputeNotes": null,
+        "resolutionNotes": "Photos and signature verified. Location within range."
+      }
+    },
+    "message": "Attendance verified successfully"
+  },
+  "errorResponses": [
+    {
+      "status": 400,
+      "body": {
+        "success": false,
+        "error": "Dispute notes required when rejecting attendance"
+      },
+      "condition": "status === REJECTED && (!disputeNotes || disputeNotes.trim() === '')"
+    },
+    {
+      "status": 403,
+      "body": {
+        "success": false,
+        "error": "Forbidden: You can only verify attendance for your own events"
+      },
+      "condition": "currentUser.role === MODERATOR && attendance.event.createdById !== currentUser.id"
+    },
+    {
+      "status": 404,
+      "body": {
+        "success": false,
+        "error": "Attendance record not found"
+      }
+    },
+    {
+      "status": 409,
+      "body": {
+        "success": false,
+        "error": "Attendance already verified"
+      },
+      "condition": "attendance.status !== PENDING && attendance.status !== DISPUTED"
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Approve pending attendance",
+      "request": {
+        "params": {
+          "attendanceId": "clx101attendance"
+        },
+        "body": {
+          "status": "APPROVED",
+          "resolutionNotes": "Valid submission"
+        },
+        "user": {
+          "id": "clx123moderator",
+          "role": "MODERATOR"
+        }
+      },
+      "preconditions": {
+        "attendance": {
+          "id": "clx101attendance",
+          "status": "PENDING",
+          "event": {
+            "createdById": "clx123moderator"
+          }
+        }
+      },
+      "expectedStatus": 200,
+      "expectedData": {
+        "attendance": {
+          "status": "APPROVED",
+          "verifiedById": "clx123moderator",
+          "verifiedAt": "ISO date string"
+        }
+      }
+    },
+    {
+      "name": "Reject attendance with dispute notes",
+      "request": {
+        "params": {
+          "attendanceId": "clx102attendance"
+        },
+        "body": {
+          "status": "REJECTED",
+          "disputeNotes": "Location too far from venue. Signature does not match profile."
+        }
+      },
+      "expectedStatus": 200,
+      "expectedData": {
+        "attendance": {
+          "status": "REJECTED",
+          "disputeNotes": "Location too far from venue. Signature does not match profile.",
+          "verifiedAt": "ISO date string"
+        }
+      }
+    },
+    {
+      "name": "Reject attendance without dispute notes (error)",
+      "request": {
+        "params": {
+          "attendanceId": "clx103attendance"
+        },
+        "body": {
+          "status": "REJECTED"
+        }
+      },
+      "expectedStatus": 400,
+      "expectedError": "Dispute notes required when rejecting attendance"
+    },
+    {
+      "name": "Moderator cannot verify other moderator's event attendance",
+      "request": {
+        "params": {
+          "attendanceId": "clx104attendance"
+        },
+        "body": {
+          "status": "APPROVED"
+        },
+        "user": {
+          "id": "clx123moderator",
+          "role": "MODERATOR"
+        }
+      },
+      "preconditions": {
+        "attendance": {
+          "id": "clx104attendance",
+          "event": {
+            "createdById": "clx999othermoderator"
+          }
+        }
+      },
+      "expectedStatus": 403,
+      "expectedError": "Forbidden: You can only verify attendance for your own events"
+    },
+    {
+      "name": "Admin can verify any event attendance",
+      "request": {
+        "params": {
+          "attendanceId": "clx105attendance"
+        },
+        "body": {
+          "status": "APPROVED"
+        },
+        "user": {
+          "id": "clx456admin",
+          "role": "ADMIN"
+        }
+      },
+      "preconditions": {
+        "attendance": {
+          "id": "clx105attendance",
+          "event": {
+            "createdById": "clx999othermoderator"
+          }
+        }
+      },
+      "expectedStatus": 200,
+      "expectedData": {
+        "attendance": {
+          "status": "APPROVED"
+        }
+      }
+    }
+  ],
+  "implementationNotes": {
+    "database": "Update Attendance: status, verifiedById, verifiedAt, disputeNotes (if REJECTED), resolutionNotes. Use Prisma transaction to fetch attendance + event + createdBy check in single query.",
+    "security": "Log to SecurityLog with eventType=ATTENDANCE_VERIFIED or ATTENDANCE_REJECTED, metadata={attendanceId, studentId, eventId, decision}. For MODERATOR, verify event.createdById === currentUser.id via join.",
+    "validation": "Zod schema: status required, disputeNotes required if status=REJECTED, resolutionNotes optional."
+  },
+  "relatedRequirements": [
+    "FR-033: Moderators verify attendance",
+    "FR-034: Rejection requires dispute notes",
+    "FR-035: Track verifier and timestamp",
+    "FR-042: Moderators verify only own event attendances"
+  ]
+}

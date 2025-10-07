@@ -1,0 +1,206 @@
+{
+  "endpoint": "/api/admin/users",
+  "method": "GET",
+  "feature": "User Management (FR-001 to FR-015)",
+  "description": "Retrieve paginated list of users with filtering and sorting capabilities. Admin-only endpoint.",
+  "authentication": {
+    "required": true,
+    "roles": ["ADMIN"]
+  },
+  "queryParameters": {
+    "page": {
+      "type": "number",
+      "required": false,
+      "default": 1,
+      "validation": "min: 1",
+      "description": "Page number for pagination"
+    },
+    "limit": {
+      "type": "number",
+      "required": false,
+      "default": 20,
+      "validation": "min: 10, max: 100",
+      "description": "Records per page"
+    },
+    "role": {
+      "type": "string",
+      "required": false,
+      "validation": "enum: [ADMIN, MODERATOR, STUDENT]",
+      "description": "Filter by user role (FR-002)"
+    },
+    "status": {
+      "type": "string",
+      "required": false,
+      "validation": "enum: [ACTIVE, SUSPENDED]",
+      "description": "Filter by account status (FR-006)"
+    },
+    "search": {
+      "type": "string",
+      "required": false,
+      "validation": "minLength: 2",
+      "description": "Search by email or name (FR-003)"
+    },
+    "sortBy": {
+      "type": "string",
+      "required": false,
+      "default": "createdAt",
+      "validation": "enum: [email, role, accountStatus, createdAt, lastLoginAt]",
+      "description": "Sort field (FR-004)"
+    },
+    "sortOrder": {
+      "type": "string",
+      "required": false,
+      "default": "desc",
+      "validation": "enum: [asc, desc]",
+      "description": "Sort direction (FR-004)"
+    }
+  },
+  "responseSchema": {
+    "success": true,
+    "data": {
+      "users": [
+        {
+          "id": "clx123abc",
+          "email": "student@example.com",
+          "role": "STUDENT",
+          "accountStatus": "ACTIVE",
+          "profile": {
+            "studentNumber": "2024-00001",
+            "firstName": "Juan",
+            "middleName": "Santos",
+            "lastName": "Dela Cruz",
+            "suffix": null,
+            "department": "Computer Science",
+            "course": "BSCS",
+            "yearLevel": 3,
+            "section": "A"
+          },
+          "createdAt": "2025-10-01T08:00:00Z",
+          "lastLoginAt": "2025-10-08T09:30:00Z",
+          "suspendedAt": null,
+          "suspendedBy": null,
+          "deletedAt": null
+        }
+      ],
+      "pagination": {
+        "page": 1,
+        "limit": 20,
+        "total": 523,
+        "totalPages": 27
+      }
+    }
+  },
+  "errorResponses": [
+    {
+      "status": 401,
+      "body": {
+        "success": false,
+        "error": "Unauthorized: Authentication required"
+      }
+    },
+    {
+      "status": 403,
+      "body": {
+        "success": false,
+        "error": "Forbidden: Admin access required"
+      }
+    },
+    {
+      "status": 400,
+      "body": {
+        "success": false,
+        "error": "Invalid query parameters",
+        "details": {
+          "role": "Must be one of: ADMIN, MODERATOR, STUDENT"
+        }
+      }
+    }
+  ],
+  "testCases": [
+    {
+      "name": "List all users with default pagination",
+      "request": {
+        "queryParams": {}
+      },
+      "expectedStatus": 200,
+      "expectedData": {
+        "users": "array",
+        "pagination": {
+          "page": 1,
+          "limit": 20
+        }
+      }
+    },
+    {
+      "name": "Filter by STUDENT role",
+      "request": {
+        "queryParams": {
+          "role": "STUDENT"
+        }
+      },
+      "expectedStatus": 200,
+      "expectedData": {
+        "users": "array where all users.role === STUDENT"
+      }
+    },
+    {
+      "name": "Filter by SUSPENDED status",
+      "request": {
+        "queryParams": {
+          "status": "SUSPENDED"
+        }
+      },
+      "expectedStatus": 200,
+      "expectedData": {
+        "users": "array where all users.accountStatus === SUSPENDED"
+      }
+    },
+    {
+      "name": "Search by email",
+      "request": {
+        "queryParams": {
+          "search": "john"
+        }
+      },
+      "expectedStatus": 200,
+      "expectedData": {
+        "users": "array where users.email or profile name contains 'john' (case-insensitive)"
+      }
+    },
+    {
+      "name": "Sort by last login (descending)",
+      "request": {
+        "queryParams": {
+          "sortBy": "lastLoginAt",
+          "sortOrder": "desc"
+        }
+      },
+      "expectedStatus": 200,
+      "expectedData": {
+        "users": "array sorted by lastLoginAt DESC (nulls last)"
+      }
+    },
+    {
+      "name": "Reject non-admin access",
+      "request": {
+        "user": {
+          "role": "MODERATOR"
+        }
+      },
+      "expectedStatus": 403,
+      "expectedError": "Forbidden: Admin access required"
+    }
+  ],
+  "implementationNotes": {
+    "database": "Use Prisma `findMany` with `where`, `orderBy`, `skip`, `take` for pagination. Filter `deletedAt IS NULL` to exclude soft-deleted users.",
+    "performance": "Add indexes on `role`, `accountStatus`, `email`, `deletedAt` (already defined in data model).",
+    "security": "Verify JWT role claim === ADMIN in middleware. Log access via SecurityLog (ANALYTICS_ACCESSED)."
+  },
+  "relatedRequirements": [
+    "FR-001: Admin views all users",
+    "FR-002: Admin filters by role",
+    "FR-003: Admin searches by email/name",
+    "FR-004: Admin sorts users",
+    "FR-006: Admin views account status"
+  ]
+}

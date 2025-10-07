@@ -1,0 +1,131 @@
+{
+  "endpoint": "/api/admin/users/:userId/status",
+  "method": "PATCH",
+  "feature": "User Management (FR-007, FR-009)",
+  "description": "Suspend or reactivate a user account. Admin-only endpoint.",
+  "authentication": {
+    "required": true,
+    "roles": ["ADMIN"]
+  },
+  "urlParameters": {
+    "userId": {
+      "type": "string",
+      "required": true,
+      "validation": "cuid format",
+      "description": "Target user ID"
+    }
+  },
+  "requestSchema": {
+    "accountStatus": {
+      "type": "string",
+      "required": true,
+      "validation": "enum: [ACTIVE, SUSPENDED]",
+      "description": "New account status"
+    },
+    "reason": {
+      "type": "string",
+      "required": false,
+      "validation": "maxLength: 500",
+      "description": "Reason for suspension (optional, for audit log)"
+    }
+  },
+  "responseSchema": {
+    "success": true,
+    "data": {
+      "user": {
+        "id": "clx123abc",
+        "email": "user@example.com",
+        "accountStatus": "SUSPENDED",
+        "suspendedAt": "2025-10-08T10:20:00Z",
+        "suspendedById": "clx456admin"
+      }
+    },
+    "message": "User account suspended successfully"
+  },
+  "errorResponses": [
+    {
+      "status": 400,
+      "body": {
+        "success": false,
+        "error": "Cannot suspend self"
+      },
+      "condition": "userId === currentUser.id"
+    },
+    {
+      "status": 409,
+      "body": {
+        "success": false,
+        "error": "User account already has this status"
+      }
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Suspend user account",
+      "request": {
+        "params": {
+          "userId": "clx123student"
+        },
+        "body": {
+          "accountStatus": "SUSPENDED",
+          "reason": "Violation of attendance policy"
+        }
+      },
+      "expectedStatus": 200,
+      "expectedData": {
+        "user": {
+          "id": "clx123student",
+          "accountStatus": "SUSPENDED",
+          "suspendedAt": "ISO date string",
+          "suspendedById": "current admin ID"
+        }
+      }
+    },
+    {
+      "name": "Reactivate suspended account",
+      "request": {
+        "params": {
+          "userId": "clx123student"
+        },
+        "body": {
+          "accountStatus": "ACTIVE"
+        }
+      },
+      "expectedStatus": 200,
+      "expectedData": {
+        "user": {
+          "accountStatus": "ACTIVE",
+          "suspendedAt": null,
+          "suspendedById": null
+        }
+      }
+    },
+    {
+      "name": "Reject self-suspension",
+      "request": {
+        "params": {
+          "userId": "clx123admin"
+        },
+        "user": {
+          "id": "clx123admin",
+          "role": "ADMIN"
+        },
+        "body": {
+          "accountStatus": "SUSPENDED"
+        }
+      },
+      "expectedStatus": 400,
+      "expectedError": "Cannot suspend self"
+    }
+  ],
+  "implementationNotes": {
+    "database": "Update User.accountStatus, User.suspendedAt, User.suspendedById. On reactivation, set suspendedAt/suspendedById to null.",
+    "security": "Log to SecurityLog with eventType=USER_STATUS_CHANGED, metadata={fromStatus, toStatus, targetUserId, reason}. Invalidate all active sessions for suspended user (revoke JWT via blocklist or expiration check).",
+    "sideEffects": "Suspended users cannot login (enforced in auth middleware). Existing active sessions should be invalidated."
+  },
+  "relatedRequirements": [
+    "FR-007: Admin suspends user",
+    "FR-009: Admin reactivates user",
+    "FR-010: Audit trail for status changes"
+  ]
+}

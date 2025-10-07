@@ -186,7 +186,7 @@ The moderator accesses their dashboard and manages their assigned events. They c
 - **FR-008**: System MUST require confirmation when an admin attempts to change their own role
 - **FR-009**: System MUST invalidate the user's active session when their role or status is changed
 - **FR-010**: System MUST log all user management actions (role changes, status changes) to the audit trail with admin ID and timestamp
-- **FR-011**: [NEEDS CLARIFICATION: Additional user management capabilities like password reset, account deletion, or user creation]
+- **FR-011**: System MUST provide admins with comprehensive user management capabilities including manual user creation, password reset functionality, account suspension/reactivation, and user soft deletion with reason tracking
 
 #### Event Management (Moderator and Admin)
 
@@ -199,18 +199,18 @@ The moderator accesses their dashboard and manages their assigned events. They c
 - **FR-018**: System MUST display a warning when editing an event that has already completed
 - **FR-019**: System MUST allow users to download the event's QR code as a printable image file
 - **FR-020**: System MUST prevent deletion of events that have associated attendance records
-- **FR-025**: System MUST allow admins to view all events system-wide regardless of creator
-- **FR-026**: System MUST restrict moderators to viewing and managing only events they created (creator-owned access)
-- **FR-027**: System MUST allow filtering events by status (Upcoming/Active/Completed)
+- **FR-021**: System MUST allow admins to view all events system-wide regardless of creator
+- **FR-022**: System MUST restrict moderators to viewing and managing only events they created (creator-owned access)
+- **FR-023**: System MUST allow filtering events by status (Upcoming/Active/Completed)
 - **FR-024**: System MUST allow filtering events by date range
 - **FR-025**: System MUST allow searching events by name or location
 
 #### Attendance Management (Moderator and Admin)
 
 - **FR-026**: System MUST provide moderators and admins with an Attendance Management interface
-- **FR-027**: Attendance Management interface MUST display attendance records with columns: student name, student ID, event name, submission timestamp, verification status (Pending/Approved/Rejected/Disputed), distance from venue (meters), verified by, and verification timestamp
+- **FR-027**: Attendance Management interface MUST display attendance records with columns: student name, student ID, event name, submission timestamp, verification status (PENDING/APPROVED/REJECTED/DISPUTED), distance from venue (meters), verified by, and verification timestamp
 - **FR-028**: System MUST allow filtering attendance records by event
-- **FR-029**: System MUST allow filtering attendance records by verification status (Pending/Approved/Rejected/Disputed)
+- **FR-029**: System MUST allow filtering attendance records by verification status (PENDING/APPROVED/REJECTED/DISPUTED)
 - **FR-030**: System MUST allow filtering attendance records by date range (submission date)
 - **FR-031**: System MUST allow searching attendance records by student name or ID
 - **FR-032**: System MUST allow moderators and admins to view full attendance details including submitted photos, signature, GPS coordinates, and submission metadata
@@ -218,15 +218,15 @@ The moderator accesses their dashboard and manages their assigned events. They c
 - **FR-034**: System MUST allow moderators and admins to reject attendance records with a required dispute note explaining the reason
 - **FR-035**: System MUST record the verifier's user ID and verification timestamp when attendance is approved or rejected
 - **FR-036**: System MUST allow moderators and admins to review disputed attendances (where student has appealed)
-- **FR-041**: System MUST allow moderators and admins to resolve disputed attendances by either approving with updated notes or maintaining rejection with additional explanation
-- **FR-042**: System MUST restrict moderators to viewing and managing attendance records only for events they created (admins see all attendance records)
+- **FR-037**: System MUST allow moderators and admins to resolve disputed attendances by either approving with updated notes or maintaining rejection with additional explanation
+- **FR-038**: System MUST restrict moderators to viewing and managing attendance records only for events they created (admins see all attendance records)
 
 #### Data Export Functionality
 
 - **FR-039**: System MUST provide export functionality accessible to moderators and admins
-- **FR-044**: System MUST support exporting attendance data to CSV format
-- **FR-045**: System MUST support exporting attendance data to Excel format (.xlsx)
-- **FR-046**: CSV export MUST include the following columns: Student Name, Student ID, Email, Year, Section, Course, Department, Event Name, Event Date, Event Location, Submission Timestamp, Check-In Time, Check-Out Time, Verification Status, Verified By, Verification Timestamp, Distance from Venue (meters), Dispute Notes
+- **FR-040**: System MUST support exporting attendance data to CSV format
+- **FR-041**: System MUST support exporting attendance data to Excel format (.xlsx)
+- **FR-042**: CSV export MUST include the following columns: Student Name, Student ID, Email, Year, Section, Course, Department, Event Name, Event Date, Event Location, Submission Timestamp, Check-In Time, Check-Out Time, Verification Status, Verified By, Verification Timestamp, Distance from Venue (meters), Dispute Notes
 - **FR-043**: Excel export MUST include the same data as CSV with formatted headers and auto-sized columns for readability
 - **FR-044**: System MUST allow users to apply filters before exporting (event, date range, verification status)
 - **FR-045**: System MUST generate export file with a descriptive filename including export type, date range, and timestamp (e.g., "attendance_export_2025-10-01_to_2025-10-31_20251108_143052.csv")
@@ -239,29 +239,28 @@ The moderator accesses their dashboard and manages their assigned events. They c
 - **FR-049**: System MUST provide admins with a comprehensive Analytics Dashboard
 - **FR-050**: Analytics Dashboard MUST display the following key metrics: Total Events (count), Total Attendances (count), Average Attendance per Event, Verification Rate (percentage of approved attendances), Pending Verification Count
 - **FR-051**: Analytics Dashboard MUST support time period filters: All-time, Last 7 days, Last 30 days, Last 90 days
-- **FR-052**: System MUST display an attendance trends chart showing attendance submissions over time
-- **FR-053**: System MUST display an event statistics chart showing top events by attendance count
-- **FR-054**: System MUST display a user participation chart showing engagement metrics [NEEDS CLARIFICATION: Specific chart type - bar, pie, line?]
-- **FR-055**: System MUST display a verification status distribution chart showing breakdown of Pending/Approved/Rejected/Disputed attendances
-- **FR-056**: Charts MUST display tooltips with detailed values when hovering over data points
-- **FR-057**: Charts MUST be responsive and readable on mobile and desktop devices
-- **FR-058**: System MUST display a message when insufficient data is available for meaningful visualization
-- **FR-063**: System MUST allow admins to drill down into chart data points to view detailed records
-- **FR-064**: System MUST display attendance rate breakdown by department using a bar chart showing percentage of students who attended events per department
-- **FR-065**: System MUST display attendance rate breakdown by course using a bar chart showing percentage of students who attended events per course
-- **FR-066**: System MUST calculate attendance rates as: (Number of approved attendances / Total enrolled students in department or course) × 100%
+- **FR-052**: System MUST display an attendance trends chart (line chart) showing attendance submissions over time
+- **FR-053**: System MUST display an event statistics chart (bar chart) showing top events by attendance count
+- **FR-054**: System MUST display a verification status distribution chart (pie chart) showing breakdown of PENDING/APPROVED/REJECTED/DISPUTED attendances
+- **FR-055**: Charts MUST display tooltips with detailed values when hovering over data points
+- **FR-056**: Charts MUST be responsive and readable on mobile and desktop devices
+- **FR-057**: System MUST display a message when insufficient data is available for meaningful visualization
+- **FR-058**: System MUST allow admins to drill down into chart data points to view detailed records by clicking on chart elements
+- **FR-059**: System MUST display attendance rate breakdown by department using a bar chart showing percentage of students who attended events per department
+- **FR-060**: System MUST display attendance rate breakdown by course using a bar chart showing percentage of students who attended events per course
+- **FR-061**: System MUST calculate attendance rates as: (Number of approved attendances / Total enrolled students in department or course) × 100%
 
 #### General Management Features
 
-- **FR-061**: System MUST implement role-based access control ensuring students cannot access management interfaces
-- **FR-062**: System MUST display clear error messages when users attempt to access features above their permission level
-- **FR-063**: System MUST implement pagination for all data tables displaying more than 50 records
-- **FR-064**: System MUST display record counts (e.g., "Showing 1-50 of 234 records") on all data tables
-- **FR-065**: System MUST allow sorting on all table columns where applicable
-- **FR-066**: System MUST maintain filter and sort states when navigating between pages in the same section
-- **FR-067**: System MUST implement optimistic locking or conflict detection when multiple users edit the same record
-- **FR-068**: System MUST display timestamps in the user's local timezone with timezone indicator
-- **FR-069**: System MUST provide bulk actions for common tasks (e.g., bulk approve pending attendances, bulk export multiple events)
+- **FR-062**: System MUST implement role-based access control ensuring students cannot access management interfaces
+- **FR-063**: System MUST display clear error messages when users attempt to access features above their permission level
+- **FR-064**: System MUST implement pagination for all data tables displaying more than 50 records
+- **FR-065**: System MUST display record counts (e.g., "Showing 1-50 of 234 records") on all data tables
+- **FR-066**: System MUST allow sorting on all table columns where applicable
+- **FR-067**: System MUST maintain filter and sort states when navigating between pages in the same section
+- **FR-068**: System MUST implement optimistic locking or conflict detection when multiple users edit the same record
+- **FR-069**: System MUST display timestamps in the user's local timezone with timezone indicator
+- **FR-070**: System MUST provide bulk actions for common tasks (e.g., bulk approve pending attendances, bulk export multiple events)
 
 ### Key Entities *(include if feature involves data)*
 

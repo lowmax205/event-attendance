@@ -1,0 +1,140 @@
+{
+  "endpoint": "/api/admin/users/:userId/role",
+  "method": "PATCH",
+  "feature": "User Management (FR-005)",
+  "description": "Update a user's role. Admin-only endpoint with confirmation for self-role changes.",
+  "authentication": {
+    "required": true,
+    "roles": ["ADMIN"]
+  },
+  "urlParameters": {
+    "userId": {
+      "type": "string",
+      "required": true,
+      "validation": "cuid format",
+      "description": "Target user ID"
+    }
+  },
+  "requestSchema": {
+    "role": {
+      "type": "string",
+      "required": true,
+      "validation": "enum: [ADMIN, MODERATOR, STUDENT]",
+      "description": "New role for user"
+    },
+    "confirmSelfChange": {
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "description": "Explicit confirmation when admin changes own role (FR-008)"
+    }
+  },
+  "responseSchema": {
+    "success": true,
+    "data": {
+      "user": {
+        "id": "clx123abc",
+        "email": "user@example.com",
+        "role": "MODERATOR",
+        "updatedAt": "2025-10-08T10:15:00Z"
+      }
+    },
+    "message": "User role updated successfully"
+  },
+  "errorResponses": [
+    {
+      "status": 400,
+      "body": {
+        "success": false,
+        "error": "Self-role change requires confirmation",
+        "requiresConfirmation": true
+      },
+      "condition": "userId === currentUser.id && confirmSelfChange !== true (FR-008)"
+    },
+    {
+      "status": 404,
+      "body": {
+        "success": false,
+        "error": "User not found"
+      }
+    },
+    {
+      "status": 409,
+      "body": {
+        "success": false,
+        "error": "User already has this role"
+      }
+    }
+  ],
+  "testCases": [
+    {
+      "name": "Update student to moderator",
+      "request": {
+        "params": {
+          "userId": "clx123student"
+        },
+        "body": {
+          "role": "MODERATOR"
+        }
+      },
+      "expectedStatus": 200,
+      "expectedData": {
+        "user": {
+          "id": "clx123student",
+          "role": "MODERATOR"
+        }
+      }
+    },
+    {
+      "name": "Reject self-role change without confirmation",
+      "request": {
+        "params": {
+          "userId": "clx123admin"
+        },
+        "user": {
+          "id": "clx123admin",
+          "role": "ADMIN"
+        },
+        "body": {
+          "role": "STUDENT"
+        }
+      },
+      "expectedStatus": 400,
+      "expectedError": "Self-role change requires confirmation",
+      "expectedData": {
+        "requiresConfirmation": true
+      }
+    },
+    {
+      "name": "Allow self-role change with confirmation",
+      "request": {
+        "params": {
+          "userId": "clx123admin"
+        },
+        "user": {
+          "id": "clx123admin",
+          "role": "ADMIN"
+        },
+        "body": {
+          "role": "MODERATOR",
+          "confirmSelfChange": true
+        }
+      },
+      "expectedStatus": 200,
+      "expectedData": {
+        "user": {
+          "role": "MODERATOR"
+        }
+      }
+    }
+  ],
+  "implementationNotes": {
+    "security": "Log to SecurityLog with eventType=USER_ROLE_CHANGED, metadata={fromRole, toRole, targetUserId}. Verify current user !== target user OR confirmSelfChange === true.",
+    "sideEffects": "If role changes to/from MODERATOR, invalidate any cached event ownership queries."
+  },
+  "relatedRequirements": [
+    "FR-005: Admin changes user role",
+    "FR-008: Confirmation for self-role change",
+    "FR-010: Audit trail for role changes"
+  ]
+}
