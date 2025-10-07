@@ -24,7 +24,7 @@ export async function createEvent(input: unknown) {
     // Validate buffer window doesn't extend into the past (FR-035.1)
     const checkInTime = new Date(validatedData.startDateTime);
     checkInTime.setMinutes(
-      checkInTime.getMinutes() - (validatedData.checkInBufferMins ?? 30)
+      checkInTime.getMinutes() - (validatedData.checkInBufferMins ?? 30),
     );
 
     if (checkInTime < new Date()) {
@@ -71,7 +71,7 @@ export async function createEvent(input: unknown) {
     const qrCodeUrl = await uploadQRCode(
       qrDataUrl,
       cloudinaryFolder,
-      `qr_${Date.now()}`
+      `qr_${Date.now()}`,
     );
 
     // Update event with QR code information
@@ -94,7 +94,7 @@ export async function createEvent(input: unknown) {
       headersList.get("x-forwarded-for") ||
         headersList.get("x-real-ip") ||
         undefined,
-      headersList.get("user-agent") || undefined
+      headersList.get("user-agent") || undefined,
     );
 
     return {

@@ -11,7 +11,7 @@ export async function logAction(
   entityId: string,
   metadata?: object,
   ipAddress?: string,
-  userAgent?: string
+  userAgent?: string,
 ): Promise<void> {
   try {
     await db.securityLog.create({

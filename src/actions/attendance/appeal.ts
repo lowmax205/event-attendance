@@ -87,7 +87,7 @@ export async function appealAttendance(input: unknown) {
       headersList.get("x-forwarded-for") ||
         headersList.get("x-real-ip") ||
         undefined,
-      headersList.get("user-agent") || undefined
+      headersList.get("user-agent") || undefined,
     );
 
     return {

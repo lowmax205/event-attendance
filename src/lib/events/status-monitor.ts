@@ -34,7 +34,7 @@ export async function checkAndUpdateExpiredEvents(): Promise<{
     const eventsToComplete = expiredEvents.filter((event) => {
       const checkOutEndTime = new Date(event.endDateTime);
       checkOutEndTime.setMinutes(
-        checkOutEndTime.getMinutes() + event.checkOutBufferMins
+        checkOutEndTime.getMinutes() + event.checkOutBufferMins,
       );
       return checkOutEndTime < now;
     });
@@ -60,7 +60,7 @@ export async function checkAndUpdateExpiredEvents(): Promise<{
     });
 
     console.log(
-      `Event status monitor: Transitioned ${result.count} events to Completed status`
+      `Event status monitor: Transitioned ${result.count} events to Completed status`,
     );
 
     return {
@@ -83,7 +83,7 @@ export async function checkAndUpdateExpiredEvents(): Promise<{
  * @param intervalMs - Interval in milliseconds (default: 60000 = 1 minute)
  */
 export function startEventStatusMonitor(
-  intervalMs: number = 60000
+  intervalMs: number = 60000,
 ): NodeJS.Timeout {
   console.log(`Event status monitor started (checking every ${intervalMs}ms)`);
 
@@ -126,7 +126,7 @@ export async function checkSingleEvent(eventId: string): Promise<boolean> {
     const now = new Date();
     const checkOutEndTime = new Date(event.endDateTime);
     checkOutEndTime.setMinutes(
-      checkOutEndTime.getMinutes() + event.checkOutBufferMins
+      checkOutEndTime.getMinutes() + event.checkOutBufferMins,
     );
 
     if (checkOutEndTime < now) {
