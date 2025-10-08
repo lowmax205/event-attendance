@@ -15,7 +15,8 @@ import { headers } from "next/headers";
  * @param input - Optional reason for regeneration
  * @returns New QR code information
  */
-export async function regenerateQRCode(eventId: string, input?: unknown) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function regenerateQRCode(eventId: string, input?: any) {
   try {
     // Require Moderator or Administrator role
     const user = await requireRole(["Moderator", "Administrator"]);

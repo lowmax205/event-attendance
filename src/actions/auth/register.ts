@@ -68,6 +68,7 @@ export async function register(data: RegisterInput): Promise<AuthResponse> {
       email: user.email,
       role: user.role,
       hasProfile: false,
+      accountStatus: user.accountStatus,
     });
 
     // 7. Set cookies

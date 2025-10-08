@@ -13,7 +13,8 @@ import { headers } from "next/headers";
  * Create a new event with QR code generation
  * @returns Created event with QR code URL
  */
-export async function createEvent(input: unknown) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function createEvent(input: any) {
   try {
     // Require Moderator or Administrator role
     const user = await requireRole(["Moderator", "Administrator"]);

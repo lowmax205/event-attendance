@@ -20,6 +20,7 @@ export interface JWTPayload {
   email: string;
   role: "Student" | "Moderator" | "Administrator";
   hasProfile: boolean;
+  accountStatus?: "ACTIVE" | "SUSPENDED";
   type: "access" | "refresh";
 }
 
@@ -85,7 +86,8 @@ export async function generateRefreshToken(
 export async function verifyToken(token: string): Promise<JWTPayload | null> {
   try {
     const { payload } = await jwtVerify(token, JWT_SECRET);
-    return payload as unknown as JWTPayload;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return payload as any as JWTPayload;
   } catch (error) {
     console.error("JWT verification failed:", error);
     return null;

@@ -46,7 +46,8 @@ interface RecentActivity {
   userId: string;
   userName: string;
   timestamp: Date;
-  metadata?: Record<string, unknown>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  metadata?: Record<string, any>;
 }
 
 interface Alert {

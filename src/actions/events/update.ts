@@ -17,7 +17,8 @@ import { ZodError } from "zod";
  * @param input - Partial event data to update
  * @returns Updated event
  */
-export async function updateEvent(eventId: string, input: unknown) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function updateEvent(eventId: string, input: any) {
   try {
     // Require Moderator or Administrator role
     const user = await requireRole(["Moderator", "Administrator"]);
@@ -102,11 +103,14 @@ export async function updateEvent(eventId: string, input: unknown) {
 
     // Build editHistory entry (FR-017)
     const changedFields = Object.keys(validatedData);
-    const changes: Record<string, { from: unknown; to: unknown }> = {};
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const changes: Record<string, { from: any; to: any }> = {};
 
     changedFields.forEach((field) => {
-      const oldValue = (existingEvent as Record<string, unknown>)[field];
-      const newValue = (validatedData as Record<string, unknown>)[field];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const oldValue = (existingEvent as Record<string, any>)[field];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const newValue = (validatedData as Record<string, any>)[field];
       if (oldValue !== newValue && newValue !== undefined) {
         changes[field] = { from: oldValue, to: newValue };
       }

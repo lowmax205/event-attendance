@@ -60,15 +60,31 @@ export async function login(data: LoginInput): Promise<AuthResponse> {
     // 5. Check if user has profile
     const hasProfile = !!user.UserProfile;
 
-    // 6. Create session
+    // 6. Check account status (T058)
+    if (user.accountStatus === "SUSPENDED") {
+      return {
+        success: false,
+        message: "Your account has been suspended. Please contact support.",
+      };
+    }
+
+    if (user.deletedAt !== null) {
+      return {
+        success: false,
+        message: "Account not found.",
+      };
+    }
+
+    // 7. Create session
     const { accessToken, refreshToken } = await createSession({
       id: user.id,
       email: user.email,
       role: user.role,
       hasProfile,
+      accountStatus: user.accountStatus,
     });
 
-    // 7. Set cookies
+    // 8. Set cookies
     const cookieStore = await cookies();
     cookieStore.set("accessToken", accessToken, {
       httpOnly: true,

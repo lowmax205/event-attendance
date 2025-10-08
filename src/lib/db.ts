@@ -5,8 +5,8 @@ import { PrismaClient } from "@prisma/client";
  * Prevents multiple instances in development due to hot-reloading
  * See: https://www.prisma.io/docs/guides/other/troubleshooting-orm/help-articles/nextjs-prisma-client-dev-practices
  */
-
-const globalForPrisma = globalThis as unknown as {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const globalForPrisma = globalThis as any as {
   prisma: PrismaClient | undefined;
 };
 

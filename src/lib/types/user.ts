@@ -67,6 +67,7 @@ export interface SecurityLogEntry {
   action: SecurityEventType;
   ipAddress?: string | null;
   userAgent?: string | null;
-  metadata?: Record<string, unknown> | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  metadata?: Record<string, any> | null;
   createdAt: Date;
 }

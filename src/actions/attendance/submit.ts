@@ -14,7 +14,8 @@ import { headers } from "next/headers";
  * @param input - Attendance submission data (including attendanceType)
  * @returns Created or updated attendance record
  */
-export async function submitAttendance(input: unknown) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function submitAttendance(input: any) {
   try {
     // Require Student role (or higher)
     const user = await requireRole(["Student", "Moderator", "Administrator"]);

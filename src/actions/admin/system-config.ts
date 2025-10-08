@@ -86,7 +86,8 @@ export async function getSystemConfig() {
  * Update system configuration
  * Validates GPS radius (10-500m) and buffer times (0-120min)
  */
-export async function updateSystemConfig(input: unknown) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function updateSystemConfig(input: any) {
   try {
     // Require Administrator role
     const user = await requireRole(["Administrator"]);

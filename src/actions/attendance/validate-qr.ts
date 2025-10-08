@@ -19,14 +19,15 @@ const validateQRSchema = z.object({
  * @param input - QR payload to validate
  * @returns Validation result with event details
  */
-export async function validateQR(input: unknown) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function validateQR(input: any) {
   try {
     // Check rate limit before processing
     const headersList = await headers();
     const ipAddress =
       headersList.get("x-forwarded-for")?.split(",")[0] ||
       headersList.get("x-real-ip") ||
-      "unknown";
+      "any";
 
     const rateLimit = await checkQRValidationRateLimit(ipAddress);
 

@@ -19,7 +19,7 @@ Follow this execution flow:
 2. Collect/derive values for placeholders:
    - If user input (conversation) supplies a value, use it.
    - Otherwise infer from existing repo context (README, docs, prior constitution versions if embedded).
-   - For governance dates: `RATIFICATION_DATE` is the original adoption date (if unknown ask or mark TODO), `LAST_AMENDED_DATE` is today if changes are made, otherwise keep previous.
+   - For governance dates: `RATIFICATION_DATE` is the original adoption date (if  ask or mark TODO), `LAST_AMENDED_DATE` is today if changes are made, otherwise keep previous.
    - `CONSTITUTION_VERSION` must increment according to semantic versioning rules:
      * MAJOR: Backward incompatible governance/principle removals or redefinitions.
      * MINOR: New principle/section added or materially expanded guidance.
@@ -68,6 +68,6 @@ Formatting & Style Requirements:
 
 If the user supplies partial updates (e.g., only one principle revision), still perform validation and version decision steps.
 
-If critical info missing (e.g., ratification date truly unknown), insert `TODO(<FIELD_NAME>): explanation` and include in the Sync Impact Report under deferred items.
+If critical info missing (e.g., ratification date truly ), insert `TODO(<FIELD_NAME>): explanation` and include in the Sync Impact Report under deferred items.
 
 Do not create a new template; always operate on the existing `.specify/memory/constitution.md` file.

@@ -45,6 +45,7 @@ export async function refreshToken(): Promise<TokenRefreshResponse> {
       email: payload.email,
       role: payload.role,
       hasProfile: payload.hasProfile,
+      accountStatus: payload.accountStatus ?? "ACTIVE",
     });
 
     // 4. Update access token cookie

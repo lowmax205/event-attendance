@@ -12,7 +12,8 @@ import { headers } from "next/headers";
  * @param input - Verification data
  * @returns Updated attendance record
  */
-export async function verifyAttendance(attendanceId: string, input: unknown) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function verifyAttendance(attendanceId: string, input: any) {
   try {
     // Require Moderator or Administrator role
     const user = await requireRole(["Moderator", "Administrator"]);

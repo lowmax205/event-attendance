@@ -24,7 +24,7 @@ const profileExemptRoutes = [
   "/auth/register",
 ];
 
-// Routes that require specific roles
+// Routes that require specific roles (T059)
 const roleBasedRoutes: Record<
   string,
   Array<"Student" | "Moderator" | "Administrator">
@@ -34,6 +34,14 @@ const roleBasedRoutes: Record<
   "/dashboard/admin": ["Administrator"],
   "/events/create": ["Moderator", "Administrator"],
   "/events/manage": ["Moderator", "Administrator"],
+  // Analytics dashboard (admin only)
+  "/dashboard/admin/analytics": ["Administrator"],
+  // User management (admin only)
+  "/dashboard/admin/users": ["Administrator"],
+  // Event management by moderators
+  "/dashboard/moderator/events": ["Moderator", "Administrator"],
+  // Attendance management by moderators
+  "/dashboard/moderator/attendance": ["Moderator", "Administrator"],
 };
 
 // Public routes that don't require authentication
@@ -89,6 +97,19 @@ export async function middleware(request: NextRequest) {
     url.pathname = "/";
     url.searchParams.set("error", "session_expired");
     return NextResponse.redirect(url);
+  }
+
+  // T058: Check account status
+  if (payload.accountStatus === "SUSPENDED") {
+    // Account is suspended - clear cookies and redirect
+    const url = request.nextUrl.clone();
+    url.pathname = "/";
+    url.searchParams.set("error", "account_suspended");
+
+    const response = NextResponse.redirect(url);
+    response.cookies.delete("accessToken");
+    response.cookies.delete("refreshToken");
+    return response;
   }
 
   // Check if user has completed their profile
