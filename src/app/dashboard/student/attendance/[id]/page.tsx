@@ -309,8 +309,7 @@ async function AttendanceDetailPage({ params }: PageProps) {
                 action={async (formData: FormData) => {
                   "use server";
                   const appealMessage = formData.get("appealMessage") as string;
-                  const result = await appealAttendance({
-                    attendanceId: id,
+                  const result = await appealAttendance(id, {
                     appealMessage,
                   });
 

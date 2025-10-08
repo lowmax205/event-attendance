@@ -259,11 +259,11 @@
 
 ---
 
-## Phase 3.5: Server Actions - Attendance Verification
+## Phase 3.5: Server Actions - Attendance Verification ✅ COMPLETE
 
 **Goal**: Implement attendance verification workflow with moderator scope
 
-- [ ] **T024** Implement attendance listing for moderators in `src/actions/moderator/attendance.ts`
+- [x] **T024** Implement attendance listing for moderators in `src/actions/moderator/attendance.ts`
   - Export `listAttendances` server action
   - Validate JWT, check role = MODERATOR or ADMIN
   - Parse query params with `attendanceListQuerySchema` (T011)
@@ -276,7 +276,7 @@
   - **Dependencies**: T003 (Attendance model), T007 (migration), T011 (validation)
   - **Reference**: quickstart.md Scenario 3 Step 1
 
-- [ ] **T025** Implement attendance verification (approve/reject) in `src/actions/moderator/attendance.ts`
+- [x] **T025** Implement attendance verification (approve/reject) in `src/actions/moderator/attendance.ts`
   - Export `verifyAttendance` server action
   - Validate JWT, check role = MODERATOR or ADMIN
   - Validate input with `attendanceVerifySchema` (T011)
@@ -288,7 +288,7 @@
   - **Dependencies**: T003, T007, T011, T024
   - **Reference**: contracts/moderator-attendance-verify.json
 
-- [ ] **T026** [P] Implement student attendance appeal in `src/actions/attendance/appeal.ts`
+- [x] **T026** [P] Implement student attendance appeal in `src/actions/attendance/appeal.ts`
   - Export `appealAttendance` server action
   - Validate JWT, check attendance belongs to current student
   - Validate input with `attendanceAppealSchema` (T011)
@@ -298,7 +298,7 @@
   - **Dependencies**: T003, T007, T011
   - **Reference**: quickstart.md Scenario 3 Step 4
 
-- [ ] **T027** [P] Implement dispute resolution in `src/actions/moderator/attendance.ts`
+- [x] **T027** [P] Implement dispute resolution in `src/actions/moderator/attendance.ts`
   - Export `resolveDispute` server action (can reuse `verifyAttendance` with status = DISPUTED check)
   - Validate JWT, check role = MODERATOR or ADMIN
   - Validate input (status, resolutionNotes required for disputes)

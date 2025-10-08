@@ -2,36 +2,36 @@
 
 import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth/server";
-import { logAction } from "@/lib/security/audit-log";
-import { headers } from "next/headers";
+import { attendanceAppealSchema } from "@/lib/validations/attendance-verification";
+import { VerificationStatus } from "@prisma/client";
 import { z } from "zod";
 
-const appealSchema = z.object({
-  attendanceId: z.string().min(1, "Attendance ID is required"),
-  appealMessage: z
-    .string()
-    .min(10, "Appeal message must be at least 10 characters")
-    .max(1000, "Appeal message must not exceed 1000 characters"),
-});
-
 /**
+ * T026: Student attendance appeal
+ * Phase 3.5 - Server Actions - Attendance Verification
  * Allow students to appeal rejected attendance verifications
- * Transitions status from Rejected to Disputed for admin review
- * @param input - attendanceId and appealMessage
+ * Transitions status from Rejected to Disputed for moderator review
  */
-export async function appealAttendance(input: unknown) {
+export async function appealAttendance(
+  attendanceId: string,
+  input: { appealMessage: string }
+) {
   try {
     // Require Student role
     const user = await requireRole(["Student"]);
 
     // Validate input
-    const { attendanceId, appealMessage } = appealSchema.parse(input);
+    const validatedData = attendanceAppealSchema.parse(input);
+
+    // Validate attendanceId
+    const attendanceIdSchema = z.string().cuid("Invalid attendance ID");
+    attendanceIdSchema.parse(attendanceId);
 
     // Fetch the attendance record
     const attendance = await db.attendance.findUnique({
       where: { id: attendanceId },
       include: {
-        event: { select: { name: true } },
+        event: { select: { id: true, name: true } },
       },
     });
 
@@ -51,16 +51,11 @@ export async function appealAttendance(input: unknown) {
     }
 
     // Verify status is Rejected
-    if (attendance.verificationStatus !== "Rejected") {
+    if (attendance.verificationStatus !== VerificationStatus.Rejected) {
       return {
         success: false,
         error: "Only rejected attendance can be appealed",
-        details: [
-          {
-            field: "verificationStatus",
-            message: `Current status is ${attendance.verificationStatus}. Only Rejected attendances can be appealed.`,
-          },
-        ],
+        details: `Current status is ${attendance.verificationStatus}. Only Rejected attendances can be appealed.`,
       };
     }
 
@@ -68,43 +63,40 @@ export async function appealAttendance(input: unknown) {
     const updatedAttendance = await db.attendance.update({
       where: { id: attendanceId },
       data: {
-        verificationStatus: "Disputed",
-        disputeNote: appealMessage,
+        verificationStatus: VerificationStatus.Disputed,
+        appealMessage: validatedData.appealMessage,
       },
     });
 
-    // Log security action
-    const headersList = await headers();
-    await logAction(
-      "ATTENDANCE_APPEALED",
-      user.userId,
-      "Attendance",
-      attendanceId,
-      {
-        eventName: attendance.event.name,
-        appealMessage: appealMessage.substring(0, 100), // Truncate for log
+    // Log security event (FR-013)
+    await db.securityLog.create({
+      data: {
+        userId: user.userId,
+        eventType: "ATTENDANCE_APPEALED",
+        ipAddress: "::1",
+        userAgent: "Server Action",
+        success: true,
+        metadata: {
+          attendanceId: attendance.id,
+          studentId: user.userId,
+          eventId: attendance.event.id,
+          eventName: attendance.event.name,
+          appealMessageLength: validatedData.appealMessage.length,
+        },
       },
-      headersList.get("x-forwarded-for") ||
-        headersList.get("x-real-ip") ||
-        undefined,
-      headersList.get("user-agent") || undefined,
-    );
+    });
 
     return {
       success: true,
       data: updatedAttendance,
       message:
-        "Appeal submitted successfully. An administrator will review your request.",
+        "Appeal submitted successfully. A moderator will review your request.",
     };
   } catch (error) {
     if (error instanceof z.ZodError) {
       return {
         success: false,
-        error: "Validation failed",
-        details: error.issues.map((err) => ({
-          field: err.path.join("."),
-          message: err.message,
-        })),
+        error: error.issues.map((issue) => issue.message).join(", "),
       };
     }
 
