@@ -96,11 +96,11 @@
 
 ---
 
-## Phase 3.2: Validation Schemas (Zod)
+## Phase 3.2: Validation Schemas (Zod) ✅ COMPLETE
 
 **Goal**: Create Zod validation schemas for all management forms and API endpoints
 
-- [ ] **T009** [P] Create user management validation schemas in `src/lib/validations/user-management.ts`
+- [x] **T009** [P] Create user management validation schemas in `src/lib/validations/user-management.ts`
   - `userListQuerySchema`: Validate pagination, role filter, status filter, search, sortBy, sortOrder
   - `userRoleUpdateSchema`: Validate role (enum), confirmSelfChange (boolean)
   - `userStatusUpdateSchema`: Validate accountStatus (enum), reason (optional string)
@@ -110,39 +110,42 @@
   - **Dependencies**: None
   - **Reference**: contracts/admin-users-*.json
 
-- [ ] **T010** [P] Create event management validation schemas in `src/lib/validations/event-management.ts`
+- [x] **T010** [P] Create event management validation schemas in `src/lib/validations/event-management.ts`
   - `eventListQuerySchema`: Validate pagination, status filter, date range (startDate, endDate), sortBy, sortOrder
   - `eventCreateSchema`: Validate name, description, start/end datetime, venue, location, buffers (inherit from Phase 2, extend if needed)
   - `eventUpdateSchema`: Same fields as create, all optional
   - **Dependencies**: None
   - **Reference**: contracts/moderator-events-list.json
 
-- [ ] **T011** [P] Create attendance verification validation schemas in `src/lib/validations/attendance-verification.ts`
+- [x] **T011** [P] Create attendance verification validation schemas in `src/lib/validations/attendance-verification.ts`
   - `attendanceVerifySchema`: Validate status (APPROVED/REJECTED), disputeNotes (required if REJECTED), resolutionNotes (optional)
   - `attendanceAppealSchema`: Validate appealMessage (required, max 1000 chars)
   - `attendanceListQuerySchema`: Validate pagination, eventId filter, status filter, date range
+  - `disputeResolutionSchema`: Validate resolution with required resolutionNotes
   - **Dependencies**: None
   - **Reference**: contracts/moderator-attendance-verify.json
 
-- [ ] **T012** [P] Create export validation schemas in `src/lib/validations/export.ts`
+- [x] **T012** [P] Create export validation schemas in `src/lib/validations/export.ts`
   - `exportFiltersSchema`: Validate eventIds (array), startDate, endDate, status (enum), studentName
   - Validate max 50 eventIds, max 10,000 record limit (server-side check)
+  - Added `validateExportRecordCount()` helper function
   - **Dependencies**: None
   - **Reference**: contracts/export-attendance-xlsx.json
 
-- [ ] **T013** [P] Create analytics validation schemas in `src/lib/validations/analytics.ts`
+- [x] **T013** [P] Create analytics validation schemas in `src/lib/validations/analytics.ts`
   - `analyticsQuerySchema`: Validate startDate, endDate (ISO 8601), refresh (boolean)
-  - Validate date range (startDate < endDate)
+  - Validate date range (startDate < endDate), max 365 days
+  - `chartDrillDownSchema`: Validate chart type and drill-down filters (FR-058)
   - **Dependencies**: None
   - **Reference**: contracts/analytics-dashboard-data.json
 
 ---
 
-## Phase 3.3: Server Actions - User Management
+## Phase 3.3: Server Actions - User Management ✅ COMPLETE
 
 **Goal**: Implement admin user management CRUD operations with RBAC enforcement
 
-- [ ] **T014** Implement admin user listing in `src/actions/admin/users.ts`
+- [x] **T014** Implement admin user listing in `src/actions/admin/users.ts`
   - Export `listUsers` server action
   - Validate JWT, check role = ADMIN
   - Parse query params with `userListQuerySchema` (T009)
@@ -152,7 +155,7 @@
   - **Dependencies**: T001 (User model), T007 (migration), T009 (validation)
   - **Reference**: contracts/admin-users-list.json
 
-- [ ] **T015** Implement user role update in `src/actions/admin/users.ts`
+- [x] **T015** Implement user role update in `src/actions/admin/users.ts`
   - Export `updateUserRole` server action
   - Validate JWT, check role = ADMIN
   - Validate input with `userRoleUpdateSchema` (T009)
@@ -162,28 +165,28 @@
   - **Dependencies**: T001, T007, T009, T014
   - **Reference**: contracts/admin-users-update-role.json
 
-- [ ] **T016** Implement user account suspension in `src/actions/admin/users.ts`
+- [x] **T016** Implement user account suspension in `src/actions/admin/users.ts`
   - Export `updateUserStatus` server action
   - Validate JWT, check role = ADMIN
   - Validate input with `userStatusUpdateSchema` (T009)
   - Prevent self-suspension: if `userId === currentUser.id`, return error
-  - Update User: accountStatus, suspendedAt, suspendedById (if SUSPENDED), clear fields (if ACTIVE)
+  - Update User: accountStatus, suspendedAt, suspendedBy relation (if SUSPENDED), clear fields (if ACTIVE)
   - Log to SecurityLog: eventType = USER_STATUS_CHANGED, metadata = {fromStatus, toStatus, targetUserId, reason}
   - **Dependencies**: T001, T007, T009, T014
   - **Reference**: contracts/admin-users-suspend.json
 
-- [ ] **T017** [P] Implement user password reset in `src/actions/admin/users.ts`
+- [x] **T017** [P] Implement user password reset in `src/actions/admin/users.ts`
   - Export `resetUserPassword` server action
   - Validate JWT, check role = ADMIN
   - Validate userId
   - Generate temporary password (bcryptjs hash)
-  - Update User: passwordHash, passwordResetAt, passwordResetById
+  - Update User: passwordHash, passwordResetAt, passwordResetBy relation
   - Log to SecurityLog: eventType = USER_PASSWORD_RESET, metadata = {targetUserId}
   - Return temporary password to admin (display once)
   - **Dependencies**: T001, T007, T009
   - **Reference**: quickstart.md Scenario 1 Step 10
 
-- [ ] **T018** [P] Implement user creation in `src/actions/admin/users.ts`
+- [x] **T018** [P] Implement user creation in `src/actions/admin/users.ts`
   - Export `createUser` server action
   - Validate JWT, check role = ADMIN
   - Validate input with `userCreateSchema` (T009)
@@ -194,12 +197,12 @@
   - **Dependencies**: T001, T007, T009
   - **Reference**: quickstart.md Scenario 1 Step 5
 
-- [ ] **T019** [P] Implement user soft delete in `src/actions/admin/users.ts`
+- [x] **T019** [P] Implement user soft delete in `src/actions/admin/users.ts`
   - Export `deleteUser` server action
   - Validate JWT, check role = ADMIN
   - Validate userId, reason
   - Check user has no attendance records (or allow with confirmation)
-  - Update User: deletedAt, deletedById (soft delete)
+  - Update User: deletedAt, deletedBy relation (soft delete), accountStatus = SUSPENDED
   - Log to SecurityLog: eventType = USER_DELETED, metadata = {targetUserId, reason}
   - **Dependencies**: T001, T007, T009
   - **Reference**: quickstart.md Scenario 1 Step 11
