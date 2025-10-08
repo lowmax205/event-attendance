@@ -86,14 +86,13 @@ export async function login(data: LoginInput): Promise<AuthResponse> {
       path: "/",
     });
 
-    // 8. Log security event
+    // Log successful login
     await db.securityLog.create({
       data: {
+        eventType: "LOGIN",
         userId: user.id,
-        action: "USER_LOGIN",
-        metadata: {
-          email: user.email,
-        },
+        ipAddress: null,
+        userAgent: null,
       },
     });
 

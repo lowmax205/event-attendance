@@ -8,16 +8,17 @@ datasource db {
 }
 
 model SecurityLog {
-  id        String   @id @default(cuid())
+  id        String            @id @default(cuid())
   userId    String?
   ipAddress String?
   userAgent String?
-  createdAt DateTime @default(now())
-  action    String
+  createdAt DateTime          @default(now())
+  eventType SecurityEventType @default(LOGIN)
+  success   Boolean           @default(true)
   metadata  Json?
-  User      User?    @relation(fields: [userId], references: [id])
+  User      User?             @relation(fields: [userId], references: [id])
 
-  @@index([action, createdAt])
+  @@index([eventType, createdAt])
   @@index([createdAt])
   @@index([userId, createdAt])
 }
@@ -38,25 +39,49 @@ model Session {
 }
 
 model User {
-  id                  String         @id @default(cuid())
-  email               String         @unique
+  id                  String          @id @default(cuid())
+  email               String          @unique
   passwordHash        String
-  role                Role           @default(Student)
-  accountStatus       String         @default("active")
-  emailVerified       Boolean        @default(false)
-  createdAt           DateTime       @default(now())
+  role                Role            @default(Student)
+  accountStatus       AccountStatus   @default(ACTIVE)
+  emailVerified       Boolean         @default(false)
+  createdAt           DateTime        @default(now())
   lastLoginAt         DateTime?
   firstName           String
   lastName            String
+  
+  // Account management (Phase 3 - FR-007, FR-012, FR-014)
+  suspendedAt         DateTime?
+  suspendedBy         User?           @relation("SuspendedUsers", fields: [suspendedById], references: [id], onDelete: SetNull)
+  suspendedById       String?
+  suspendedUsers      User[]          @relation("SuspendedUsers")
+  
+  passwordResetAt     DateTime?
+  passwordResetBy     User?           @relation("PasswordResets", fields: [passwordResetById], references: [id], onDelete: SetNull)
+  passwordResetById   String?
+  passwordResets      User[]          @relation("PasswordResets")
+  
+  deletedAt           DateTime?
+  deletedBy           User?           @relation("DeletedUsers", fields: [deletedById], references: [id], onDelete: SetNull)
+  deletedById         String?
+  deletedUsers        User[]          @relation("DeletedUsers")
+  
+  // Relations
   attendances         Attendance[]
-  verifiedAttendances Attendance[]   @relation("AttendanceVerifier")
-  createdEvents       Event[]        @relation("EventCreator")
+  verifiedAttendances Attendance[]    @relation("AttendanceVerifier")
+  createdEvents       Event[]         @relation("EventCreator")
+  deletedEvents       Event[]         @relation("DeletedEvents")
+  exports             ExportRecord[]  @relation("UserExports")
   SecurityLog         SecurityLog[]
   Session             Session[]
-  systemConfigUpdates SystemConfig[] @relation("SystemConfigUpdater")
+  systemConfigUpdates SystemConfig[]  @relation("SystemConfigUpdater")
   UserProfile         UserProfile?
 
   @@index([email])
+  @@index([role])
+  @@index([accountStatus])
+  @@index([suspendedById])
+  @@index([deletedAt])
 }
 
 model UserProfile {
@@ -92,12 +117,23 @@ model Event {
   createdById        String
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
+  
+  // Phase 3 - Audit trail and deletion prevention (FR-017, FR-020)
+  editHistory        Json?
+  hasAttendances     Boolean      @default(false)
+  deletedAt          DateTime?
+  deletedBy          User?        @relation("DeletedEvents", fields: [deletedById], references: [id], onDelete: SetNull)
+  deletedById        String?
+  
+  // Relations
   attendances        Attendance[]
   createdBy          User         @relation("EventCreator", fields: [createdById], references: [id])
 
   @@index([startDateTime, endDateTime])
   @@index([status])
   @@index([createdById])
+  @@index([status, startDateTime])
+  @@index([deletedAt])
 }
 
 model Attendance {
@@ -107,7 +143,12 @@ model Attendance {
   verificationStatus  VerificationStatus @default(Pending)
   verifiedById        String?
   verifiedAt          DateTime?
-  disputeNote         String?
+  
+  // Phase 3 - Dispute workflow (FR-033, FR-034, FR-041)
+  disputeNote         String?            @db.Text
+  appealMessage       String?            @db.Text
+  resolutionNotes     String?            @db.Text
+  
   checkInBackPhoto    String?
   checkInDistance     Float?
   checkInFrontPhoto   String?
@@ -128,6 +169,8 @@ model Attendance {
   checkOutUserAgent   String?
   createdAt           DateTime           @default(now())
   updatedAt           DateTime           @default(now()) @updatedAt
+  
+  // Relations
   event               Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
   user                User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   verifiedBy          User?              @relation("AttendanceVerifier", fields: [verifiedById], references: [id])
@@ -136,6 +179,8 @@ model Attendance {
   @@index([userId, checkInSubmittedAt])
   @@index([eventId, verificationStatus])
   @@index([verificationStatus])
+  @@index([verifiedById, verifiedAt])
+  @@index([checkInSubmittedAt])
 }
 
 model SystemConfig {
@@ -148,10 +193,34 @@ model SystemConfig {
   updatedBy                 User     @relation("SystemConfigUpdater", fields: [updatedById], references: [id])
 }
 
+model ExportRecord {
+  id           String       @id @default(cuid())
+  createdAt    DateTime     @default(now())
+  exportedBy   User         @relation("UserExports", fields: [exportedById], references: [id])
+  exportedById String
+  format       ExportFormat
+  filters      Json
+  recordCount  Int
+  status       ExportStatus @default(PENDING)
+  errorMessage String?      @db.Text
+  fileSize     Int?
+  downloadUrl  String?
+  expiresAt    DateTime?
+
+  @@index([exportedById, createdAt])
+  @@index([createdAt])
+  @@index([status])
+}
+
 enum Role {
   Student
   Moderator
   Administrator
+}
+
+enum AccountStatus {
+  ACTIVE
+  SUSPENDED
 }
 
 enum EventStatus {
@@ -165,4 +234,38 @@ enum VerificationStatus {
   Approved
   Rejected
   Disputed
+}
+
+enum ExportFormat {
+  CSV
+  XLSX
+}
+
+enum ExportStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum SecurityEventType {
+  REGISTRATION
+  LOGIN
+  LOGOUT
+  FAILED_LOGIN
+  PASSWORD_CHANGE
+  USER_ROLE_CHANGED
+  USER_STATUS_CHANGED
+  USER_CREATED
+  USER_PASSWORD_RESET
+  USER_DELETED
+  EVENT_CREATED
+  EVENT_EDITED
+  EVENT_DELETED
+  ATTENDANCE_VERIFIED
+  ATTENDANCE_REJECTED
+  ATTENDANCE_APPEALED
+  DISPUTE_RESOLVED
+  DATA_EXPORTED
+  ANALYTICS_ACCESSED
 }

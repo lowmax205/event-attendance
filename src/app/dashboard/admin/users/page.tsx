@@ -171,7 +171,9 @@ export default function AdminUsersPage() {
       // Update user active status
       await db.user.update({
         where: { id: user.id },
-        data: { accountStatus: newStatus },
+        data: {
+          accountStatus: newStatus === "active" ? "ACTIVE" : "SUSPENDED",
+        },
       });
 
       // Update local state

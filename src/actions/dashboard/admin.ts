@@ -101,7 +101,7 @@ export async function getAdminDashboard(params: AdminDashboardParams = {}) {
     // Format recent activity
     const formattedActivity = recentActivity.map((log) => ({
       id: log.id,
-      action: log.action,
+      action: log.eventType,
       timestamp: log.createdAt,
       userId: log.userId,
       userEmail: log.User?.email || "Unknown",

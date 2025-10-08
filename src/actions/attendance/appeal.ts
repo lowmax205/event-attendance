@@ -76,7 +76,7 @@ export async function appealAttendance(input: unknown) {
     // Log security action
     const headersList = await headers();
     await logAction(
-      "attendance.appealed",
+      "ATTENDANCE_APPEALED",
       user.userId,
       "Attendance",
       attendanceId,

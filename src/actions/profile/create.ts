@@ -135,7 +135,7 @@ export async function createProfile(
     await db.securityLog.create({
       data: {
         userId: payload.userId,
-        action: "PROFILE_CREATED",
+        eventType: "REGISTRATION",
         metadata: {
           studentId,
           department,

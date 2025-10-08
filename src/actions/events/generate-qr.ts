@@ -107,7 +107,7 @@ export async function regenerateQRCode(eventId: string, input?: unknown) {
     await db.securityLog.create({
       data: {
         userId: user.userId,
-        action: "QR_REGENERATED",
+        eventType: "EVENT_EDITED",
         metadata: {
           eventId,
           eventName: existingEvent.name,

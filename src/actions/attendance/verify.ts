@@ -97,7 +97,7 @@ export async function verifyAttendance(attendanceId: string, input: unknown) {
     await db.securityLog.create({
       data: {
         userId: user.userId,
-        action: "ATTENDANCE_VERIFIED",
+        eventType: "ATTENDANCE_VERIFIED",
         metadata: {
           attendanceId,
           previousStatus: attendance.verificationStatus,

@@ -33,7 +33,7 @@ async function main() {
       lastName: "Doe",
       role: "Student",
       emailVerified: true,
-      accountStatus: "active",
+      accountStatus: "ACTIVE",
       UserProfile: {
         create: {
           studentId: "2021-00001",
@@ -55,7 +55,7 @@ async function main() {
       lastName: "Smith",
       role: "Student",
       emailVerified: true,
-      accountStatus: "active",
+      accountStatus: "ACTIVE",
       UserProfile: {
         create: {
           studentId: "2021-00002",
@@ -77,7 +77,7 @@ async function main() {
       lastName: "Incomplete",
       role: "Student",
       emailVerified: true,
-      accountStatus: "active",
+      accountStatus: "ACTIVE",
       // No UserProfile created
     },
   });
@@ -91,7 +91,7 @@ async function main() {
       lastName: "Johnson",
       role: "Moderator",
       emailVerified: true,
-      accountStatus: "active",
+      accountStatus: "ACTIVE",
       UserProfile: {
         create: {
           studentId: "MOD-2020-001",
@@ -113,7 +113,7 @@ async function main() {
       lastName: "Williams",
       role: "Administrator",
       emailVerified: true,
-      accountStatus: "active",
+      accountStatus: "ACTIVE",
       UserProfile: {
         create: {
           studentId: "ADM-2019-001",
@@ -138,7 +138,7 @@ async function main() {
       lastName: "User",
       role: "Administrator",
       emailVerified: true,
-      accountStatus: "active",
+      accountStatus: "ACTIVE",
       UserProfile: {
         create: {
           studentId: "ADM-2020-001",
@@ -162,7 +162,7 @@ async function main() {
         lastName: "Santos",
         role: "Moderator",
         emailVerified: true,
-        accountStatus: "active",
+        accountStatus: "ACTIVE",
         UserProfile: {
           create: {
             studentId: "MOD-2020-002",
@@ -182,7 +182,7 @@ async function main() {
         lastName: "Dela Cruz",
         role: "Moderator",
         emailVerified: true,
-        accountStatus: "active",
+        accountStatus: "ACTIVE",
         UserProfile: {
           create: {
             studentId: "MOD-2020-003",
@@ -274,7 +274,7 @@ async function main() {
         lastName,
         role: "Student",
         emailVerified: true,
-        accountStatus: "active",
+        accountStatus: "ACTIVE",
         UserProfile: {
           create: {
             studentId: studentIdNum,
@@ -482,21 +482,21 @@ async function main() {
     data: [
       {
         userId: admin.id,
-        action: "LOGIN",
+        eventType: "LOGIN",
         metadata: { email: admin.email },
         ipAddress: "192.168.1.100",
         userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
       },
       {
         userId: moderators[0].id,
-        action: "EVENT_CREATED",
+        eventType: "EVENT_CREATED",
         metadata: { eventName: events[0].name },
         ipAddress: "192.168.1.101",
         userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
       },
       {
         userId: moderators[1].id,
-        action: "EVENT_CREATED",
+        eventType: "EVENT_CREATED",
         metadata: { eventName: events[1].name },
         ipAddress: "192.168.1.102",
         userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",

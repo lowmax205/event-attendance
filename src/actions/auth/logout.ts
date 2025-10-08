@@ -27,7 +27,7 @@ export async function logout(): Promise<{ success: boolean; message: string }> {
         await db.securityLog.create({
           data: {
             userId: session.userId,
-            action: "USER_LOGOUT",
+            eventType: "LOGOUT",
             metadata: {
               sessionId: session.id,
             },

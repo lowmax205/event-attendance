@@ -1,11 +1,12 @@
 import { db } from "@/lib/db";
+import { SecurityEventType } from "@prisma/client";
 
 /**
  * Log security-related actions to the SecurityLog table
  * Used for audit trail of event/attendance operations
  */
 export async function logAction(
-  action: string,
+  eventType: SecurityEventType,
   userId: string,
   entityType: string,
   entityId: string,
@@ -16,7 +17,7 @@ export async function logAction(
   try {
     await db.securityLog.create({
       data: {
-        action,
+        eventType,
         userId,
         metadata: metadata
           ? JSON.parse(JSON.stringify({ entityType, entityId, ...metadata }))

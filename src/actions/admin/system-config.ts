@@ -127,7 +127,7 @@ export async function updateSystemConfig(input: unknown) {
     // Log security action
     const headersList = await headers();
     await logAction(
-      "systemconfig.updated",
+      "ANALYTICS_ACCESSED",
       user.userId,
       "SystemConfig",
       updatedConfig.id,

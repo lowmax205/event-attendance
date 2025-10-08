@@ -92,7 +92,7 @@ export async function register(data: RegisterInput): Promise<AuthResponse> {
     await db.securityLog.create({
       data: {
         userId: user.id,
-        action: "USER_REGISTERED",
+        eventType: "REGISTRATION",
         metadata: {
           email: user.email,
           role: user.role,

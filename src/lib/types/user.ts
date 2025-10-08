@@ -1,3 +1,5 @@
+import { SecurityEventType } from "@prisma/client";
+
 /**
  * User-related TypeScript types
  * Used for user profiles, sessions, and user data management
@@ -62,7 +64,7 @@ export interface UserWithProfile {
 export interface SecurityLogEntry {
   id: string;
   userId: string;
-  action: string;
+  action: SecurityEventType;
   ipAddress?: string | null;
   userAgent?: string | null;
   metadata?: Record<string, unknown> | null;

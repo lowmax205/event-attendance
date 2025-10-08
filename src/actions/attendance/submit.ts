@@ -233,7 +233,7 @@ export async function submitAttendance(input: unknown) {
       await db.securityLog.create({
         data: {
           userId: user.userId,
-          action: "ATTENDANCE_CHECKIN",
+          eventType: "REGISTRATION",
           metadata: {
             attendanceId: updatedAttendance.id,
             eventId: event.id,
@@ -291,7 +291,7 @@ export async function submitAttendance(input: unknown) {
       await db.securityLog.create({
         data: {
           userId: user.userId,
-          action: "ATTENDANCE_CHECKOUT",
+          eventType: "REGISTRATION",
           metadata: {
             attendanceId: updatedAttendance.id,
             eventId: event.id,

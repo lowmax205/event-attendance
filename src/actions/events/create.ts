@@ -131,7 +131,7 @@ export async function createEvent(input: unknown) {
     // Log security action
     const headersList = await headers();
     await logAction(
-      "event.created",
+      "EVENT_CREATED",
       user.userId,
       "Event",
       event.id,
