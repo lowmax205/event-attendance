@@ -53,6 +53,12 @@ interface ListUsersResponse {
       total: number;
       totalPages: number;
     };
+    summary: {
+      totalActive: number;
+      totalSuspended: number;
+      totalAdministrators: number;
+      totalModerators: number;
+    };
   };
   error?: string;
 }
@@ -94,21 +100,20 @@ export async function listUsers(
     // Validate and parse query parameters
     const validatedQuery = userListQuerySchema.parse(query);
 
-    // Build where clause
-    const where: Prisma.UserWhereInput = {
+    // Build base where clause (excluding status to support breakdown counts)
+    const statusFilter = validatedQuery.status;
+    const roleFilter = validatedQuery.role;
+
+    const baseWhere: Prisma.UserWhereInput = {
       deletedAt: null, // Exclude soft-deleted users
     };
 
-    if (validatedQuery.role) {
-      where.role = validatedQuery.role;
-    }
-
-    if (validatedQuery.status) {
-      where.accountStatus = validatedQuery.status;
+    if (roleFilter) {
+      baseWhere.role = roleFilter;
     }
 
     if (validatedQuery.search) {
-      where.OR = [
+      baseWhere.OR = [
         { email: { contains: validatedQuery.search, mode: "insensitive" } },
         {
           firstName: { contains: validatedQuery.search, mode: "insensitive" },
@@ -117,12 +122,68 @@ export async function listUsers(
       ];
     }
 
+    const listWhere: Prisma.UserWhereInput = {
+      ...baseWhere,
+      ...(statusFilter ? { accountStatus: statusFilter } : {}),
+    };
+
     // Count total matching records
-    const total = await db.user.count({ where });
+    const total = await db.user.count({ where: listWhere });
+
+    // Count breakdown totals respecting current filters
+    const totalActivePromise =
+      !statusFilter || statusFilter === AccountStatus.ACTIVE
+        ? db.user.count({
+            where: {
+              ...baseWhere,
+              accountStatus: AccountStatus.ACTIVE,
+            },
+          })
+        : Promise.resolve(0);
+
+    const totalSuspendedPromise =
+      !statusFilter || statusFilter === AccountStatus.SUSPENDED
+        ? db.user.count({
+            where: {
+              ...baseWhere,
+              accountStatus: AccountStatus.SUSPENDED,
+            },
+          })
+        : Promise.resolve(0);
+
+    const totalAdministratorsPromise =
+      !roleFilter || roleFilter === Role.Administrator
+        ? db.user.count({
+            where: {
+              ...baseWhere,
+              role: Role.Administrator,
+              ...(statusFilter ? { accountStatus: statusFilter } : {}),
+            },
+          })
+        : Promise.resolve(0);
+
+    const totalModeratorsPromise =
+      !roleFilter || roleFilter === Role.Moderator
+        ? db.user.count({
+            where: {
+              ...baseWhere,
+              role: Role.Moderator,
+              ...(statusFilter ? { accountStatus: statusFilter } : {}),
+            },
+          })
+        : Promise.resolve(0);
+
+    const [totalActive, totalSuspended, totalAdministrators, totalModerators] =
+      await Promise.all([
+        totalActivePromise,
+        totalSuspendedPromise,
+        totalAdministratorsPromise,
+        totalModeratorsPromise,
+      ]);
 
     // Query users with pagination
     const users = await db.user.findMany({
-      where,
+      where: listWhere,
       select: {
         id: true,
         email: true,
@@ -169,6 +230,12 @@ export async function listUsers(
           limit: validatedQuery.limit,
           total,
           totalPages: Math.ceil(total / validatedQuery.limit),
+        },
+        summary: {
+          totalActive,
+          totalSuspended,
+          totalAdministrators,
+          totalModerators,
         },
       },
     };

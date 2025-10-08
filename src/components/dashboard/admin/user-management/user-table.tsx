@@ -5,6 +5,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/dashboard/shared/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,17 +14,24 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Shield, Ban, Trash2, KeyRound } from "lucide-react";
-import { format } from "date-fns";
+import { MoreHorizontal, UserCog, Trash2, KeyRound } from "lucide-react";
+import { format, formatDistanceToNow } from "date-fns";
 import { AccountStatus, Role } from "@prisma/client";
 
 export interface UserRow {
   id: string;
+  fullName: string;
   email: string;
   role: Role;
   accountStatus: AccountStatus;
   lastLoginAt: Date | null;
   createdAt: Date;
+  profile?: {
+    studentId?: string | null;
+    department?: string | null;
+    yearLevel?: number | null;
+    section?: string | null;
+  } | null;
 }
 
 interface UserTableProps {
@@ -35,8 +43,7 @@ interface UserTableProps {
     totalItems: number;
   };
   onPaginationChange: (pageIndex: number) => void;
-  onEditRole: (userId: string, currentRole: Role) => void;
-  onSuspend: (userId: string, currentStatus: AccountStatus) => void;
+  onEditUser: (user: UserRow) => void;
   onResetPassword: (userId: string) => void;
   onDelete: (userId: string) => void;
   isLoading?: boolean;
@@ -46,19 +53,39 @@ export function UserTable({
   users,
   pagination,
   onPaginationChange,
-  onEditRole,
-  onSuspend,
+  onEditUser,
   onResetPassword,
   onDelete,
   isLoading = false,
 }: UserTableProps) {
   const columns: ColumnDef<UserRow>[] = [
     {
-      accessorKey: "email",
-      header: "Email",
-      cell: ({ row }) => (
-        <div className="font-medium">{row.getValue("email")}</div>
-      ),
+      accessorKey: "fullName",
+      header: "User",
+      cell: ({ row }) => {
+        const user = row.original;
+        const initials =
+          (user.fullName || user.email)
+            .split(" ")
+            .filter(Boolean)
+            .map((part) => part.charAt(0).toUpperCase())
+            .join("")
+            .slice(0, 2) || user.email.charAt(0).toUpperCase();
+
+        return (
+          <div className="flex items-center gap-3">
+            <Avatar className="h-9 w-9">
+              <AvatarFallback>{initials}</AvatarFallback>
+            </Avatar>
+            <div className="space-y-1">
+              <p className="text-sm font-medium leading-none">
+                {user.fullName}
+              </p>
+              <p className="text-sm text-muted-foreground">{user.email}</p>
+            </div>
+          </div>
+        );
+      },
     },
     {
       accessorKey: "role",
@@ -99,6 +126,43 @@ export function UserTable({
       },
     },
     {
+      id: "affiliation",
+      header: "Affiliation",
+      accessorFn: (user) => user.profile?.department ?? "",
+      cell: ({ row }) => {
+        const { role, profile } = row.original;
+
+        if (!profile) {
+          return (
+            <span className="text-sm text-muted-foreground">
+              {role === "Student" ? "No profile" : "—"}
+            </span>
+          );
+        }
+
+        const details = [
+          profile.department,
+          profile.yearLevel ? `Year ${profile.yearLevel}` : null,
+          profile.section ? `Section ${profile.section}` : null,
+        ]
+          .filter(Boolean)
+          .join(" • ");
+
+        return (
+          <div className="space-y-1">
+            {profile.studentId && (
+              <p className="text-sm font-medium">{profile.studentId}</p>
+            )}
+            {details ? (
+              <p className="text-xs text-muted-foreground">{details}</p>
+            ) : (
+              <p className="text-xs text-muted-foreground">Profile on file</p>
+            )}
+          </div>
+        );
+      },
+    },
+    {
       accessorKey: "lastLoginAt",
       header: "Last Login",
       cell: ({ row }) => {
@@ -107,9 +171,32 @@ export function UserTable({
           return <span className="text-muted-foreground">Never</span>;
         }
         return (
-          <span className="text-sm">
-            {format(lastLogin, "MMM dd, yyyy HH:mm")}
-          </span>
+          <div className="space-y-0.5 text-sm">
+            <span className="font-medium">
+              {format(lastLogin, "MMM dd, yyyy")}
+            </span>
+            <span className="block text-xs text-muted-foreground">
+              {format(lastLogin, "HH:mm")} •{" "}
+              {formatDistanceToNow(lastLogin, { addSuffix: true })}
+            </span>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "createdAt",
+      header: "Joined",
+      cell: ({ row }) => {
+        const joined = row.getValue("createdAt") as Date;
+        return (
+          <div className="space-y-0.5 text-sm">
+            <span className="font-medium">
+              {format(joined, "MMM dd, yyyy")}
+            </span>
+            <span className="block text-xs text-muted-foreground">
+              {formatDistanceToNow(joined, { addSuffix: true })}
+            </span>
+          </div>
         );
       },
     },
@@ -134,20 +221,11 @@ export function UserTable({
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                onClick={() => onEditRole(user.id, user.role)}
+                onClick={() => onEditUser(user)}
                 className="cursor-pointer"
               >
-                <Shield className="mr-2 h-4 w-4" />
-                <span>Change Role</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => onSuspend(user.id, user.accountStatus)}
-                className="cursor-pointer"
-              >
-                <Ban className="mr-2 h-4 w-4" />
-                <span>
-                  {user.accountStatus === "ACTIVE" ? "Suspend" : "Activate"}
-                </span>
+                <UserCog className="mr-2 h-4 w-4" />
+                <span>Edit User</span>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => onResetPassword(user.id)}

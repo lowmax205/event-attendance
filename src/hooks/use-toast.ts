@@ -1,4 +1,7 @@
+"use client";
+
 // Wrapper around sonner toast for consistency with shadcn/ui patterns
+import { useCallback, useMemo } from "react";
 import { toast as sonnerToast } from "sonner";
 
 interface ToastOptions {
@@ -8,7 +11,7 @@ interface ToastOptions {
 }
 
 export function useToast() {
-  const toast = ({ title, description, variant }: ToastOptions) => {
+  const toast = useCallback(({ title, description, variant }: ToastOptions) => {
     if (variant === "destructive") {
       sonnerToast.error(title, {
         description,
@@ -18,7 +21,8 @@ export function useToast() {
         description,
       });
     }
-  };
+  }, []);
 
-  return { toast };
+  // Memoise the returned object so callers can safely list `toast` in dependencies.
+  return useMemo(() => ({ toast }), [toast]);
 }

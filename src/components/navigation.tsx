@@ -19,14 +19,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/logo";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -102,8 +95,8 @@ export function Navigation() {
   // Public navigation for non-authenticated users
   const publicNavLinks = [
     { href: "/", label: "Home" },
+    { href: "/roadmap", label: "Road Map" },
     { href: "/events", label: "Events" },
-    { href: "/roadmap", label: "RoadMap" },
   ];
 
   if (isLoading) {
@@ -143,7 +136,7 @@ export function Navigation() {
                   className="flex items-center gap-1 text-sm font-medium text-foreground/80 hover:text-foreground transition-colors"
                 >
                   <Map className="h-4 w-4" />
-                  Roadmap
+                  Road Map
                 </Link>
 
                 {/* Events Dropdown */}
@@ -413,7 +406,7 @@ export function Navigation() {
                       className="flex items-center gap-3 text-lg font-medium text-foreground/80 hover:text-foreground transition-colors min-h-[44px]"
                     >
                       <Map className="h-5 w-5" />
-                      Roadmap
+                      Road Map
                     </Link>
 
                     {/* Scan QR Link */}
