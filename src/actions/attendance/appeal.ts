@@ -14,7 +14,7 @@ import { z } from "zod";
  */
 export async function appealAttendance(
   attendanceId: string,
-  input: { appealMessage: string }
+  input: { appealMessage: string },
 ) {
   try {
     // Require Student role

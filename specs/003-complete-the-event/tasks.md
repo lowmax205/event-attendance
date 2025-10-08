@@ -310,11 +310,11 @@
 
 ---
 
-## Phase 3.6: Server Actions - Data Export
+## Phase 3.6: Server Actions - Data Export ✅ COMPLETE
 
 **Goal**: Implement CSV and Excel export with filtering and audit trail
 
-- [ ] **T028** Implement CSV export generation in `src/lib/export/csv-generator.ts`
+- [x] **T028** Implement CSV export generation in `src/lib/export/csv-generator.ts`
   - Export `generateAttendanceCSV` function
   - Accept: attendance records array
   - Generate RFC 4180-compliant CSV
@@ -324,7 +324,7 @@
   - **Dependencies**: None
   - **Reference**: research.md (CSV Export section), contracts/export-attendance-xlsx.json
 
-- [ ] **T029** Implement Excel export generation in `src/lib/export/xlsx-generator.ts`
+- [x] **T029** Implement Excel export generation in `src/lib/export/xlsx-generator.ts`
   - Export `generateAttendanceXLSX` function
   - Use `xlsx` library (SheetJS)
   - Accept: attendance records array
@@ -337,7 +337,7 @@
   - **Dependencies**: T008 (xlsx library)
   - **Reference**: research.md (Excel Export section), contracts/export-attendance-xlsx.json
 
-- [ ] **T030** Implement export endpoint with filtering in `src/actions/export/export-xlsx.ts` and `src/actions/export/export-csv.ts`
+- [x] **T030** Implement export endpoint with filtering in `src/actions/export/export-xlsx.ts` and `src/actions/export/export-csv.ts`
   - Export `exportAttendanceXLSX` and `exportAttendanceCSV` server actions
   - Validate JWT, check role = ADMIN or MODERATOR
   - Validate input with `exportFiltersSchema` (T012)

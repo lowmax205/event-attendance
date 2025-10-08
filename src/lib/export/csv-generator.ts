@@ -133,11 +133,11 @@ export function generateAttendanceCSV(records: AttendanceRecord[]): string {
       escapeCSVField(
         record.verifiedBy
           ? `${record.verifiedBy.firstName} ${record.verifiedBy.lastName}`
-          : ""
+          : "",
       ),
       escapeCSVField(formatDate(record.verifiedAt)),
       escapeCSVField(
-        record.checkInDistance ? record.checkInDistance.toFixed(2) : ""
+        record.checkInDistance ? record.checkInDistance.toFixed(2) : "",
       ),
       escapeCSVField(record.checkInFrontPhoto || ""),
       escapeCSVField(record.checkInBackPhoto || ""),
