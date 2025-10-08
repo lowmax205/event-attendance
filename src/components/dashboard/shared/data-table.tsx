@@ -19,7 +19,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ArrowUpDown } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  ArrowUpDown,
+} from "lucide-react";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -34,7 +40,9 @@ interface DataTableProps<TData, TValue> {
   sorting?: SortingState;
   onSortingChange?: React.Dispatch<React.SetStateAction<SortingState>>;
   rowSelection?: RowSelectionState;
-  onRowSelectionChange?: React.Dispatch<React.SetStateAction<RowSelectionState>>;
+  onRowSelectionChange?: React.Dispatch<
+    React.SetStateAction<RowSelectionState>
+  >;
   enableRowSelection?: boolean;
   isLoading?: boolean;
 }
@@ -52,7 +60,7 @@ export function DataTable<TData, TValue>({
   isLoading = false,
 }: DataTableProps<TData, TValue>) {
   const [internalSorting, setInternalSorting] = React.useState<SortingState>(
-    sorting || []
+    sorting || [],
   );
   const [internalRowSelection, setInternalRowSelection] =
     React.useState<RowSelectionState>(rowSelection || {});
@@ -111,7 +119,9 @@ export function DataTable<TData, TValue>({
                             }
                           }}
                           tabIndex={header.column.getCanSort() ? 0 : undefined}
-                          role={header.column.getCanSort() ? "button" : undefined}
+                          role={
+                            header.column.getCanSort() ? "button" : undefined
+                          }
                           aria-sort={
                             header.column.getIsSorted()
                               ? header.column.getIsSorted() === "asc"
@@ -122,10 +132,13 @@ export function DataTable<TData, TValue>({
                         >
                           {flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                           {header.column.getCanSort() && (
-                            <ArrowUpDown className="h-4 w-4" aria-hidden="true" />
+                            <ArrowUpDown
+                              className="h-4 w-4"
+                              aria-hidden="true"
+                            />
                           )}
                         </div>
                       )}
@@ -156,7 +169,7 @@ export function DataTable<TData, TValue>({
                     <TableCell key={cell.id} role="cell">
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}

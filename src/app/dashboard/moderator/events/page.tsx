@@ -1,154 +1,268 @@
-import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth/server";
-import { listEvents } from "@/actions/events/list";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+"use client";
+
+import * as React from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Plus, Edit } from "lucide-react";
-import { QRCodeModal } from "@/components/events/qr-code-modal";
+  EventTable,
+  type EventRow,
+} from "@/components/dashboard/moderator/event-management/event-table";
+import { EventFilters } from "@/components/dashboard/moderator/event-management/event-filters";
+import { EventForm } from "@/components/dashboard/moderator/event-management/event-form";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { listEvents } from "@/actions/events/list";
+import { deleteEvent } from "@/actions/events/delete";
+import { Plus } from "lucide-react";
+import { EventStatus } from "@prisma/client";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
-/**
- * Moderator events list page
- * Displays all events created by the moderator
- */
-export default async function ModeratorEventsPage() {
-  const user = await getCurrentUser();
+export default function EventManagementPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { toast } = useToast();
 
-  if (!user) {
-    redirect("/auth/login?redirect=/dashboard/moderator/events");
-  }
+  const [events, setEvents] = React.useState<EventRow[]>([]);
+  const [pagination, setPagination] = React.useState({
+    pageIndex: 0,
+    pageSize: 20,
+    totalPages: 0,
+    totalItems: 0,
+  });
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [createDialogOpen, setCreateDialogOpen] = React.useState(false);
+  const [editDialogOpen, setEditDialogOpen] = React.useState(false);
+  const [selectedEventId, setSelectedEventId] = React.useState<string | null>(
+    null,
+  );
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
+  const [eventToDelete, setEventToDelete] = React.useState<string | null>(null);
 
-  if (user.role !== "Moderator" && user.role !== "Administrator") {
-    redirect("/dashboard");
-  }
-
-  // Fetch events created by this moderator
-  // Note: Scope filtering is handled internally by listEvents based on user role
-  const result = await listEvents({
-    page: 1,
-    limit: 50,
+  const [filters, setFilters] = React.useState({
+    status: searchParams.get("status") || undefined,
+    startDate: searchParams.get("startDate")
+      ? new Date(searchParams.get("startDate")!)
+      : undefined,
+    endDate: searchParams.get("endDate")
+      ? new Date(searchParams.get("endDate")!)
+      : undefined,
+    sortBy: searchParams.get("sortBy") || "startDateTime",
+    sortOrder: searchParams.get("sortOrder") || "desc",
   });
 
-  if (!result.success || !result.data) {
-    return (
-      <div className="container max-w-7xl mx-auto px-4 py-8">
-        <div className="rounded-lg border border-destructive bg-destructive/10 p-6">
-          <h2 className="text-lg font-semibold text-destructive mb-2">
-            Error Loading Events
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            {result.error || "Failed to load events"}
-          </p>
-        </div>
-      </div>
-    );
-  }
+  const fetchEvents = React.useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const page = parseInt(searchParams.get("page") || "1", 10);
 
-  const { events } = result.data;
+      const result = await listEvents({
+        page,
+        limit: pagination.pageSize,
+        status: filters.status as EventStatus | undefined,
+        startDate: filters.startDate?.toISOString(),
+        endDate: filters.endDate?.toISOString(),
+        sortBy: filters.sortBy as
+          | "name"
+          | "startDateTime"
+          | "endDateTime"
+          | "status"
+          | "createdAt",
+        sortOrder: filters.sortOrder as "asc" | "desc",
+      });
 
-  const statusColors = {
-    Active: "default",
-    Completed: "secondary",
-    Cancelled: "destructive",
-  } as const;
+      if (!result.success || !result.data) {
+        throw new Error(result.error || "Failed to fetch events");
+      }
+
+      setEvents(result.data.events as EventRow[]);
+      setPagination({
+        pageIndex: page - 1,
+        pageSize: pagination.pageSize,
+        totalPages: result.data.pagination.totalPages,
+        totalItems: result.data.pagination.total,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error ? error.message : "Failed to fetch events",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [searchParams, pagination.pageSize, filters, toast]);
+
+  React.useEffect(() => {
+    fetchEvents();
+  }, [fetchEvents]);
+
+  const updateUrlParams = (newFilters: typeof filters, page = 1) => {
+    const params = new URLSearchParams();
+    if (newFilters.status) params.set("status", newFilters.status);
+    if (newFilters.startDate)
+      params.set("startDate", newFilters.startDate.toISOString());
+    if (newFilters.endDate)
+      params.set("endDate", newFilters.endDate.toISOString());
+    if (newFilters.sortBy) params.set("sortBy", newFilters.sortBy);
+    if (newFilters.sortOrder) params.set("sortOrder", newFilters.sortOrder);
+    if (page > 1) params.set("page", page.toString());
+    router.push(`/dashboard/moderator/events?${params.toString()}`);
+  };
+
+  const handleFilterChange = (
+    name: string,
+    value: string | Date | undefined,
+  ) => {
+    setFilters((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleApplyFilters = () => {
+    updateUrlParams(filters, 1);
+  };
+
+  const handleClearFilters = () => {
+    const clearedFilters = {
+      status: undefined,
+      startDate: undefined,
+      endDate: undefined,
+      sortBy: "startDateTime",
+      sortOrder: "desc",
+    };
+    setFilters(clearedFilters);
+    updateUrlParams(clearedFilters, 1);
+  };
+
+  const handlePaginationChange = (pageIndex: number) => {
+    updateUrlParams(filters, pageIndex + 1);
+  };
+
+  const handleEdit = (eventId: string) => {
+    setSelectedEventId(eventId);
+    setEditDialogOpen(true);
+  };
+
+  const handleDownloadQR = async () => {
+    // TODO: Implement QR code download
+    toast({
+      title: "Download QR",
+      description:
+        "QR code download functionality will be implemented in a future update.",
+    });
+  };
+
+  const handleDelete = (eventId: string) => {
+    setEventToDelete(eventId);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!eventToDelete) return;
+    try {
+      const result = await deleteEvent(eventToDelete);
+      if (!result.success)
+        throw new Error(result.error || "Failed to delete event");
+      toast({
+        title: "Event deleted",
+        description: "Event has been deleted successfully",
+      });
+      setDeleteDialogOpen(false);
+      setEventToDelete(null);
+      fetchEvents();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error ? error.message : "Failed to delete event",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
-    <div className="container max-w-7xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-8">
+    <div className="container mx-auto py-8 space-y-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-bold mb-2">My Events</h1>
-          <p className="text-lg text-muted-foreground">
-            Manage your events and track attendance
-          </p>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Event Management
+          </h1>
+          <p className="text-muted-foreground">Create and manage your events</p>
         </div>
-        <Link href="/dashboard/moderator/events/create">
-          <Button size="lg">
-            <Plus className="mr-2 h-5 w-5" />
-            Create Event
-          </Button>
-        </Link>
+        <Button onClick={() => setCreateDialogOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          Create Event
+        </Button>
       </div>
 
-      {events.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground mb-4">
-              You haven&apos;t created any events yet.
-            </p>
-            <Link href="/dashboard/moderator/events/create">
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                Create Your First Event
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle>All Events ({events.length})</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Event Name</TableHead>
-                  <TableHead>Date & Time</TableHead>
-                  <TableHead>Venue</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {events.map((event) => (
-                  <TableRow key={event.id}>
-                    <TableCell className="font-medium">{event.name}</TableCell>
-                    <TableCell>
-                      {new Date(event.startDateTime).toLocaleString("en-US", {
-                        dateStyle: "medium",
-                        timeStyle: "short",
-                      })}
-                    </TableCell>
-                    <TableCell>{event.venueName}</TableCell>
-                    <TableCell>
-                      <Badge variant={statusColors[event.status]}>
-                        {event.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Link
-                          href={`/dashboard/moderator/events/${event.id}/edit`}
-                        >
-                          <Button variant="outline" size="sm">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                        {event.qrCodeUrl && (
-                          <QRCodeModal
-                            eventId={event.id}
-                            eventName={event.name}
-                            qrCodeUrl={event.qrCodeUrl}
-                          />
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+      <EventFilters
+        values={filters}
+        onFilterChange={handleFilterChange}
+        onApplyFilters={handleApplyFilters}
+        onClearFilters={handleClearFilters}
+        isLoading={isLoading}
+      />
+
+      <EventTable
+        events={events}
+        pagination={pagination}
+        onPaginationChange={handlePaginationChange}
+        onEdit={handleEdit}
+        onDownloadQR={handleDownloadQR}
+        onDelete={handleDelete}
+        isLoading={isLoading}
+      />
+
+      <EventForm
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        mode="create"
+        onSuccess={() => {
+          setCreateDialogOpen(false);
+          fetchEvents();
+        }}
+      />
+
+      {selectedEventId && (
+        <EventForm
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          mode="edit"
+          eventId={selectedEventId}
+          onSuccess={() => {
+            setEditDialogOpen(false);
+            fetchEvents();
+          }}
+        />
       )}
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              event and all associated attendance records.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

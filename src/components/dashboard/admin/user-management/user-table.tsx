@@ -66,7 +66,8 @@ export function UserTable({
       cell: ({ row }) => {
         const role = row.getValue("role") as Role;
         const roleColors: Record<Role, string> = {
-          Student: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
+          Student:
+            "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
           Moderator:
             "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300",
           Administrator:
@@ -85,8 +86,10 @@ export function UserTable({
       cell: ({ row }) => {
         const status = row.getValue("accountStatus") as AccountStatus;
         const statusColors: Record<AccountStatus, string> = {
-          ACTIVE: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
-          SUSPENDED: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
+          ACTIVE:
+            "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+          SUSPENDED:
+            "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
         };
         return (
           <Badge variant="outline" className={statusColors[status]}>

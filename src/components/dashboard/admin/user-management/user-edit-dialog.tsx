@@ -92,7 +92,7 @@ export function UserEditDialog({
   }, [currentRole, currentStatus, roleForm, statusForm]);
 
   const handleRoleSubmit = async (
-    values: z.infer<typeof userRoleUpdateSchema>
+    values: z.infer<typeof userRoleUpdateSchema>,
   ) => {
     try {
       setIsSubmitting(true);
@@ -112,7 +112,8 @@ export function UserEditDialog({
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to update role",
+        description:
+          error instanceof Error ? error.message : "Failed to update role",
         variant: "destructive",
       });
     } finally {
@@ -121,7 +122,7 @@ export function UserEditDialog({
   };
 
   const handleStatusSubmit = async (
-    values: z.infer<typeof userStatusUpdateSchema>
+    values: z.infer<typeof userStatusUpdateSchema>,
   ) => {
     try {
       setIsSubmitting(true);
@@ -207,7 +208,9 @@ export function UserEditDialog({
                       </FormControl>
                       <SelectContent>
                         <SelectItem value={Role.Student}>Student</SelectItem>
-                        <SelectItem value={Role.Moderator}>Moderator</SelectItem>
+                        <SelectItem value={Role.Moderator}>
+                          Moderator
+                        </SelectItem>
                         <SelectItem value={Role.Administrator}>
                           Administrator
                         </SelectItem>

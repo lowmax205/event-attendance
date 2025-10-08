@@ -44,9 +44,8 @@ export function ExportButton({
 }: ExportButtonProps) {
   const { toast } = useToast();
   const [isExporting, setIsExporting] = React.useState(false);
-  const [exportingFormat, setExportingFormat] = React.useState<
-    ExportFormat | null
-  >(null);
+  const [exportingFormat, setExportingFormat] =
+    React.useState<ExportFormat | null>(null);
 
   const handleExport = async (format: ExportFormat) => {
     try {

@@ -85,7 +85,9 @@ export function FilterPanel({
                 >
                   <SelectTrigger id={filter.name} aria-label={filter.label}>
                     <SelectValue
-                      placeholder={filter.placeholder || `Select ${filter.label}`}
+                      placeholder={
+                        filter.placeholder || `Select ${filter.label}`
+                      }
                     />
                   </SelectTrigger>
                   <SelectContent>
@@ -139,7 +141,7 @@ export function FilterPanel({
                       variant="outline"
                       className={cn(
                         "w-full justify-start text-left font-normal",
-                        !values[filter.name] && "text-muted-foreground"
+                        !values[filter.name] && "text-muted-foreground",
                       )}
                       disabled={isLoading}
                       aria-label={filter.label}
@@ -175,7 +177,7 @@ export function FilterPanel({
                         variant="outline"
                         className={cn(
                           "w-full justify-start text-left font-normal",
-                          !values[filter.startName] && "text-muted-foreground"
+                          !values[filter.startName] && "text-muted-foreground",
                         )}
                         disabled={isLoading}
                         aria-label={filter.startLabel || "Start Date"}
@@ -209,7 +211,7 @@ export function FilterPanel({
                         variant="outline"
                         className={cn(
                           "w-full justify-start text-left font-normal",
-                          !values[filter.endName] && "text-muted-foreground"
+                          !values[filter.endName] && "text-muted-foreground",
                         )}
                         disabled={isLoading}
                         aria-label={filter.endLabel || "End Date"}
@@ -224,7 +226,9 @@ export function FilterPanel({
                       <Calendar
                         mode="single"
                         selected={values[filter.endName] as Date | undefined}
-                        onSelect={(date) => onFilterChange(filter.endName, date)}
+                        onSelect={(date) =>
+                          onFilterChange(filter.endName, date)
+                        }
                         initialFocus
                       />
                     </PopoverContent>

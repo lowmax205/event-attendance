@@ -5,13 +5,13 @@ import {
   FilterPanel,
   FilterConfig,
 } from "@/components/dashboard/shared/filter-panel";
-import { Role, AccountStatus } from "@prisma/client";
+import { EventStatus } from "@prisma/client";
 
-interface UserFiltersProps {
+interface EventFiltersProps {
   values: {
-    role?: string;
-    accountStatus?: string;
-    search?: string;
+    status?: string;
+    startDate?: Date;
+    endDate?: Date;
     sortBy?: string;
     sortOrder?: string;
   };
@@ -21,22 +21,18 @@ interface UserFiltersProps {
   isLoading?: boolean;
 }
 
-const roleOptions = [
-  { value: Role.Student, label: "Student" },
-  { value: Role.Moderator, label: "Moderator" },
-  { value: Role.Administrator, label: "Administrator" },
-];
-
 const statusOptions = [
-  { value: AccountStatus.ACTIVE, label: "Active" },
-  { value: AccountStatus.SUSPENDED, label: "Suspended" },
+  { value: EventStatus.Active, label: "Active" },
+  { value: EventStatus.Completed, label: "Completed" },
+  { value: EventStatus.Cancelled, label: "Cancelled" },
 ];
 
 const sortOptions = [
-  { value: "email", label: "Email" },
-  { value: "role", label: "Role" },
+  { value: "name", label: "Name" },
+  { value: "startDateTime", label: "Start Date" },
+  { value: "endDateTime", label: "End Date" },
+  { value: "status", label: "Status" },
   { value: "createdAt", label: "Created Date" },
-  { value: "lastLoginAt", label: "Last Login" },
 ];
 
 const sortOrderOptions = [
@@ -44,33 +40,29 @@ const sortOrderOptions = [
   { value: "desc", label: "Descending" },
 ];
 
-export function UserFilters({
+export function EventFilters({
   values,
   onFilterChange,
   onApplyFilters,
   onClearFilters,
   isLoading = false,
-}: UserFiltersProps) {
+}: EventFiltersProps) {
   const filterConfig: FilterConfig[] = [
     {
-      name: "role",
+      name: "status",
       type: "select",
-      label: "Role",
-      options: roleOptions,
-      placeholder: "All Roles",
-    },
-    {
-      name: "accountStatus",
-      type: "select",
-      label: "Account Status",
+      label: "Status",
       options: statusOptions,
       placeholder: "All Statuses",
     },
     {
-      name: "search",
-      type: "search",
-      label: "Search",
-      placeholder: "Search by email or name...",
+      name: "dateRange",
+      type: "daterange",
+      label: "Date Range",
+      startName: "startDate",
+      endName: "endDate",
+      startLabel: "Start Date",
+      endLabel: "End Date",
     },
     {
       name: "sortBy",

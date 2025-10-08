@@ -162,7 +162,7 @@ export async function getEventStatusDistribution() {
  */
 export async function getVerificationStatusDistribution(
   startDate: Date,
-  endDate: Date
+  endDate: Date,
 ) {
   const distribution = await db.attendance.groupBy({
     by: ["verificationStatus"],
