@@ -179,7 +179,7 @@ export default function UserManagementPage() {
 
       setUsers(formattedUsers);
       setPagination({
-  pageIndex: currentPage - 1,
+        pageIndex: currentPage - 1,
         pageSize: PAGE_SIZE,
         totalPages: result.data.pagination.totalPages,
         totalItems: result.data.pagination.total,
@@ -261,9 +261,8 @@ export default function UserManagementPage() {
   };
 
   const handleSearchSubmit = () => {
-    const normalizedSearch = searchDraft && searchDraft.trim().length > 0
-      ? searchDraft
-      : undefined;
+    const normalizedSearch =
+      searchDraft && searchDraft.trim().length > 0 ? searchDraft : undefined;
 
     if ((appliedFilters.search ?? undefined) === normalizedSearch) {
       return;
