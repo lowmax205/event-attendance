@@ -2,6 +2,17 @@
 
 import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth/server";
+import {
+  getKeyMetrics,
+  getAttendanceTrends,
+  getTopEvents,
+  getEventStatusDistribution,
+  getVerificationStatusDistribution,
+  getDepartmentBreakdown,
+  getCourseBreakdown,
+} from "@/lib/analytics/aggregations";
+import { analyticsQuerySchema } from "@/lib/validations/analytics";
+import { z } from "zod";
 
 interface AdminDashboardParams {
   page?: number;
@@ -143,6 +154,116 @@ export async function getAdminDashboard(params: AdminDashboardParams = {}) {
     return {
       success: false,
       error: "Failed to load administrator dashboard",
+    };
+  }
+}
+
+/**
+ * Get analytics dashboard data with optional caching
+ * T032: Analytics Dashboard Endpoint
+ */
+export async function getAnalyticsDashboard(input: {
+  startDate?: string;
+  endDate?: string;
+  refresh?: boolean;
+}) {
+  try {
+    const user = await requireRole(["Administrator"]);
+
+    // Validate input
+    const validatedInput = analyticsQuerySchema.parse(input);
+    const startDate = validatedInput.startDate
+      ? new Date(validatedInput.startDate)
+      : new Date(new Date().setMonth(new Date().getMonth() - 1));
+    const endDate = validatedInput.endDate
+      ? new Date(validatedInput.endDate)
+      : new Date();
+
+    const startTime = Date.now();
+    const cacheHit = false;
+
+    // Note: Redis caching skipped - not configured in this project
+    // Future enhancement: Implement Redis with cache key format:
+    // `analytics:dashboard:${startDate.toISOString()}:${endDate.toISOString()}`
+
+    // Call all aggregation functions in parallel
+    const [
+      keyMetrics,
+      attendanceTrends,
+      topEvents,
+      eventStatusDist,
+      verificationStatusDist,
+      departmentBreakdown,
+      courseBreakdown,
+    ] = await Promise.all([
+      getKeyMetrics(startDate, endDate),
+      getAttendanceTrends(startDate, endDate),
+      getTopEvents(10),
+      getEventStatusDistribution(),
+      getVerificationStatusDistribution(startDate, endDate),
+      getDepartmentBreakdown(startDate, endDate),
+      getCourseBreakdown(startDate, endDate),
+    ]);
+
+    const queryTimeMs = Date.now() - startTime;
+
+    // Optionally log analytics access
+    await db.securityLog.create({
+      data: {
+        userId: user.userId,
+        eventType: "ANALYTICS_ACCESSED",
+        ipAddress: "system",
+        userAgent: "Server Action",
+        metadata: {
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
+          queryTimeMs,
+        },
+      },
+    });
+
+    return {
+      success: true,
+      data: {
+        keyMetrics,
+        charts: {
+          attendanceTrends,
+          topEvents,
+          eventStatusDistribution: eventStatusDist,
+          verificationStatusDistribution: verificationStatusDist,
+          departmentBreakdown,
+          courseBreakdown,
+        },
+        metadata: {
+          generatedAt: new Date().toISOString(),
+          cacheHit,
+          queryTimeMs,
+          dateRange: {
+            start: startDate.toISOString(),
+            end: endDate.toISOString(),
+          },
+        },
+      },
+    };
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return {
+        success: false,
+        error: "Invalid input data",
+        details: error.issues,
+      };
+    }
+
+    if (error instanceof Error) {
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+
+    return {
+      success: false,
+      error: "Failed to load analytics dashboard",
     };
   }
 }

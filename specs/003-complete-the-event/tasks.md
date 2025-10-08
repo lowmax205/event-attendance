@@ -360,7 +360,7 @@
 
 **Goal**: Implement analytics aggregations with Redis caching
 
-- [ ] **T031** Implement analytics aggregation functions in `src/lib/analytics/aggregations.ts`
+- [x] **T031** Implement analytics aggregation functions in `src/lib/analytics/aggregations.ts`
   - Export functions:
     - `getKeyMetrics(startDate, endDate)`: total events, total attendances, verification rate, pending count
     - `getAttendanceTrends(startDate, endDate)`: group by date, count attendances (for line chart)
@@ -374,7 +374,7 @@
   - **Dependencies**: T001, T002, T003, T007
   - **Reference**: data-model.md (Analytics Aggregation Queries), contracts/analytics-dashboard-data.json
 
-- [ ] **T032** Implement analytics dashboard endpoint with caching in `src/actions/dashboard/admin.ts`
+- [x] **T032** Implement analytics dashboard endpoint with caching in `src/actions/dashboard/admin.ts`
   - Export `getAnalyticsDashboard` server action
   - Validate JWT, check role = ADMIN
   - Validate input with `analyticsQuerySchema` (T013)
@@ -392,11 +392,11 @@
 
 ---
 
-## Phase 3.8: UI Components - Data Tables
+## Phase 3.8: UI Components - Data Tables ✅ COMPLETE
 
 **Goal**: Create reusable data table components with shadcn/ui + TanStack Table
 
-- [ ] **T033** [P] Create base DataTable component in `src/components/dashboard/shared/data-table.tsx`
+- [x] **T033** [P] Create base DataTable component in `src/components/dashboard/shared/data-table.tsx`
   - Use TanStack Table for headless logic (useReactTable hook)
   - Accept props: columns (ColumnDef[]), data, pagination, onPaginationChange, sorting, onSortingChange, filters
   - Render: shadcn/ui Table component
@@ -406,7 +406,7 @@
   - **Dependencies**: T008 (@tanstack/react-table)
   - **Reference**: research.md (Data Table Architecture)
 
-- [ ] **T034** [P] Create FilterPanel component in `src/components/dashboard/shared/filter-panel.tsx`
+- [x] **T034** [P] Create FilterPanel component in `src/components/dashboard/shared/filter-panel.tsx`
   - Accept props: filters array (name, type, options), onFilterChange
   - Render: shadcn/ui Select, Input, DatePicker components
   - Support: dropdown filters (role, status), search input, date range pickers
@@ -414,7 +414,7 @@
   - **Dependencies**: None (uses existing shadcn/ui)
   - **Reference**: plan.md (Project Structure)
 
-- [ ] **T035** [P] Create ExportButton component in `src/components/dashboard/shared/export-button.tsx`
+- [x] **T035** [P] Create ExportButton component in `src/components/dashboard/shared/export-button.tsx`
   - Accept props: exportType (CSV | XLSX), filters, onExport
   - Render: shadcn/ui Button with dropdown (CSV, Excel options)
   - On click: call export server action, show loading state, handle download URL
@@ -424,11 +424,11 @@
 
 ---
 
-## Phase 3.9: UI Components - User Management
+## Phase 3.9: UI Components - User Management ✅ COMPLETE
 
 **Goal**: Build admin user management dashboard
 
-- [ ] **T036** Create UserTable component in `src/components/dashboard/admin/user-management/user-table.tsx`
+- [x] **T036** Create UserTable component in `src/components/dashboard/admin/user-management/user-table.tsx`
   - Use DataTable (T033) with user-specific columns
   - Columns: Email, Role, Account Status, Last Login, Actions (Edit, Suspend, Delete dropdowns)
   - Status badges: color-coded (ACTIVE=green, SUSPENDED=red)
@@ -436,14 +436,14 @@
   - **Dependencies**: T033 (DataTable)
   - **Reference**: quickstart.md Scenario 1
 
-- [ ] **T037** [P] Create UserFilters component in `src/components/dashboard/admin/user-management/user-filters.tsx`
+- [x] **T037** [P] Create UserFilters component in `src/components/dashboard/admin/user-management/user-filters.tsx`
   - Use FilterPanel (T034) with user-specific filters
   - Filters: Role dropdown, Status dropdown, Search input (email/name), Sort dropdown
   - On change: update query params, trigger refetch
   - **Dependencies**: T034 (FilterPanel)
   - **Reference**: contracts/admin-users-list.json
 
-- [ ] **T038** [P] Create UserEditDialog component in `src/components/dashboard/admin/user-management/user-edit-dialog.tsx`
+- [x] **T038** [P] Create UserEditDialog component in `src/components/dashboard/admin/user-management/user-edit-dialog.tsx`
   - shadcn/ui Dialog with form
   - Fields: Role dropdown (with self-change confirmation), Account Status toggle
   - React Hook Form + Zod validation (userRoleUpdateSchema, userStatusUpdateSchema)
@@ -452,7 +452,7 @@
   - **Dependencies**: T009 (validation), T015, T016 (actions)
   - **Reference**: contracts/admin-users-update-role.json, admin-users-suspend.json
 
-- [ ] **T039** [P] Create UserCreateForm component in `src/components/dashboard/admin/user-management/user-create-form.tsx`
+- [x] **T039** [P] Create UserCreateForm component in `src/components/dashboard/admin/user-management/user-create-form.tsx`
   - shadcn/ui Dialog or page with form
   - Fields: Email, Role dropdown, Student Number (if student), First/Middle/Last Name, Department, Course (if student)
   - React Hook Form + Zod validation (userCreateSchema)
@@ -461,7 +461,7 @@
   - **Dependencies**: T009 (validation), T018 (action)
   - **Reference**: quickstart.md Scenario 1 Step 5
 
-- [ ] **T040** Create User Management page in `src/app/dashboard/admin/users/page.tsx`
+- [x] **T040** Create User Management page in `src/app/dashboard/admin/users/page.tsx`
   - Fetch users with listUsers action (T014) with filters from URL params
   - Render: UserTable (T036), UserFilters (T037), "Create User" button
   - Handle pagination: update URL params, refetch

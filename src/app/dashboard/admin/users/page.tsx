@@ -1,406 +1,254 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { db } from "@/lib/db";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import * as React from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { UserTable, type UserRow } from "@/components/dashboard/admin/user-management/user-table";
+import { UserFilters } from "@/components/dashboard/admin/user-management/user-filters";
+import { UserEditDialog } from "@/components/dashboard/admin/user-management/user-edit-dialog";
+import { UserCreateForm } from "@/components/dashboard/admin/user-management/user-create-form";
 import { Button } from "@/components/ui/button";
-import { Loader2, UserCog, Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
+import { useToast } from "@/hooks/use-toast";
+import { listUsers, resetUserPassword, deleteUser } from "@/actions/admin/users";
+import { Plus } from "lucide-react";
+import { Role, AccountStatus } from "@prisma/client";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
-type UserRole = "Student" | "Moderator" | "Administrator";
+export default function UserManagementPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { toast } = useToast();
 
-type UserData = {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: UserRole;
-  accountStatus: string;
-  createdAt: Date;
-  studentId?: string;
-  department?: string;
-};
+  const [users, setUsers] = React.useState<UserRow[]>([]);
+  const [pagination, setPagination] = React.useState({
+    pageIndex: 0,
+    pageSize: 10,
+    totalPages: 0,
+    totalItems: 0,
+  });
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [createDialogOpen, setCreateDialogOpen] = React.useState(false);
+  const [editDialogOpen, setEditDialogOpen] = React.useState(false);
+  const [selectedUser, setSelectedUser] = React.useState<{
+    id: string;
+    email: string;
+    role: Role;
+    status: AccountStatus;
+  } | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
+  const [userToDelete, setUserToDelete] = React.useState<string | null>(null);
+  const [currentUserEmail] = React.useState("");
 
-/**
- * Admin users management page
- * List all users, role assignment, user activation/deactivation
- */
-export default function AdminUsersPage() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [users, setUsers] = useState<UserData[]>([]);
-  const [filteredUsers, setFilteredUsers] = useState<UserData[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [roleFilter, setRoleFilter] = useState<UserRole | "All">("All");
-  const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [newRole, setNewRole] = useState<UserRole>("Student");
+  const [filters, setFilters] = React.useState({
+    role: searchParams.get("role") || undefined,
+    accountStatus: searchParams.get("accountStatus") || undefined,
+    search: searchParams.get("search") || undefined,
+    sortBy: searchParams.get("sortBy") || "createdAt",
+    sortOrder: searchParams.get("sortOrder") || "desc",
+  });
 
-  useEffect(() => {
-    async function fetchUsers() {
+  const fetchUsers = React.useCallback(async () => {
+    try {
       setIsLoading(true);
-      try {
-        // Fetch all users with profile information
-        const userRecords = await db.user.findMany({
-          include: {
-            UserProfile: {
-              select: {
-                studentId: true,
-                department: true,
-              },
-            },
-          },
-          orderBy: {
-            createdAt: "desc",
-          },
-        });
+      const page = parseInt(searchParams.get("page") || "1", 10);
+      
+      const result = await listUsers({
+        page,
+        limit: pagination.pageSize,
+        role: filters.role as Role | undefined,
+        status: filters.accountStatus as AccountStatus | undefined,
+        search: filters.search,
+        sortBy: filters.sortBy as "email" | "role" | "createdAt" | "lastLoginAt",
+        sortOrder: filters.sortOrder as "asc" | "desc",
+      });
 
-        const userData = userRecords.map((user) => ({
-          id: user.id,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          role: user.role as UserRole,
-          accountStatus: user.accountStatus,
-          createdAt: user.createdAt,
-          studentId: user.UserProfile?.studentId,
-          department: user.UserProfile?.department,
-        }));
-
-        setUsers(userData);
-        setFilteredUsers(userData);
-      } catch (error) {
-        console.error("Error fetching users:", error);
-        toast.error("Failed to load users");
-      } finally {
-        setIsLoading(false);
+      if (!result.success || !result.data) {
+        throw new Error(result.error || "Failed to fetch users");
       }
-    }
 
-    fetchUsers();
-  }, []);
-
-  useEffect(() => {
-    let filtered = users;
-
-    // Apply role filter
-    if (roleFilter !== "All") {
-      filtered = filtered.filter((user) => user.role === roleFilter);
-    }
-
-    // Apply search filter
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        (user) =>
-          user.email.toLowerCase().includes(query) ||
-          user.firstName.toLowerCase().includes(query) ||
-          user.lastName.toLowerCase().includes(query) ||
-          user.studentId?.toLowerCase().includes(query) ||
-          user.department?.toLowerCase().includes(query),
-      );
-    }
-
-    setFilteredUsers(filtered);
-  }, [users, roleFilter, searchQuery]);
-
-  const handleRoleChange = (user: UserData) => {
-    setSelectedUser(user);
-    setNewRole(user.role);
-    setIsDialogOpen(true);
-  };
-
-  const handleUpdateRole = async () => {
-    if (!selectedUser) return;
-
-    setIsUpdating(true);
-
-    try {
-      // Update user role
-      await db.user.update({
-        where: { id: selectedUser.id },
-        data: { role: newRole },
+      setUsers(result.data.users as UserRow[]);
+      setPagination({
+        pageIndex: page - 1,
+        pageSize: pagination.pageSize,
+        totalPages: result.data.pagination.totalPages,
+        totalItems: result.data.pagination.total,
       });
-
-      // Update local state
-      setUsers((prev) =>
-        prev.map((user) =>
-          user.id === selectedUser.id ? { ...user, role: newRole } : user,
-        ),
-      );
-
-      toast.success("User role updated successfully!");
-      setIsDialogOpen(false);
     } catch (error) {
-      console.error("Error updating role:", error);
-      toast.error("Failed to update user role");
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to fetch users",
+        variant: "destructive",
+      });
     } finally {
-      setIsUpdating(false);
+      setIsLoading(false);
     }
+  }, [searchParams, pagination.pageSize, filters, toast]);
+
+  React.useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  const updateUrlParams = (newFilters: typeof filters, page = 1) => {
+    const params = new URLSearchParams();
+    if (newFilters.role) params.set("role", newFilters.role);
+    if (newFilters.accountStatus) params.set("accountStatus", newFilters.accountStatus);
+    if (newFilters.search) params.set("search", newFilters.search);
+    if (newFilters.sortBy) params.set("sortBy", newFilters.sortBy);
+    if (newFilters.sortOrder) params.set("sortOrder", newFilters.sortOrder);
+    if (page > 1) params.set("page", page.toString());
+    router.push(`/dashboard/admin/users?${params.toString()}`);
   };
 
-  const handleToggleActive = async (user: UserData) => {
-    try {
-      const newStatus = user.accountStatus === "active" ? "inactive" : "active";
-
-      // Update user active status
-      await db.user.update({
-        where: { id: user.id },
-        data: {
-          accountStatus: newStatus === "active" ? "ACTIVE" : "SUSPENDED",
-        },
-      });
-
-      // Update local state
-      setUsers((prev) =>
-        prev.map((u) =>
-          u.id === user.id ? { ...u, accountStatus: newStatus } : u,
-        ),
-      );
-
-      toast.success(
-        `User ${newStatus === "active" ? "activated" : "deactivated"} successfully!`,
-      );
-    } catch (error) {
-      console.error("Error toggling user status:", error);
-      toast.error("Failed to update user status");
-    }
+  const handleFilterChange = (name: string, value: string | Date | undefined) => {
+    setFilters((prev) => ({ ...prev, [name]: value }));
   };
 
-  const getRoleBadge = (role: UserRole) => {
-    const variants = {
-      Student: "secondary" as const,
-      Moderator: "default" as const,
-      Administrator: "destructive" as const,
+  const handleApplyFilters = () => {
+    updateUrlParams(filters, 1);
+  };
+
+  const handleClearFilters = () => {
+    const clearedFilters = {
+      role: undefined,
+      accountStatus: undefined,
+      search: undefined,
+      sortBy: "createdAt",
+      sortOrder: "desc",
     };
-
-    return <Badge variant={variants[role]}>{role}</Badge>;
+    setFilters(clearedFilters);
+    updateUrlParams(clearedFilters, 1);
   };
 
-  if (isLoading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
-      </div>
-    );
-  }
+  const handlePaginationChange = (pageIndex: number) => {
+    updateUrlParams(filters, pageIndex + 1);
+  };
+
+  const handleEditRole = (userId: string, currentRole: Role) => {
+    const user = users.find((u) => u.id === userId);
+    if (user) {
+      setSelectedUser({ id: userId, email: user.email, role: currentRole, status: user.accountStatus });
+      setEditDialogOpen(true);
+    }
+  };
+
+  const handleSuspend = (userId: string, currentStatus: AccountStatus) => {
+    const user = users.find((u) => u.id === userId);
+    if (user) {
+      setSelectedUser({ id: userId, email: user.email, role: user.role, status: currentStatus });
+      setEditDialogOpen(true);
+    }
+  };
+
+  const handleResetPassword = async (userId: string) => {
+    try {
+      const result = await resetUserPassword(userId);
+      if (!result.success) throw new Error(result.error || "Failed to reset password");
+      toast({ title: "Password reset", description: `Temporary password: ${result.data?.temporaryPassword}` });
+    } catch (error) {
+      toast({ title: "Error", description: error instanceof Error ? error.message : "Failed to reset password", variant: "destructive" });
+    }
+  };
+
+  const handleDelete = (userId: string) => {
+    setUserToDelete(userId);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!userToDelete) return;
+    try {
+      const result = await deleteUser({ userId: userToDelete });
+      if (!result.success) throw new Error(result.error || "Failed to delete user");
+      toast({ title: "User deleted", description: "User has been deleted successfully" });
+      setDeleteDialogOpen(false);
+      setUserToDelete(null);
+      fetchUsers();
+    } catch (error) {
+      toast({ title: "Error", description: error instanceof Error ? error.message : "Failed to delete user", variant: "destructive" });
+    }
+  };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-2">User Management</h1>
-        <p className="text-lg text-muted-foreground">
-          Manage user accounts, roles, and permissions
-        </p>
+    <div className="container mx-auto py-8 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">User Management</h1>
+          <p className="text-muted-foreground">Manage users, roles, and account statuses</p>
+        </div>
+        <Button onClick={() => setCreateDialogOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          Create User
+        </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <CardTitle>
-              All Users
-              <Badge variant="secondary" className="ml-2">
-                {filteredUsers.length}
-              </Badge>
-            </CardTitle>
-            <div className="flex items-center gap-2">
-              <div className="relative flex-1 sm:w-64">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search users..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-8"
-                />
-              </div>
-              <Select
-                value={roleFilter}
-                onValueChange={(value) =>
-                  setRoleFilter(value as UserRole | "All")
-                }
-              >
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="All">All Roles</SelectItem>
-                  <SelectItem value="Student">Student</SelectItem>
-                  <SelectItem value="Moderator">Moderator</SelectItem>
-                  <SelectItem value="Administrator">Administrator</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {filteredUsers.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <p className="text-lg">No users found</p>
-            </div>
-          ) : (
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead className="hidden md:table-cell">
-                      Student ID / Department
-                    </TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredUsers.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">
-                            {user.firstName} {user.lastName}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {user.email}
-                          </p>
-                        </div>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        <div>
-                          {user.studentId && (
-                            <p className="text-sm">{user.studentId}</p>
-                          )}
-                          {user.department && (
-                            <p className="text-xs text-muted-foreground">
-                              {user.department}
-                            </p>
-                          )}
-                          {!user.studentId && !user.department && (
-                            <span className="text-sm text-muted-foreground">
-                              N/A
-                            </span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>{getRoleBadge(user.role)}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            user.accountStatus === "active"
-                              ? "default"
-                              : "secondary"
-                          }
-                        >
-                          {user.accountStatus === "active"
-                            ? "Active"
-                            : "Inactive"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleRoleChange(user)}
-                          >
-                            <UserCog className="mr-2 h-4 w-4" />
-                            Change Role
-                          </Button>
-                          <Button
-                            variant={
-                              user.accountStatus === "active"
-                                ? "destructive"
-                                : "default"
-                            }
-                            size="sm"
-                            onClick={() => handleToggleActive(user)}
-                          >
-                            {user.accountStatus === "active"
-                              ? "Deactivate"
-                              : "Activate"}
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <UserFilters
+        values={filters}
+        onFilterChange={handleFilterChange}
+        onApplyFilters={handleApplyFilters}
+        onClearFilters={handleClearFilters}
+        isLoading={isLoading}
+      />
 
-      {/* Role Change Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Change User Role</DialogTitle>
-            <DialogDescription>
-              Update the role for {selectedUser?.firstName}{" "}
-              {selectedUser?.lastName}
-            </DialogDescription>
-          </DialogHeader>
+      <UserTable
+        users={users}
+        pagination={pagination}
+        onPaginationChange={handlePaginationChange}
+        onEditRole={handleEditRole}
+        onSuspend={handleSuspend}
+        onResetPassword={handleResetPassword}
+        onDelete={handleDelete}
+        isLoading={isLoading}
+      />
 
-          <div className="py-4">
-            <label className="text-sm font-medium mb-2 block">
-              Select New Role
-            </label>
-            <Select
-              value={newRole}
-              onValueChange={(value) => setNewRole(value as UserRole)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Student">Student</SelectItem>
-                <SelectItem value="Moderator">Moderator</SelectItem>
-                <SelectItem value="Administrator">Administrator</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+      <UserCreateForm
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        onSuccess={() => {
+          setCreateDialogOpen(false);
+          fetchUsers();
+        }}
+      />
 
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsDialogOpen(false)}
-              disabled={isUpdating}
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleUpdateRole} disabled={isUpdating}>
-              {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Update Role
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {selectedUser && (
+        <UserEditDialog
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          userId={selectedUser.id}
+          currentRole={selectedUser.role}
+          currentStatus={selectedUser.status}
+          currentUserEmail={selectedUser.email}
+          isCurrentUser={selectedUser.email === currentUserEmail}
+          onSuccess={() => {
+            setEditDialogOpen(false);
+            fetchUsers();
+          }}
+        />
+      )}
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the user account and all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

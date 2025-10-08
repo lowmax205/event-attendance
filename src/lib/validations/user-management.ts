@@ -30,7 +30,7 @@ export type UserListQuery = z.infer<typeof userListQuerySchema>;
  */
 export const userRoleUpdateSchema = z.object({
   role: z.nativeEnum(Role),
-  confirmSelfChange: z.boolean().optional().default(false),
+  confirmSelfChange: z.boolean().default(false),
 });
 
 export type UserRoleUpdate = z.infer<typeof userRoleUpdateSchema>;
