@@ -2,40 +2,52 @@
 
 import { db } from "@/lib/db";
 import { requireAuth } from "@/lib/auth/server";
-
-interface ListEventsFilters {
-  status?: "Active" | "Completed" | "Cancelled";
-  createdById?: string;
-  page?: number;
-  limit?: number;
-}
+import {
+  eventListQuerySchema,
+  type EventListQuery,
+} from "@/lib/validations/event-management";
+import { Prisma } from "@prisma/client";
 
 /**
- * List events with optional filters and pagination
- * @param filters - Optional filters for status, creator, pagination
+ * T020: List events with moderator scope filtering and enhanced pagination
+ * Phase 3.4 - Extended from Phase 2
+ * @param query - Query parameters (pagination, filters, sorting)
  * @returns Paginated list of events
  */
-export async function listEvents(filters: ListEventsFilters = {}) {
+export async function listEvents(query: Partial<EventListQuery> = {}) {
   try {
-    // Require authentication
-    await requireAuth();
+    // Require authentication (MODERATOR or ADMIN)
+    const user = await requireAuth();
 
-    const { status, createdById, page = 1, limit = 10 } = filters;
+    // Validate and parse query parameters
+    const validatedQuery = eventListQuerySchema.parse(query);
 
-    const skip = (page - 1) * limit;
+    const skip = (validatedQuery.page - 1) * validatedQuery.limit;
 
     // Build where clause
-    const where: {
-      status?: "Active" | "Completed" | "Cancelled";
-      createdById?: string;
-    } = {};
+    const where: Prisma.EventWhereInput = {
+      deletedAt: null, // Exclude soft-deleted events (FR-020)
+    };
 
-    if (status) {
-      where.status = status;
+    // Moderator scope: only see own events (FR-026)
+    if (user.role === "Moderator") {
+      where.createdById = user.userId;
+    }
+    // Admin can see all events (no filter)
+
+    if (validatedQuery.status) {
+      where.status = validatedQuery.status;
     }
 
-    if (createdById) {
-      where.createdById = createdById;
+    // Date range filtering (FR-024, FR-028)
+    if (validatedQuery.startDate || validatedQuery.endDate) {
+      where.startDateTime = {};
+      if (validatedQuery.startDate) {
+        where.startDateTime.gte = new Date(validatedQuery.startDate);
+      }
+      if (validatedQuery.endDate) {
+        where.startDateTime.lte = new Date(validatedQuery.endDate);
+      }
     }
 
     // Get total count
@@ -60,10 +72,10 @@ export async function listEvents(filters: ListEventsFilters = {}) {
         },
       },
       orderBy: {
-        createdAt: "desc",
+        [validatedQuery.sortBy]: validatedQuery.sortOrder,
       },
       skip,
-      take: limit,
+      take: validatedQuery.limit,
     });
 
     return {
@@ -71,10 +83,10 @@ export async function listEvents(filters: ListEventsFilters = {}) {
       data: {
         events,
         pagination: {
-          page,
-          limit,
+          page: validatedQuery.page,
+          limit: validatedQuery.limit,
           total,
-          totalPages: Math.ceil(total / limit),
+          totalPages: Math.ceil(total / validatedQuery.limit),
         },
       },
     };

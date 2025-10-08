@@ -209,11 +209,11 @@
 
 ---
 
-## Phase 3.4: Server Actions - Event Management
+## Phase 3.4: Server Actions - Event Management ✅ COMPLETE
 
 **Goal**: Implement moderator/admin event management with scope filtering
 
-- [ ] **T020** Implement moderator event listing in `src/actions/moderator/events.ts`
+- [x] **T020** Implement moderator event listing in `src/actions/events/list.ts`
   - Export `listEvents` server action
   - Validate JWT, check role = MODERATOR or ADMIN
   - Parse query params with `eventListQuerySchema` (T010)
@@ -225,8 +225,8 @@
   - **Dependencies**: T002 (Event model), T007 (migration), T010 (validation)
   - **Reference**: contracts/moderator-events-list.json
 
-- [ ] **T021** [P] Implement event creation in `src/actions/moderator/events.ts`
-  - Export `createEvent` server action (may already exist from Phase 2, extend if needed)
+- [x] **T021** [P] Implement event creation in `src/actions/events/create.ts`
+  - Export `createEvent` server action (inherited from Phase 2, already sets createdById)
   - Validate JWT, check role = MODERATOR or ADMIN
   - Validate input with `eventCreateSchema` (T010)
   - Set `createdById = currentUser.id`
@@ -235,7 +235,7 @@
   - **Dependencies**: T002, T007, T010
   - **Reference**: quickstart.md Scenario 2 Step 3
 
-- [ ] **T022** [P] Implement event update in `src/actions/moderator/events.ts`
+- [x] **T022** [P] Implement event update in `src/actions/events/update.ts`
   - Export `updateEvent` server action
   - Validate JWT, check role = MODERATOR or ADMIN
   - Validate eventId and input with `eventUpdateSchema` (T010)
@@ -246,7 +246,7 @@
   - **Dependencies**: T002, T007, T010, T020
   - **Reference**: quickstart.md Scenario 2 Step 4
 
-- [ ] **T023** [P] Implement event soft delete in `src/actions/moderator/events.ts`
+- [x] **T023** [P] Implement event soft delete in `src/actions/events/delete.ts`
   - Export `deleteEvent` server action
   - Validate JWT, check role = MODERATOR or ADMIN (prefer ADMIN only)
   - Validate eventId

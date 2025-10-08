@@ -2,13 +2,16 @@
 
 import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth/server";
-import { updateEventSchema } from "@/lib/validations/event";
+import { eventUpdateSchema } from "@/lib/validations/event-management";
 import { generateQRCode, generateQRPayload } from "@/lib/qr-generator";
 import { uploadQRCode, deleteImage } from "@/lib/cloudinary";
+import { headers } from "next/headers";
+import { Prisma } from "@prisma/client";
 import { ZodError } from "zod";
 
 /**
- * Update an existing event
+ * T022: Update an existing event with editHistory tracking
+ * Phase 3.4 - Extended from Phase 2
  * Regenerates QR code if venue coordinates change
  * @param eventId - Event ID to update
  * @param input - Partial event data to update
@@ -17,10 +20,10 @@ import { ZodError } from "zod";
 export async function updateEvent(eventId: string, input: unknown) {
   try {
     // Require Moderator or Administrator role
-    await requireRole(["Moderator", "Administrator"]);
+    const user = await requireRole(["Moderator", "Administrator"]);
 
     // Validate input
-    const validatedData = updateEventSchema.parse(input);
+    const validatedData = eventUpdateSchema.parse(input);
 
     // Get existing event
     const existingEvent = await db.event.findUnique({
@@ -31,6 +34,17 @@ export async function updateEvent(eventId: string, input: unknown) {
       return {
         success: false,
         error: "Event not found",
+      };
+    }
+
+    // Moderator scope: can only edit own events (FR-026)
+    if (
+      user.role === "Moderator" &&
+      existingEvent.createdById !== user.userId
+    ) {
+      return {
+        success: false,
+        error: "Forbidden: You can only edit events you created",
       };
     }
 
@@ -86,15 +100,59 @@ export async function updateEvent(eventId: string, input: unknown) {
       );
     }
 
+    // Build editHistory entry (FR-017)
+    const changedFields = Object.keys(validatedData);
+    const changes: Record<string, { from: unknown; to: unknown }> = {};
+
+    changedFields.forEach((field) => {
+      const oldValue = (existingEvent as Record<string, unknown>)[field];
+      const newValue = (validatedData as Record<string, unknown>)[field];
+      if (oldValue !== newValue && newValue !== undefined) {
+        changes[field] = { from: oldValue, to: newValue };
+      }
+    });
+
+    const editHistoryEntry = {
+      editedBy: user.userId,
+      editedAt: new Date().toISOString(),
+      fields: changedFields,
+      changes,
+    };
+
+    // Append to existing editHistory or create new array
+    const currentHistory = existingEvent.editHistory
+      ? Array.isArray(existingEvent.editHistory)
+        ? existingEvent.editHistory
+        : [existingEvent.editHistory]
+      : [];
+    const newEditHistory = [...currentHistory, editHistoryEntry];
+
     // Update event
     const updatedEvent = await db.event.update({
       where: { id: eventId },
       data: {
         ...validatedData,
+        editHistory: newEditHistory as Prisma.InputJsonValue,
         ...(venueChanged && {
           qrCodeUrl,
           qrCodePayload,
         }),
+      },
+    });
+
+    // Log security event (FR-010)
+    const headersList = await headers();
+    await db.securityLog.create({
+      data: {
+        userId: user.userId,
+        eventType: "EVENT_EDITED",
+        metadata: {
+          eventId,
+          eventName: existingEvent.name,
+          fields: changedFields,
+        },
+        ipAddress: headersList.get("x-forwarded-for") || undefined,
+        userAgent: headersList.get("user-agent") || undefined,
       },
     });
 

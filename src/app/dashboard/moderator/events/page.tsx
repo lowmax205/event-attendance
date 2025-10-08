@@ -32,8 +32,8 @@ export default async function ModeratorEventsPage() {
   }
 
   // Fetch events created by this moderator
+  // Note: Scope filtering is handled internally by listEvents based on user role
   const result = await listEvents({
-    createdById: user.userId,
     page: 1,
     limit: 50,
   });
