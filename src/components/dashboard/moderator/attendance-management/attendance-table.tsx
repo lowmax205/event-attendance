@@ -119,7 +119,8 @@ export function AttendanceTable({
       header: "Distance",
       cell: ({ row }) => (
         <div className="text-center">
-          {row.original.distanceMeters !== null
+          {row.original.distanceMeters !== null &&
+          row.original.distanceMeters !== undefined
             ? `${row.original.distanceMeters.toFixed(0)}m`
             : "N/A"}
         </div>

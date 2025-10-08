@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import {
   PieChart,
   Pie,
@@ -14,9 +15,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 /**
  * T053: VerificationStatusChart Component
  * Phase 3.12 - UI Components - Analytics Dashboard
+ * T057.1: Enhanced with drill-down navigation
  *
  * Displays verification status distribution using Recharts PieChart
  * Color-coded to match status badges
+ * Click on segments to view attendance records with that status
  */
 
 interface VerificationStatusData {
@@ -27,6 +30,7 @@ interface VerificationStatusData {
 interface VerificationStatusChartProps {
   data: VerificationStatusData[];
   isLoading?: boolean;
+  dateRange?: { startDate?: string; endDate?: string };
 }
 
 // Match status badge colors from the application
@@ -40,7 +44,10 @@ const STATUS_COLORS = {
 export function VerificationStatusChart({
   data,
   isLoading,
+  dateRange,
 }: VerificationStatusChartProps) {
+  const router = useRouter();
+
   if (isLoading) {
     return (
       <Card>
@@ -62,6 +69,26 @@ export function VerificationStatusChart({
     percentage: total > 0 ? ((item.count / total) * 100).toFixed(1) : "0.0",
   }));
 
+  // Handle click on pie segment to drill down by status
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleClick = (data: any) => {
+    if (data && data.status) {
+      const params = new URLSearchParams({
+        status: data.status,
+      });
+
+      // Add date range from analytics filter
+      if (dateRange?.startDate) {
+        params.set("startDate", dateRange.startDate);
+      }
+      if (dateRange?.endDate) {
+        params.set("endDate", dateRange.endDate);
+      }
+
+      router.push(`/dashboard/admin/attendance?${params.toString()}`);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -80,6 +107,8 @@ export function VerificationStatusChart({
               fill="hsl(var(--primary))"
               dataKey="count"
               nameKey="status"
+              onClick={handleClick}
+              style={{ cursor: "pointer" }}
             >
               {dataWithPercentage.map((entry, index) => (
                 <Cell

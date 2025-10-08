@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import {
   BarChart,
   Bar,
@@ -16,21 +17,31 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 /**
  * T051: TopEventsChart Component
  * Phase 3.12 - UI Components - Analytics Dashboard
+ * T057.1: Enhanced with drill-down navigation
  *
  * Displays top 10 events by attendance count using Recharts BarChart
+ * Click on bars to view attendance records for that event
  */
 
 interface TopEventData {
   eventName: string;
   attendanceCount: number;
+  eventId?: string;
 }
 
 interface TopEventsChartProps {
   data: TopEventData[];
   isLoading?: boolean;
+  dateRange?: { startDate?: string; endDate?: string };
 }
 
-export function TopEventsChart({ data, isLoading }: TopEventsChartProps) {
+export function TopEventsChart({
+  data,
+  isLoading,
+  dateRange,
+}: TopEventsChartProps) {
+  const router = useRouter();
+
   if (isLoading) {
     return (
       <Card>
@@ -49,6 +60,32 @@ export function TopEventsChart({ data, isLoading }: TopEventsChartProps) {
     .sort((a, b) => b.attendanceCount - a.attendanceCount)
     .slice(0, 10);
 
+  // Handle click on bar to drill down
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleClick = (data: any) => {
+    if (data && data.activePayload && data.activePayload[0]) {
+      const clickedEvent = data.activePayload[0].payload;
+      const params = new URLSearchParams({
+        status: "APPROVED",
+      });
+
+      // Add event ID if available
+      if (clickedEvent.eventId) {
+        params.set("eventId", clickedEvent.eventId);
+      }
+
+      // Add date range from analytics filter
+      if (dateRange?.startDate) {
+        params.set("startDate", dateRange.startDate);
+      }
+      if (dateRange?.endDate) {
+        params.set("endDate", dateRange.endDate);
+      }
+
+      router.push(`/dashboard/admin/attendance?${params.toString()}`);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -60,6 +97,8 @@ export function TopEventsChart({ data, isLoading }: TopEventsChartProps) {
             data={sortedData}
             margin={{ top: 5, right: 30, left: 20, bottom: 60 }}
             aria-label="Top events bar chart"
+            onClick={handleClick}
+            style={{ cursor: "pointer" }}
           >
             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
             <XAxis

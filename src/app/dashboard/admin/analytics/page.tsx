@@ -113,26 +113,6 @@ export default function AnalyticsDashboardPage() {
     fetchAnalytics();
   }, [fetchAnalytics]);
 
-  // Update URL params when filter changes
-  React.useEffect(() => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("preset", filter.preset);
-
-    if (filter.preset === "custom" && filter.customRange) {
-      if (filter.customRange.from) {
-        params.set("startDate", format(filter.customRange.from, "yyyy-MM-dd"));
-      }
-      if (filter.customRange.to) {
-        params.set("endDate", format(filter.customRange.to, "yyyy-MM-dd"));
-      }
-    } else {
-      params.delete("startDate");
-      params.delete("endDate");
-    }
-
-    router.push(`?${params.toString()}`);
-  }, [filter, router, searchParams]);
-
   const handleFilterChange = (newFilter: {
     preset: string;
     customRange?: DateRange;
@@ -141,6 +121,23 @@ export default function AnalyticsDashboardPage() {
       preset: newFilter.preset,
       customRange: newFilter.customRange,
     });
+    // Update URL after state change
+    setTimeout(() => {
+      const params = new URLSearchParams();
+      params.set("preset", newFilter.preset);
+      if (newFilter.preset === "custom" && newFilter.customRange) {
+        if (newFilter.customRange.from) {
+          params.set(
+            "startDate",
+            format(newFilter.customRange.from, "yyyy-MM-dd"),
+          );
+        }
+        if (newFilter.customRange.to) {
+          params.set("endDate", format(newFilter.customRange.to, "yyyy-MM-dd"));
+        }
+      }
+      router.replace(`/dashboard/admin/analytics?${params.toString()}`);
+    }, 0);
   };
 
   const handleRefresh = () => {
@@ -187,6 +184,7 @@ export default function AnalyticsDashboardPage() {
           <AttendanceTrendsChart
             data={analyticsData?.charts?.attendanceTrends?.data || []}
             isLoading={isLoading}
+            dateRange={getDateRange()}
           />
         </div>
 
@@ -194,6 +192,7 @@ export default function AnalyticsDashboardPage() {
         <TopEventsChart
           data={analyticsData?.charts?.topEvents?.data || []}
           isLoading={isLoading}
+          dateRange={getDateRange()}
         />
 
         {/* Event Status Distribution */}
@@ -208,18 +207,21 @@ export default function AnalyticsDashboardPage() {
             analyticsData?.charts?.verificationStatusDistribution?.data || []
           }
           isLoading={isLoading}
+          dateRange={getDateRange()}
         />
 
         {/* Department Breakdown */}
         <DepartmentBreakdownChart
           data={analyticsData?.charts?.departmentBreakdown?.data || []}
           isLoading={isLoading}
+          dateRange={getDateRange()}
         />
 
         {/* Course Breakdown */}
         <CourseBreakdownChart
           data={analyticsData?.charts?.courseBreakdown?.data || []}
           isLoading={isLoading}
+          dateRange={getDateRange()}
         />
       </div>
 

@@ -13,10 +13,20 @@ import {
   ChevronDown,
   Home,
   Map,
+  Users,
+  BarChart3,
+  ClipboardCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/logo";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -190,6 +200,71 @@ export function Navigation() {
                     )}
                   </DropdownMenuContent>
                 </DropdownMenu>
+
+                {/* Management Links for Admin/Moderator */}
+                {(user.role === "Administrator" ||
+                  user.role === "Moderator") && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        className="flex items-center gap-1"
+                      >
+                        <LayoutDashboard className="h-4 w-4" />
+                        Management
+                        <ChevronDown className="h-3 w-3" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-[200px]">
+                      {user.role === "Administrator" && (
+                        <>
+                          <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                            Admin
+                          </div>
+                          <DropdownMenuItem asChild>
+                            <Link href="/dashboard/admin/users">
+                              <Users className="h-4 w-4 mr-2" />
+                              User Management
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link href="/dashboard/admin/analytics">
+                              <BarChart3 className="h-4 w-4 mr-2" />
+                              Analytics
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link href="/dashboard/admin/attendance">
+                              <ClipboardCheck className="h-4 w-4 mr-2" />
+                              All Attendances
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                        </>
+                      )}
+                      {(user.role === "Administrator" ||
+                        user.role === "Moderator") && (
+                        <>
+                          <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                            {user.role === "Moderator" ? "Moderator" : "Events"}
+                          </div>
+                          <DropdownMenuItem asChild>
+                            <Link href="/dashboard/moderator/events">
+                              <Calendar className="h-4 w-4 mr-2" />
+                              My Events
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link href="/dashboard/moderator/attendance">
+                              <ClipboardCheck className="h-4 w-4 mr-2" />
+                              My Attendances
+                            </Link>
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
 
                 <ThemeToggle />
 
@@ -390,6 +465,73 @@ export function Navigation() {
                         </Link>
                       )}
                     </div>
+
+                    {/* Management Links for Admin/Moderator */}
+                    {(user.role === "Administrator" ||
+                      user.role === "Moderator") && (
+                      <div className="space-y-2 pt-2 border-t">
+                        <div className="flex items-center gap-3 text-lg font-medium text-foreground/80 min-h-[44px]">
+                          <LayoutDashboard className="h-5 w-5" />
+                          Management
+                        </div>
+                        <div className="ml-8 space-y-2">
+                          {user.role === "Administrator" && (
+                            <>
+                              <Link
+                                href="/dashboard/admin/users"
+                                onClick={() => setIsOpen(false)}
+                                className="block py-2 text-sm text-foreground/70 hover:text-foreground"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <Users className="h-4 w-4" />
+                                  User Management
+                                </div>
+                              </Link>
+                              <Link
+                                href="/dashboard/admin/analytics"
+                                onClick={() => setIsOpen(false)}
+                                className="block py-2 text-sm text-foreground/70 hover:text-foreground"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <BarChart3 className="h-4 w-4" />
+                                  Analytics
+                                </div>
+                              </Link>
+                              <Link
+                                href="/dashboard/admin/attendance"
+                                onClick={() => setIsOpen(false)}
+                                className="block py-2 text-sm text-foreground/70 hover:text-foreground"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <ClipboardCheck className="h-4 w-4" />
+                                  All Attendances
+                                </div>
+                              </Link>
+                            </>
+                          )}
+                          <Link
+                            href="/dashboard/moderator/events"
+                            onClick={() => setIsOpen(false)}
+                            className="block py-2 text-sm text-foreground/70 hover:text-foreground"
+                          >
+                            <div className="flex items-center gap-2">
+                              <Calendar className="h-4 w-4" />
+                              My Events
+                            </div>
+                          </Link>
+                          <Link
+                            href="/dashboard/moderator/attendance"
+                            onClick={() => setIsOpen(false)}
+                            className="block py-2 text-sm text-foreground/70 hover:text-foreground"
+                          >
+                            <div className="flex items-center gap-2">
+                              <ClipboardCheck className="h-4 w-4" />
+                              My Attendances
+                            </div>
+                          </Link>
+                        </div>
+                      </div>
+                    )}
 
                     <div className="pt-4 border-t flex items-center gap-2">
                       <ThemeToggle />

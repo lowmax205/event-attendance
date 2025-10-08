@@ -19,28 +19,17 @@ import { VerificationStatus } from "@prisma/client";
 import { Filter, RefreshCw } from "lucide-react";
 
 /**
- * T048: Moderator Attendance Management Page
- * Phase 3.11 - UI Components - Attendance Management
+ * Admin Attendance Management Page
+ * Similar to moderator attendance page but shows ALL attendance records
  *
  * Features:
- * - Lists attendance records for moderator's own events
- * - Filters by event, status, date range
+ * - Lists all attendance records system-wide (admin scope)
+ * - Filters by event, status, date range, department, course
  * - View attendance details
  * - Verify/reject attendance submissions
- * - Moderator scope enforcement (only own events)
  */
-/**
- * T048: Moderator Attendance Management Page
- * Phase 3.11 - UI Components - Attendance Management
- *
- * Features:
- * - Lists attendance records for moderator's own events
- * - Filters by event, status, date range
- * - View attendance details
- * - Verify/reject attendance submissions
- * - Moderator scope enforcement (only own events)
- */
-export default function AttendanceManagementPage() {
+
+export default function AdminAttendanceManagementPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
@@ -61,10 +50,12 @@ export default function AttendanceManagementPage() {
   >(null);
   const [showFilters, setShowFilters] = React.useState(false);
 
-  // Filter state from URL params
+  // Filter state from URL params (includes department and course for drill-down)
   const [filters, setFilters] = React.useState({
     status: searchParams.get("status") || undefined,
     eventId: searchParams.get("eventId") || undefined,
+    department: searchParams.get("department") || undefined,
+    course: searchParams.get("course") || undefined,
     startDate: searchParams.get("startDate")
       ? new Date(searchParams.get("startDate")!)
       : undefined,
@@ -95,7 +86,22 @@ export default function AttendanceManagementPage() {
         throw new Error(result.error || "Failed to fetch attendances");
       }
 
-      setFullAttendances(result.data.attendances);
+      // Client-side filtering for department and course (if needed)
+      let attendances = result.data.attendances;
+      if (filters.department) {
+        attendances = attendances.filter(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (a: any) => a.user?.UserProfile?.department === filters.department,
+        );
+      }
+      if (filters.course) {
+        attendances = attendances.filter(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (a: any) => a.user?.UserProfile?.course === filters.course,
+        );
+      }
+
+      setFullAttendances(attendances);
       setPagination({
         pageIndex: page - 1,
         pageSize: PAGE_SIZE,
@@ -160,36 +166,36 @@ export default function AttendanceManagementPage() {
   // Update URL params when filters change
   const updateUrlParams = React.useCallback(
     (newFilters: typeof filters) => {
-      const params = new URLSearchParams(searchParams.toString());
+      const params = new URLSearchParams();
 
       if (newFilters.status) {
         params.set("status", newFilters.status);
-      } else {
-        params.delete("status");
       }
 
       if (newFilters.eventId) {
         params.set("eventId", newFilters.eventId);
-      } else {
-        params.delete("eventId");
+      }
+
+      if (newFilters.department) {
+        params.set("department", newFilters.department);
+      }
+
+      if (newFilters.course) {
+        params.set("course", newFilters.course);
       }
 
       if (newFilters.startDate) {
         params.set("startDate", newFilters.startDate.toISOString());
-      } else {
-        params.delete("startDate");
       }
 
       if (newFilters.endDate) {
         params.set("endDate", newFilters.endDate.toISOString());
-      } else {
-        params.delete("endDate");
       }
 
       params.set("page", "1");
       router.push(`?${params.toString()}`);
     },
-    [router, searchParams],
+    [router],
   );
 
   // Filter handlers
@@ -211,6 +217,8 @@ export default function AttendanceManagementPage() {
     const clearedFilters = {
       status: undefined,
       eventId: undefined,
+      department: undefined,
+      course: undefined,
       startDate: undefined,
       endDate: undefined,
     };
@@ -254,7 +262,7 @@ export default function AttendanceManagementPage() {
     });
   }, [fetchAttendances, toast]);
 
-  // Filter configuration
+  // Filter configuration (includes department and course for drill-down)
   const filterConfig: FilterConfig[] = [
     {
       name: "status",
@@ -267,6 +275,18 @@ export default function AttendanceManagementPage() {
         { value: "REJECTED", label: "Rejected" },
         { value: "DISPUTED", label: "Disputed" },
       ],
+    },
+    {
+      name: "department",
+      type: "search",
+      label: "Department",
+      placeholder: "Filter by department",
+    },
+    {
+      name: "course",
+      type: "search",
+      label: "Course",
+      placeholder: "Filter by course",
     },
     {
       name: "daterange",
@@ -284,10 +304,10 @@ export default function AttendanceManagementPage() {
       {/* Header */}
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-bold tracking-tight">
-          Attendance Management
+          Attendance Management (All Events)
         </h1>
         <p className="text-muted-foreground">
-          View and verify attendance submissions for your events
+          View and verify all attendance submissions across the system
         </p>
       </div>
 

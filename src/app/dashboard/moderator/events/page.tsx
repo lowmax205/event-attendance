@@ -58,6 +58,9 @@ export default function EventManagementPage() {
     sortOrder: searchParams.get("sortOrder") || "desc",
   });
 
+  // Use constant page size to avoid infinite loop
+  const PAGE_SIZE = 20;
+
   const fetchEvents = React.useCallback(async () => {
     try {
       setIsLoading(true);
@@ -65,7 +68,7 @@ export default function EventManagementPage() {
 
       const result = await listEvents({
         page,
-        limit: pagination.pageSize,
+        limit: PAGE_SIZE,
         status: filters.status as EventStatus | undefined,
         startDate: filters.startDate?.toISOString(),
         endDate: filters.endDate?.toISOString(),
@@ -85,7 +88,7 @@ export default function EventManagementPage() {
       setEvents(result.data.events as EventRow[]);
       setPagination({
         pageIndex: page - 1,
-        pageSize: pagination.pageSize,
+        pageSize: PAGE_SIZE,
         totalPages: result.data.pagination.totalPages,
         totalItems: result.data.pagination.total,
       });
@@ -99,7 +102,8 @@ export default function EventManagementPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [searchParams, pagination.pageSize, filters, toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, toast]);
 
   React.useEffect(() => {
     fetchEvents();

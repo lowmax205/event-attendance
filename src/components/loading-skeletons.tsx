@@ -151,3 +151,102 @@ export function AttendanceDetailLoading() {
     </div>
   );
 }
+
+/**
+ * T062: Loading skeleton for data tables (Phase 3.14)
+ * Enhanced table skeleton with header and pagination
+ */
+export function DataTableLoading({ rows = 10 }: { rows?: number }) {
+  return (
+    <div className="space-y-4">
+      {/* Table header */}
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-10 w-64" /> {/* Search/filter */}
+        <div className="flex gap-2">
+          <Skeleton className="h-10 w-24" /> {/* Export button */}
+          <Skeleton className="h-10 w-24" /> {/* Action button */}
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="rounded-md border">
+        {/* Table header row */}
+        <div className="border-b bg-muted/50 p-4">
+          <div className="flex items-center gap-4">
+            <Skeleton className="h-4 w-4" /> {/* Checkbox */}
+            <Skeleton className="h-4 w-32" /> {/* Column 1 */}
+            <Skeleton className="h-4 w-24" /> {/* Column 2 */}
+            <Skeleton className="h-4 w-24" /> {/* Column 3 */}
+            <Skeleton className="h-4 w-20" /> {/* Column 4 */}
+            <Skeleton className="h-4 w-16 ml-auto" /> {/* Actions */}
+          </div>
+        </div>
+
+        {/* Table rows */}
+        <div className="divide-y">
+          {Array.from({ length: rows }).map((_, i) => (
+            <div key={i} className="p-4">
+              <div className="flex items-center gap-4">
+                <Skeleton className="h-4 w-4" /> {/* Checkbox */}
+                <Skeleton className="h-4 w-32" /> {/* Column 1 */}
+                <Skeleton className="h-4 w-24" /> {/* Column 2 */}
+                <Skeleton className="h-4 w-24" /> {/* Column 3 */}
+                <Skeleton className="h-4 w-20" /> {/* Column 4 */}
+                <Skeleton className="h-8 w-16 ml-auto" /> {/* Actions */}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Pagination */}
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-4 w-32" /> {/* Row count */}
+        <div className="flex gap-2">
+          <Skeleton className="h-10 w-24" /> {/* Previous */}
+          <Skeleton className="h-10 w-24" /> {/* Next */}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * T062: Loading skeleton for analytics charts
+ */
+export function ChartLoading() {
+  return (
+    <Card>
+      <CardHeader>
+        <Skeleton className="h-6 w-48" />
+      </CardHeader>
+      <CardContent>
+        <Skeleton className="h-[300px] w-full rounded" />
+      </CardContent>
+    </Card>
+  );
+}
+
+/**
+ * T062: Loading skeleton for filter panel
+ */
+export function FilterPanelLoading() {
+  return (
+    <Card>
+      <CardContent className="pt-6">
+        <div className="grid gap-4 md:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="space-y-2">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          ))}
+        </div>
+        <div className="mt-4 flex gap-2">
+          <Skeleton className="h-10 w-24" />
+          <Skeleton className="h-10 w-24" />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}

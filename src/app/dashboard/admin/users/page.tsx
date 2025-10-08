@@ -62,6 +62,9 @@ export default function UserManagementPage() {
     sortOrder: searchParams.get("sortOrder") || "desc",
   });
 
+  // Use constant page size to avoid infinite loop
+  const PAGE_SIZE = 10;
+
   const fetchUsers = React.useCallback(async () => {
     try {
       setIsLoading(true);
@@ -69,7 +72,7 @@ export default function UserManagementPage() {
 
       const result = await listUsers({
         page,
-        limit: pagination.pageSize,
+        limit: PAGE_SIZE,
         role: filters.role as Role | undefined,
         status: filters.accountStatus as AccountStatus | undefined,
         search: filters.search,
@@ -88,7 +91,7 @@ export default function UserManagementPage() {
       setUsers(result.data.users as UserRow[]);
       setPagination({
         pageIndex: page - 1,
-        pageSize: pagination.pageSize,
+        pageSize: PAGE_SIZE,
         totalPages: result.data.pagination.totalPages,
         totalItems: result.data.pagination.total,
       });
@@ -102,7 +105,8 @@ export default function UserManagementPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [searchParams, pagination.pageSize, filters, toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, toast]);
 
   React.useEffect(() => {
     fetchUsers();
