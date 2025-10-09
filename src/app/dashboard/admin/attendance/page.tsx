@@ -15,11 +15,13 @@ import {
 import { DashboardSearchInput } from "@/components/dashboard/shared/dashboard-search-input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 import { listAttendances } from "@/actions/moderator/attendance";
 import { VerificationStatus } from "@prisma/client";
 import { formatDistanceToNow } from "date-fns";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, ShieldAlert } from "lucide-react";
 
 /**
  * Admin Attendance Management mirrors the user management layout, providing
@@ -59,6 +61,8 @@ export default function AdminAttendanceManagementPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const isReadOnly = user?.role === "Moderator";
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [fullAttendances, setFullAttendances] = React.useState<any[]>([]);
@@ -373,17 +377,23 @@ export default function AdminAttendanceManagementPage() {
     setDetailDialogOpen(true);
   }, []);
 
-  const handleVerify = React.useCallback((attendanceId: string) => {
-    setSelectedAttendanceId(attendanceId);
-    setVerifyDialogOpen(true);
-  }, []);
+  const handleVerify = React.useCallback(
+    (attendanceId: string) => {
+      if (isReadOnly) return;
+      setSelectedAttendanceId(attendanceId);
+      setVerifyDialogOpen(true);
+    },
+    [isReadOnly],
+  );
 
   const handleVerifyFromDetails = React.useCallback(() => {
+    if (isReadOnly) return;
     setDetailDialogOpen(false);
     setVerifyDialogOpen(true);
-  }, []);
+  }, [isReadOnly]);
 
   const handleVerifySuccess = React.useCallback(() => {
+    if (isReadOnly) return;
     setVerifyDialogOpen(false);
     setSelectedAttendanceId(null);
     void fetchAttendances();
@@ -391,7 +401,7 @@ export default function AdminAttendanceManagementPage() {
       title: "Success",
       description: "Attendance verification updated successfully",
     });
-  }, [fetchAttendances, toast]);
+  }, [fetchAttendances, isReadOnly, toast]);
 
   const detailCountLabel = React.useMemo(() => {
     const firstItem = pagination.pageIndex * pagination.pageSize + 1;
@@ -404,6 +414,16 @@ export default function AdminAttendanceManagementPage() {
 
   return (
     <div className="container mx-auto space-y-8 py-8">
+      {isReadOnly && (
+        <Alert className="border-border/60">
+          <ShieldAlert className="mt-0.5 h-4 w-4 text-muted-foreground" />
+          <AlertTitle>View-only access</AlertTitle>
+          <AlertDescription>
+            Moderators can review attendance submissions here but must request
+            an administrator to verify or resolve records.
+          </AlertDescription>
+        </Alert>
+      )}
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
         <div className="space-y-4">
           <div>
@@ -521,7 +541,7 @@ export default function AdminAttendanceManagementPage() {
         pagination={pagination}
         onPaginationChange={handlePaginationChange}
         onViewDetails={handleViewDetails}
-        onVerify={handleVerify}
+        onVerify={isReadOnly ? undefined : handleVerify}
         isLoading={isLoading}
       />
 
@@ -531,11 +551,11 @@ export default function AdminAttendanceManagementPage() {
           attendance={selectedAttendance as any}
           open={detailDialogOpen}
           onOpenChange={setDetailDialogOpen}
-          onVerify={handleVerifyFromDetails}
+          onVerify={isReadOnly ? undefined : handleVerifyFromDetails}
         />
       )}
 
-      {selectedAttendanceId && (
+      {!isReadOnly && selectedAttendanceId && (
         <VerificationForm
           attendanceId={selectedAttendanceId}
           open={verifyDialogOpen}

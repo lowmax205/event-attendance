@@ -16,13 +16,15 @@ import { UserEditDialog } from "@/components/dashboard/admin/user-management/use
 import { UserCreateForm } from "@/components/dashboard/admin/user-management/user-create-form";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import {
   listUsers,
   resetUserPassword,
   deleteUser,
 } from "@/actions/admin/users";
-import { Plus } from "lucide-react";
+import { Plus, ShieldAlert } from "lucide-react";
 import { Role, AccountStatus } from "@prisma/client";
 import {
   AlertDialog,
@@ -55,6 +57,8 @@ export default function UserManagementPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const isReadOnly = user?.role === "Moderator";
 
   const [users, setUsers] = React.useState<UserRow[]>([]);
   const [pagination, setPagination] = React.useState({
@@ -82,6 +86,9 @@ export default function UserManagementPage() {
     totalAdministrators: 0,
     totalModerators: 0,
   });
+  const [readOnlyNotice, setReadOnlyNotice] = React.useState<string | null>(
+    null,
+  );
 
   const searchParamsString = searchParams.toString();
 
@@ -193,6 +200,12 @@ export default function UserManagementPage() {
         },
       );
       setLastSyncedAt(new Date());
+      setReadOnlyNotice(
+        result.message ??
+          (isReadOnly
+            ? "You have view-only access as a moderator. Administrative actions are disabled."
+            : null),
+      );
     } catch (error) {
       toast({
         title: "Error",
@@ -210,6 +223,7 @@ export default function UserManagementPage() {
     appliedFilters.sortBy,
     appliedFilters.sortOrder,
     currentPage,
+    isReadOnly,
     toast,
   ]);
 
@@ -328,6 +342,7 @@ export default function UserManagementPage() {
   }, [appliedFilters]);
 
   const handleEditUser = (user: UserRow) => {
+    if (isReadOnly) return;
     setSelectedUser({
       id: user.id,
       email: user.email,
@@ -338,6 +353,7 @@ export default function UserManagementPage() {
   };
 
   const handleResetPassword = async (userId: string) => {
+    if (isReadOnly) return;
     try {
       const result = await resetUserPassword(userId);
       if (!result.success)
@@ -357,12 +373,13 @@ export default function UserManagementPage() {
   };
 
   const handleDelete = (userId: string) => {
+    if (isReadOnly) return;
     setUserToDelete(userId);
     setDeleteDialogOpen(true);
   };
 
   const confirmDelete = async () => {
-    if (!userToDelete) return;
+    if (!userToDelete || isReadOnly) return;
     try {
       const result = await deleteUser({ userId: userToDelete });
       if (!result.success)
@@ -386,6 +403,16 @@ export default function UserManagementPage() {
 
   return (
     <div className="container mx-auto space-y-8 py-8">
+      {(isReadOnly || readOnlyNotice) && (
+        <Alert className="border-border/60">
+          <ShieldAlert className="mt-0.5 h-4 w-4 text-muted-foreground" />
+          <AlertTitle>View-only access</AlertTitle>
+          <AlertDescription>
+            {readOnlyNotice ??
+              "Moderators can review user information but cannot make changes."}
+          </AlertDescription>
+        </Alert>
+      )}
       <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
         <div className="space-y-4">
           <h1 className="text-3xl font-semibold tracking-tight">
@@ -427,7 +454,19 @@ export default function UserManagementPage() {
           </div>
         </div>
         <div className="flex items-center justify-end">
-          <Button onClick={() => setCreateDialogOpen(true)}>
+          <Button
+            onClick={() => {
+              if (isReadOnly) return;
+              setCreateDialogOpen(true);
+            }}
+            disabled={isReadOnly}
+            title={
+              isReadOnly
+                ? "Moderators have view-only access to user management"
+                : undefined
+            }
+            variant={isReadOnly ? "outline" : "default"}
+          >
             <Plus className="mr-2 h-4 w-4" />
             Create User
           </Button>
@@ -491,53 +530,61 @@ export default function UserManagementPage() {
         onResetPassword={handleResetPassword}
         onDelete={handleDelete}
         isLoading={isLoading}
+        isReadOnly={isReadOnly}
       />
 
-      <UserCreateForm
-        open={createDialogOpen}
-        onOpenChange={setCreateDialogOpen}
-        onSuccess={() => {
-          setCreateDialogOpen(false);
-          fetchUsers();
-        }}
-      />
+      {!isReadOnly && (
+        <>
+          <UserCreateForm
+            open={createDialogOpen}
+            onOpenChange={setCreateDialogOpen}
+            onSuccess={() => {
+              setCreateDialogOpen(false);
+              fetchUsers();
+            }}
+          />
 
-      {selectedUser && (
-        <UserEditDialog
-          open={editDialogOpen}
-          onOpenChange={setEditDialogOpen}
-          userId={selectedUser.id}
-          currentRole={selectedUser.role}
-          currentStatus={selectedUser.status}
-          currentUserEmail={selectedUser.email}
-          isCurrentUser={selectedUser.email === currentUserEmail}
-          onSuccess={() => {
-            setEditDialogOpen(false);
-            fetchUsers();
-          }}
-        />
+          {selectedUser && (
+            <UserEditDialog
+              open={editDialogOpen}
+              onOpenChange={setEditDialogOpen}
+              userId={selectedUser.id}
+              currentRole={selectedUser.role}
+              currentStatus={selectedUser.status}
+              currentUserEmail={selectedUser.email}
+              isCurrentUser={selectedUser.email === currentUserEmail}
+              onSuccess={() => {
+                setEditDialogOpen(false);
+                fetchUsers();
+              }}
+            />
+          )}
+
+          <AlertDialog
+            open={deleteDialogOpen}
+            onOpenChange={setDeleteDialogOpen}
+          >
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete the
+                  user account and all associated data.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={confirmDelete}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </>
       )}
-
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the
-              user account and all associated data.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

@@ -5,7 +5,6 @@ import { useState, useEffect } from "react";
 import {
   Menu,
   X,
-  QrCode,
   LogOut,
   User,
   Calendar,
@@ -213,7 +212,7 @@ export function Navigation() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-[200px]">
-                      {user.role === "Administrator" && (
+                      {user.role === "Administrator" ? (
                         <>
                           <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
                             Admin
@@ -240,6 +239,68 @@ export function Navigation() {
                             <Link href="/dashboard/admin/attendance">
                               <ClipboardCheck className="h-4 w-4 mr-2" />
                               All Attendances
+                            </Link>
+                          </DropdownMenuItem>
+                        </>
+                      ) : (
+                        <>
+                          <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                            Limited Actions
+                          </div>
+                          <DropdownMenuItem asChild>
+                            <Link
+                              href="/dashboard/admin/users"
+                              className="flex items-start gap-2 text-sm"
+                            >
+                              <Users className="h-4 w-4 mt-0.5" />
+                              <div className="flex flex-col">
+                                <span>User Management</span>
+                                <span className="text-xs text-muted-foreground">
+                                  Read-only moderator access
+                                </span>
+                              </div>
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link
+                              href="/dashboard/admin/analytics"
+                              className="flex items-start gap-2 text-sm"
+                            >
+                              <BarChart3 className="h-4 w-4 mt-0.5" />
+                              <div className="flex flex-col">
+                                <span>Analytics</span>
+                                <span className="text-xs text-muted-foreground">
+                                  Explore institutional trends
+                                </span>
+                              </div>
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link
+                              href="/dashboard/admin/events"
+                              className="flex items-start gap-2 text-sm"
+                            >
+                              <Calendar className="h-4 w-4 mt-0.5" />
+                              <div className="flex flex-col">
+                                <span>All Events</span>
+                                <span className="text-xs text-muted-foreground">
+                                  Manage with moderator limits
+                                </span>
+                              </div>
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link
+                              href="/dashboard/admin/attendance"
+                              className="flex items-start gap-2 text-sm"
+                            >
+                              <ClipboardCheck className="h-4 w-4 mt-0.5" />
+                              <div className="flex flex-col">
+                                <span>All Attendances</span>
+                                <span className="text-xs text-muted-foreground">
+                                  Monitor verifications
+                                </span>
+                              </div>
                             </Link>
                           </DropdownMenuItem>
                         </>
@@ -497,7 +558,7 @@ export function Navigation() {
                           Management
                         </div>
                         <div className="ml-8 space-y-2">
-                          {user.role === "Administrator" && (
+                          {user.role === "Administrator" ? (
                             <>
                               <Link
                                 href="/dashboard/admin/users"
@@ -537,6 +598,80 @@ export function Navigation() {
                                 <div className="flex items-center gap-2">
                                   <ClipboardCheck className="h-4 w-4" />
                                   All Attendances
+                                </div>
+                              </Link>
+                            </>
+                          ) : (
+                            <>
+                              <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                                Limited Actions
+                              </div>
+                              <Link
+                                href="/dashboard/admin/users"
+                                onClick={() => setIsOpen(false)}
+                                className="block rounded-md border border-dashed border-border/60 px-2 py-2 text-sm text-foreground/70 hover:text-foreground"
+                              >
+                                <div className="flex items-start gap-2">
+                                  <Users className="h-4 w-4 mt-0.5" />
+                                  <div className="flex flex-col">
+                                    <span className="text-sm font-medium">
+                                      User Management
+                                    </span>
+                                    <span className="text-xs text-muted-foreground">
+                                      Review users (read-only)
+                                    </span>
+                                  </div>
+                                </div>
+                              </Link>
+                              <Link
+                                href="/dashboard/admin/analytics"
+                                onClick={() => setIsOpen(false)}
+                                className="block rounded-md border border-dashed border-border/60 px-2 py-2 text-sm text-foreground/70 hover:text-foreground"
+                              >
+                                <div className="flex items-start gap-2">
+                                  <BarChart3 className="h-4 w-4 mt-0.5" />
+                                  <div className="flex flex-col">
+                                    <span className="text-sm font-medium">
+                                      Analytics
+                                    </span>
+                                    <span className="text-xs text-muted-foreground">
+                                      Insights with moderator scope
+                                    </span>
+                                  </div>
+                                </div>
+                              </Link>
+                              <Link
+                                href="/dashboard/admin/events"
+                                onClick={() => setIsOpen(false)}
+                                className="block rounded-md border border-dashed border-border/60 px-2 py-2 text-sm text-foreground/70 hover:text-foreground"
+                              >
+                                <div className="flex items-start gap-2">
+                                  <Calendar className="h-4 w-4 mt-0.5" />
+                                  <div className="flex flex-col">
+                                    <span className="text-sm font-medium">
+                                      All Events
+                                    </span>
+                                    <span className="text-xs text-muted-foreground">
+                                      View all event records
+                                    </span>
+                                  </div>
+                                </div>
+                              </Link>
+                              <Link
+                                href="/dashboard/admin/attendance"
+                                onClick={() => setIsOpen(false)}
+                                className="block rounded-md border border-dashed border-border/60 px-2 py-2 text-sm text-foreground/70 hover:text-foreground"
+                              >
+                                <div className="flex items-start gap-2">
+                                  <ClipboardCheck className="h-4 w-4 mt-0.5" />
+                                  <div className="flex flex-col">
+                                    <span className="text-sm font-medium">
+                                      All Attendances
+                                    </span>
+                                    <span className="text-xs text-muted-foreground">
+                                      Monitor disputes and approvals
+                                    </span>
+                                  </div>
                                 </div>
                               </Link>
                             </>

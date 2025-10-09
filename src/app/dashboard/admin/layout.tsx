@@ -16,7 +16,7 @@ export default async function AdminLayout({
     redirect("/auth/login?redirect=/dashboard/admin");
   }
 
-  if (user.role !== "Administrator") {
+  if (user.role !== "Administrator" && user.role !== "Moderator") {
     redirect("/dashboard");
   }
 

@@ -7,6 +7,7 @@ import {
   type EventRow,
 } from "@/components/dashboard/moderator/event-management/event-table";
 import { EventForm } from "@/components/dashboard/moderator/event-management/event-form";
+import { EventDetailDialog } from "@/components/dashboard/moderator/event-management/event-detail-dialog";
 import {
   EventFilterMenu,
   type EventFilterValues,
@@ -24,12 +25,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { listEvents } from "@/actions/events/list";
 import { deleteEvent } from "@/actions/events/delete";
 import { EventStatus } from "@prisma/client";
 import { formatDistanceToNow } from "date-fns";
-import { Plus, RefreshCw } from "lucide-react";
+import { Plus, RefreshCw, ShieldAlert } from "lucide-react";
 
 interface EventSummary {
   totalActive: number;
@@ -52,6 +54,8 @@ interface EventManagementViewProps {
   basePath: string;
   showCreateButton?: boolean;
   searchPlaceholder?: string;
+  readOnly?: boolean;
+  readOnlyMessage?: string;
 }
 
 type PageFilterValues = EventFilterValues & {
@@ -74,6 +78,8 @@ export function EventManagementView({
   basePath,
   showCreateButton = true,
   searchPlaceholder = "Search by event or venue",
+  readOnly = false,
+  readOnlyMessage,
 }: EventManagementViewProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -97,6 +103,8 @@ export function EventManagementView({
   );
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [eventToDelete, setEventToDelete] = React.useState<string | null>(null);
+  const [viewDialogOpen, setViewDialogOpen] = React.useState(false);
+  const [viewEventId, setViewEventId] = React.useState<string | null>(null);
 
   const PAGE_SIZE = 20;
   const searchParamsString = searchParams.toString();
@@ -341,11 +349,18 @@ export function EventManagementView({
   };
 
   const handleEdit = (eventId: string) => {
+    if (readOnly) return;
     setSelectedEventId(eventId);
     setEditDialogOpen(true);
   };
 
+  const handleView = (eventId: string) => {
+    setViewEventId(eventId);
+    setViewDialogOpen(true);
+  };
+
   const handleDownloadQR = async (eventId: string) => {
+    if (readOnly) return;
     toast({
       title: "Download QR",
       description: `QR code download for event ${eventId} will be available soon.`,
@@ -353,12 +368,13 @@ export function EventManagementView({
   };
 
   const handleDelete = (eventId: string) => {
+    if (readOnly) return;
     setEventToDelete(eventId);
     setDeleteDialogOpen(true);
   };
 
   const confirmDelete = React.useCallback(async () => {
-    if (!eventToDelete) return;
+    if (!eventToDelete || readOnly) return;
     try {
       const result = await deleteEvent(eventToDelete);
       if (!result.success) {
@@ -379,7 +395,7 @@ export function EventManagementView({
         variant: "destructive",
       });
     }
-  }, [eventToDelete, fetchEvents, toast]);
+  }, [eventToDelete, fetchEvents, readOnly, toast]);
 
   const detailCountLabel = React.useMemo(() => {
     const firstItem = pagination.pageIndex * pagination.pageSize + 1;
@@ -395,6 +411,16 @@ export function EventManagementView({
 
   return (
     <div className="container mx-auto space-y-8 py-8">
+      {readOnly && (
+        <Alert className="border-border/60">
+          <ShieldAlert className="mt-0.5 h-4 w-4 text-muted-foreground" />
+          <AlertTitle>View-only access</AlertTitle>
+          <AlertDescription>
+            {readOnlyMessage ??
+              "You can review events from across the institution but cannot make changes with moderator permissions."}
+          </AlertDescription>
+        </Alert>
+      )}
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
         <div className="space-y-4">
           <div>
@@ -446,7 +472,7 @@ export function EventManagementView({
             </div>
           </div>
         </div>
-        {showCreateButton && (
+        {showCreateButton && !readOnly && (
           <div className="flex justify-end lg:items-start">
             <Button onClick={() => setCreateDialogOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
@@ -503,13 +529,15 @@ export function EventManagementView({
         events={events}
         pagination={pagination}
         onPaginationChange={handlePaginationChange}
+        onView={handleView}
         onEdit={handleEdit}
         onDownloadQR={handleDownloadQR}
         onDelete={handleDelete}
         isLoading={isLoading}
+        isReadOnly={readOnly}
       />
 
-      {showCreateButton && (
+      {showCreateButton && !readOnly && (
         <EventForm
           open={createDialogOpen}
           onOpenChange={setCreateDialogOpen}
@@ -521,7 +549,7 @@ export function EventManagementView({
         />
       )}
 
-      {selectedEventId && (
+      {selectedEventId && !readOnly && (
         <EventForm
           open={editDialogOpen}
           onOpenChange={(open) => {
@@ -540,26 +568,39 @@ export function EventManagementView({
         />
       )}
 
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete event?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently remove the
-              event and associated attendance records.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <EventDetailDialog
+        eventId={viewEventId}
+        open={viewDialogOpen}
+        onOpenChange={(open) => {
+          setViewDialogOpen(open);
+          if (!open) {
+            setViewEventId(null);
+          }
+        }}
+      />
+
+      {!readOnly && (
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete event?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently remove the
+                event and associated attendance records.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={confirmDelete}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </div>
   );
 }
