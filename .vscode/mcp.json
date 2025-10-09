@@ -1,21 +1,59 @@
 {
-  "servers": {
-    "Neon": {
-      "url": "https://mcp.neon.tech/mcp",
-      "type": "http"
-    },
-    "cloudflare/workers-bindings": {
-      "type": "sse",
-      "url": "https://bindings.mcp.cloudflare.com/sse"
-    },
-    "cloudinary/asset-management": {
-      "type": "sse",
-      "url": "https://asset-management.mcp.cloudinary.com/sse"
-    },
-    "github": {
-      "type": "http",
-      "url": "https://api.githubcopilot.com/mcp/"
-    }
-  },
-  "inputs": []
+	"servers": {
+		"Neon": {
+			"url": "https://mcp.neon.tech/mcp",
+			"type": "http"
+		},
+		"cloudflare/workers-bindings": {
+			"type": "http",
+			"url": "https://bindings.mcp.cloudflare.com/sse"
+		},
+		"cloudinary/asset-management": {
+			"type": "http",
+			"url": "https://asset-management.mcp.cloudinary.com/sse"
+		},
+		"github": {
+			"type": "http",
+			"url": "https://api.githubcopilot.com/mcp/"
+		},
+		"perplexity-ask": {
+			"command": "npx",
+			"args": [
+				"-y",
+				"server-perplexity-ask"
+			],
+			"env": {
+				"PERPLEXITY_API_KEY": "${env:PERPLEXITY_API_KEY}"
+			},
+			"type": "stdio"
+		},
+		"linear": {
+			"command": "npx",
+			"args": [
+				"-y",
+				"mcp-remote",
+				"https://mcp.linear.app/sse"
+			],
+			"type": "stdio"
+		},
+		"context7": {
+			"type": "http",
+			"url": "https://mcp.context7.com/mcp",
+			"headers": {
+				"CONTEXT7_API_KEY": "${env:CONTEXT7_API_KEY}"
+			}
+		},
+		"playwright": {
+			"command": "npx",
+			"args": [
+				"@playwright/mcp@latest"
+			],
+			"type": "stdio"
+		},
+		"piecesOS": {
+			"url": "http://localhost:39300/model_context_protocol/2024-11-05/sse",
+			"type": "http"
+		}
+	},
+	"inputs": []
 }
