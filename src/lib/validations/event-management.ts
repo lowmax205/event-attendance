@@ -16,6 +16,8 @@ export const eventListQuerySchema = z.object({
   status: z.nativeEnum(EventStatus).optional(),
   startDate: z.string().datetime().optional(),
   endDate: z.string().datetime().optional(),
+  search: z.string().min(1).optional(),
+  scope: z.enum(["mine", "all"]).default("mine"),
   sortBy: z
     .enum(["name", "startDateTime", "endDateTime", "status", "createdAt"])
     .default("startDateTime"),

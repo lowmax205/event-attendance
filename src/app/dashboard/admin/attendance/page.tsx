@@ -9,25 +9,51 @@ import {
 import { AttendanceDetailDialog } from "@/components/dashboard/moderator/attendance-management/attendance-detail-dialog";
 import { VerificationForm } from "@/components/dashboard/moderator/attendance-management/verification-form";
 import {
-  FilterPanel,
-  type FilterConfig,
-} from "@/components/dashboard/shared/filter-panel";
+  AttendanceFilterMenu,
+  type AttendanceFilterValues,
+} from "@/components/dashboard/shared/attendance-filter-menu";
+import { DashboardSearchInput } from "@/components/dashboard/shared/dashboard-search-input";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { listAttendances } from "@/actions/moderator/attendance";
 import { VerificationStatus } from "@prisma/client";
-import { Filter, RefreshCw } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { RefreshCw } from "lucide-react";
 
 /**
- * Admin Attendance Management Page
- * Similar to moderator attendance page but shows ALL attendance records
- *
- * Features:
- * - Lists all attendance records system-wide (admin scope)
- * - Filters by event, status, date range, department, course
- * - View attendance details
- * - Verify/reject attendance submissions
+ * Admin Attendance Management mirrors the user management layout, providing
+ * global oversight of every attendance submission in the platform.
  */
+
+type AttendanceSummary = {
+  totalPending: number;
+  totalApproved: number;
+  totalRejected: number;
+  totalDisputed: number;
+};
+
+type PageFilterValues = AttendanceFilterValues & {
+  search?: string;
+};
+
+const DEFAULT_FILTERS: PageFilterValues = {
+  status: undefined,
+  sortBy: "checkInSubmittedAt",
+  sortOrder: "desc",
+  startDate: undefined,
+  endDate: undefined,
+  department: undefined,
+  course: undefined,
+  search: undefined,
+};
+
+const EMPTY_SUMMARY: AttendanceSummary = {
+  totalPending: 0,
+  totalApproved: 0,
+  totalRejected: 0,
+  totalDisputed: 0,
+};
 
 export default function AdminAttendanceManagementPage() {
   const router = useRouter();
@@ -48,66 +74,96 @@ export default function AdminAttendanceManagementPage() {
   const [selectedAttendanceId, setSelectedAttendanceId] = React.useState<
     string | null
   >(null);
-  const [showFilters, setShowFilters] = React.useState(false);
+  const [summary, setSummary] =
+    React.useState<AttendanceSummary>(EMPTY_SUMMARY);
+  const [lastSyncedAt, setLastSyncedAt] = React.useState<Date | null>(null);
 
-  // Filter state from URL params (includes department and course for drill-down)
-  const [filters, setFilters] = React.useState({
-    status: searchParams.get("status") || undefined,
-    eventId: searchParams.get("eventId") || undefined,
-    department: searchParams.get("department") || undefined,
-    course: searchParams.get("course") || undefined,
-    startDate: searchParams.get("startDate")
-      ? new Date(searchParams.get("startDate")!)
-      : undefined,
-    endDate: searchParams.get("endDate")
-      ? new Date(searchParams.get("endDate")!)
-      : undefined,
-  });
-
-  // Use constant page size to avoid infinite loop
   const PAGE_SIZE = 20;
+  const searchParamsString = searchParams.toString();
 
-  // Fetch attendances
+  const appliedFilters = React.useMemo<PageFilterValues>(() => {
+    const params = new URLSearchParams(searchParamsString);
+    return {
+      status: params.get("status") || undefined,
+      sortBy: params.get("sortBy") || DEFAULT_FILTERS.sortBy,
+      sortOrder: params.get("sortOrder") || DEFAULT_FILTERS.sortOrder,
+      startDate: params.get("startDate") || undefined,
+      endDate: params.get("endDate") || undefined,
+      department: params.get("department") || undefined,
+      course: params.get("course") || undefined,
+      search: params.get("search") || undefined,
+    } satisfies PageFilterValues;
+  }, [searchParamsString]);
+
+  const [searchDraft, setSearchDraft] = React.useState<string | undefined>(
+    appliedFilters.search,
+  );
+
+  React.useEffect(() => {
+    setSearchDraft(appliedFilters.search);
+  }, [appliedFilters.search]);
+
+  const currentPage = React.useMemo(() => {
+    const params = new URLSearchParams(searchParamsString);
+    const pageValue = parseInt(params.get("page") || "1", 10);
+    return Number.isNaN(pageValue) || pageValue < 1 ? 1 : pageValue;
+  }, [searchParamsString]);
+
+  const buildQueryString = React.useCallback(
+    (filters: PageFilterValues, page: number) => {
+      const params = new URLSearchParams();
+      if (filters.status) params.set("status", filters.status);
+      if (filters.startDate) params.set("startDate", filters.startDate);
+      if (filters.endDate) params.set("endDate", filters.endDate);
+      if (filters.department) params.set("department", filters.department);
+      if (filters.course) params.set("course", filters.course);
+      if (filters.search) params.set("search", filters.search);
+      if (filters.sortBy && filters.sortBy !== DEFAULT_FILTERS.sortBy)
+        params.set("sortBy", filters.sortBy);
+      if (filters.sortOrder && filters.sortOrder !== DEFAULT_FILTERS.sortOrder)
+        params.set("sortOrder", filters.sortOrder);
+      if (page > 1) params.set("page", page.toString());
+      return params.toString();
+    },
+    [],
+  );
+
   const fetchAttendances = React.useCallback(async () => {
     try {
       setIsLoading(true);
-      const page = parseInt(searchParams.get("page") || "1", 10);
 
       const result = await listAttendances({
-        page,
+        page: currentPage,
         limit: PAGE_SIZE,
-        status: filters.status as VerificationStatus | undefined,
-        eventId: filters.eventId,
-        startDate: filters.startDate?.toISOString(),
-        endDate: filters.endDate?.toISOString(),
+        status: appliedFilters.status as VerificationStatus | undefined,
+        startDate: appliedFilters.startDate,
+        endDate: appliedFilters.endDate,
+        department: appliedFilters.department,
+        course: appliedFilters.course,
+        search: appliedFilters.search,
+        sortBy: (appliedFilters.sortBy ?? DEFAULT_FILTERS.sortBy) as
+          | "checkInSubmittedAt"
+          | "verifiedAt"
+          | "verificationStatus"
+          | "createdAt",
+        sortOrder: (appliedFilters.sortOrder ?? DEFAULT_FILTERS.sortOrder) as
+          | "asc"
+          | "desc",
       });
 
       if (!result.success || !result.data) {
         throw new Error(result.error || "Failed to fetch attendances");
       }
 
-      // Client-side filtering for department and course (if needed)
-      let attendances = result.data.attendances;
-      if (filters.department) {
-        attendances = attendances.filter(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (a: any) => a.user?.UserProfile?.department === filters.department,
-        );
-      }
-      if (filters.course) {
-        attendances = attendances.filter(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (a: any) => a.user?.UserProfile?.course === filters.course,
-        );
-      }
-
-      setFullAttendances(attendances);
+      setFullAttendances(result.data.attendances);
       setPagination({
-        pageIndex: page - 1,
+        pageIndex: currentPage - 1,
         pageSize: PAGE_SIZE,
         totalPages: result.data.pagination.totalPages,
         totalItems: result.data.pagination.total,
       });
+      setSummary(result.data.summary ?? EMPTY_SUMMARY);
+      setLastSyncedAt(new Date());
     } catch (error) {
       toast({
         title: "Error",
@@ -120,8 +176,54 @@ export default function AdminAttendanceManagementPage() {
     } finally {
       setIsLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, toast]);
+  }, [
+    appliedFilters.course,
+    appliedFilters.department,
+    appliedFilters.endDate,
+    appliedFilters.search,
+    appliedFilters.sortBy,
+    appliedFilters.sortOrder,
+    appliedFilters.startDate,
+    appliedFilters.status,
+    currentPage,
+    toast,
+  ]);
+
+  const fetchKey = React.useMemo(
+    () =>
+      [
+        appliedFilters.status ?? "",
+        appliedFilters.startDate ?? "",
+        appliedFilters.endDate ?? "",
+        appliedFilters.department ?? "",
+        appliedFilters.course ?? "",
+        appliedFilters.search ?? "",
+        appliedFilters.sortBy ?? DEFAULT_FILTERS.sortBy,
+        appliedFilters.sortOrder ?? DEFAULT_FILTERS.sortOrder,
+        currentPage,
+      ].join("|"),
+    [
+      appliedFilters.course,
+      appliedFilters.department,
+      appliedFilters.endDate,
+      appliedFilters.search,
+      appliedFilters.sortBy,
+      appliedFilters.sortOrder,
+      appliedFilters.startDate,
+      appliedFilters.status,
+      currentPage,
+    ],
+  );
+
+  const lastFetchKeyRef = React.useRef<string | null>(null);
+
+  React.useEffect(() => {
+    if (lastFetchKeyRef.current === fetchKey) {
+      return;
+    }
+    lastFetchKeyRef.current = fetchKey;
+    void fetchAttendances();
+  }, [fetchAttendances, fetchKey]);
 
   // Map full attendances to table rows
   const attendances = React.useMemo<AttendanceRow[]>(() => {
@@ -158,83 +260,112 @@ export default function AdminAttendanceManagementPage() {
     return fullAttendances.find((a: any) => a.id === selectedAttendanceId);
   }, [fullAttendances, selectedAttendanceId]);
 
-  // Initial fetch and refetch on filter/page changes
-  React.useEffect(() => {
-    fetchAttendances();
-  }, [fetchAttendances]);
-
-  // Update URL params when filters change
   const updateUrlParams = React.useCallback(
-    (newFilters: typeof filters) => {
-      const params = new URLSearchParams();
-
-      if (newFilters.status) {
-        params.set("status", newFilters.status);
+    (newFilters: PageFilterValues, page = 1) => {
+      const nextQuery = buildQueryString(newFilters, page);
+      const currentQuery = buildQueryString(appliedFilters, currentPage);
+      if (nextQuery === currentQuery) {
+        return;
       }
 
-      if (newFilters.eventId) {
-        params.set("eventId", newFilters.eventId);
-      }
-
-      if (newFilters.department) {
-        params.set("department", newFilters.department);
-      }
-
-      if (newFilters.course) {
-        params.set("course", newFilters.course);
-      }
-
-      if (newFilters.startDate) {
-        params.set("startDate", newFilters.startDate.toISOString());
-      }
-
-      if (newFilters.endDate) {
-        params.set("endDate", newFilters.endDate.toISOString());
-      }
-
-      params.set("page", "1");
-      router.push(`?${params.toString()}`);
+      const targetPath = nextQuery
+        ? `/dashboard/admin/attendance?${nextQuery}`
+        : `/dashboard/admin/attendance`;
+      router.push(targetPath);
     },
-    [router],
+    [appliedFilters, buildQueryString, currentPage, router],
   );
 
-  // Filter handlers
-  const handleFilterChange = React.useCallback(
-    (name: string, value: string | Date | undefined) => {
-      setFilters((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
-    },
-    [],
-  );
+  const handleSearchChange = (value: string | undefined) => {
+    setSearchDraft(value);
+  };
 
-  const handleApplyFilters = React.useCallback(() => {
-    updateUrlParams(filters);
-  }, [filters, updateUrlParams]);
+  const handleSearchSubmit = () => {
+    const normalizedSearch =
+      searchDraft && searchDraft.trim().length > 0 ? searchDraft : undefined;
 
-  const handleClearFilters = React.useCallback(() => {
-    const clearedFilters = {
-      status: undefined,
-      eventId: undefined,
-      department: undefined,
-      course: undefined,
-      startDate: undefined,
-      endDate: undefined,
+    if ((appliedFilters.search ?? undefined) === normalizedSearch) {
+      return;
+    }
+
+    updateUrlParams(
+      {
+        ...appliedFilters,
+        search: normalizedSearch,
+      },
+      1,
+    );
+  };
+
+  const handleSearchClear = () => {
+    setSearchDraft(undefined);
+    if (appliedFilters.search) {
+      updateUrlParams(
+        {
+          ...appliedFilters,
+          search: undefined,
+        },
+        1,
+      );
+    }
+  };
+
+  const handleApplyFilters = (newFilters: AttendanceFilterValues) => {
+    const normalizedFilters: PageFilterValues = {
+      ...appliedFilters,
+      status: newFilters.status,
+      startDate: newFilters.startDate,
+      endDate: newFilters.endDate,
+      sortBy: newFilters.sortBy ?? DEFAULT_FILTERS.sortBy,
+      sortOrder: newFilters.sortOrder ?? DEFAULT_FILTERS.sortOrder,
+      department: newFilters.department,
+      course: newFilters.course,
     };
-    setFilters(clearedFilters);
-    updateUrlParams(clearedFilters);
-  }, [updateUrlParams]);
+    updateUrlParams(normalizedFilters, 1);
+  };
 
-  // Pagination handler
-  const handlePaginationChange = React.useCallback(
-    (pageIndex: number) => {
-      const params = new URLSearchParams(searchParams.toString());
-      params.set("page", (pageIndex + 1).toString());
-      router.push(`?${params.toString()}`);
-    },
-    [router, searchParams],
-  );
+  const handleClearFilters = () => {
+    updateUrlParams(DEFAULT_FILTERS, 1);
+  };
+
+  const handlePaginationChange = (pageIndex: number) => {
+    updateUrlParams(appliedFilters, pageIndex + 1);
+  };
+
+  const handleRefresh = () => {
+    void fetchAttendances();
+  };
+
+  const appliedFilterCount = React.useMemo(() => {
+    let count = 0;
+    if (appliedFilters.status) count += 1;
+    if (appliedFilters.search) count += 1;
+    if (appliedFilters.startDate) count += 1;
+    if (appliedFilters.endDate) count += 1;
+    if (appliedFilters.department) count += 1;
+    if (appliedFilters.course) count += 1;
+    if (
+      appliedFilters.sortBy &&
+      appliedFilters.sortBy !== DEFAULT_FILTERS.sortBy
+    )
+      count += 1;
+    if (
+      appliedFilters.sortOrder &&
+      appliedFilters.sortOrder !== DEFAULT_FILTERS.sortOrder
+    )
+      count += 1;
+    return count;
+  }, [appliedFilters]);
+
+  const filterMenuValues: AttendanceFilterValues = {
+    status: appliedFilters.status,
+    startDate: appliedFilters.startDate,
+    endDate: appliedFilters.endDate,
+    sortBy: appliedFilters.sortBy,
+    sortOrder: appliedFilters.sortOrder,
+    department: appliedFilters.department,
+    course: appliedFilters.course,
+  };
 
   // Action handlers
   const handleViewDetails = React.useCallback((attendanceId: string) => {
@@ -255,109 +386,136 @@ export default function AdminAttendanceManagementPage() {
   const handleVerifySuccess = React.useCallback(() => {
     setVerifyDialogOpen(false);
     setSelectedAttendanceId(null);
-    fetchAttendances();
+    void fetchAttendances();
     toast({
       title: "Success",
       description: "Attendance verification updated successfully",
     });
   }, [fetchAttendances, toast]);
 
-  // Filter configuration (includes department and course for drill-down)
-  const filterConfig: FilterConfig[] = [
-    {
-      name: "status",
-      type: "select",
-      label: "Verification Status",
-      placeholder: "All statuses",
-      options: [
-        { value: "PENDING", label: "Pending" },
-        { value: "APPROVED", label: "Approved" },
-        { value: "REJECTED", label: "Rejected" },
-        { value: "DISPUTED", label: "Disputed" },
-      ],
-    },
-    {
-      name: "department",
-      type: "search",
-      label: "Department",
-      placeholder: "Filter by department",
-    },
-    {
-      name: "course",
-      type: "search",
-      label: "Course",
-      placeholder: "Filter by course",
-    },
-    {
-      name: "daterange",
-      type: "daterange",
-      label: "Submission Date Range",
-      startName: "startDate",
-      endName: "endDate",
-      startLabel: "From",
-      endLabel: "To",
-    },
-  ];
+  const detailCountLabel = React.useMemo(() => {
+    const firstItem = pagination.pageIndex * pagination.pageSize + 1;
+    const lastItem = Math.min(
+      (pagination.pageIndex + 1) * pagination.pageSize,
+      pagination.totalItems,
+    );
+    return `Showing ${firstItem}-${lastItem} of ${pagination.totalItems} records`;
+  }, [pagination.pageIndex, pagination.pageSize, pagination.totalItems]);
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Header */}
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold tracking-tight">
-          Attendance Management (All Events)
-        </h1>
-        <p className="text-muted-foreground">
-          View and verify all attendance submissions across the system
-        </p>
-      </div>
-
-      {/* Actions Bar */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            <Filter className="mr-2 h-4 w-4" />
-            {showFilters ? "Hide" : "Show"} Filters
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={fetchAttendances}
-            disabled={isLoading}
-          >
-            <RefreshCw
-              className={`mr-2 h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
+    <div className="container mx-auto space-y-8 py-8">
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+        <div className="space-y-4">
+          <div>
+            <h1 className="text-3xl font-semibold tracking-tight">
+              All Attendance Records
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Monitor submissions from every event and triage anything that
+              needs administrator attention.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <span>{detailCountLabel}</span>
+            {lastSyncedAt && (
+              <>
+                <span>•</span>
+                <span>
+                  Synced{" "}
+                  {formatDistanceToNow(lastSyncedAt, { addSuffix: true })}
+                </span>
+              </>
+            )}
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <DashboardSearchInput
+              value={searchDraft}
+              onChange={handleSearchChange}
+              onSubmit={handleSearchSubmit}
+              onClear={handleSearchClear}
+              disabled={isLoading}
+              placeholder="Search by student, event, or department"
+              ariaLabel="Search all attendance records"
             />
-            Refresh
-          </Button>
-        </div>
-
-        {/* Stats */}
-        <div className="text-sm text-muted-foreground">
-          Showing {pagination.pageIndex * pagination.pageSize + 1}-
-          {Math.min(
-            (pagination.pageIndex + 1) * pagination.pageSize,
-            pagination.totalItems,
-          )}{" "}
-          of {pagination.totalItems} records
+            <div className="flex items-center gap-2">
+              <AttendanceFilterMenu
+                values={filterMenuValues}
+                onApplyFilters={handleApplyFilters}
+                onClearFilters={handleClearFilters}
+                isLoading={isLoading}
+                activeFilterCount={appliedFilterCount}
+                showDepartmentFilters
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleRefresh}
+                disabled={isLoading}
+              >
+                <RefreshCw
+                  className={`mr-2 h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
+                />
+                Refresh
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 
-      {showFilters && (
-        <FilterPanel
-          filters={filterConfig}
-          values={filters}
-          onFilterChange={handleFilterChange}
-          onApplyFilters={handleApplyFilters}
-          onClearFilters={handleClearFilters}
-          isLoading={isLoading}
-        />
-      )}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Total Records</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-semibold">{pagination.totalItems}</p>
+            <p className="text-xs text-muted-foreground">
+              Across every event in the system
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">
+              Pending Review
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-semibold">{summary.totalPending}</p>
+            <p className="text-xs text-muted-foreground">
+              Awaiting moderator or administrator verification
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Approved</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-semibold">{summary.totalApproved}</p>
+            <p className="text-xs text-muted-foreground">
+              Confirmed attendances across all events
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">
+              Attention Needed
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-semibold">
+              {summary.totalRejected + summary.totalDisputed}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Rejected or disputed submissions
+            </p>
+          </CardContent>
+        </Card>
+      </div>
 
-      {/* Attendance Table */}
       <AttendanceTable
         attendances={attendances}
         pagination={pagination}
@@ -367,7 +525,6 @@ export default function AdminAttendanceManagementPage() {
         isLoading={isLoading}
       />
 
-      {/* Detail Dialog */}
       {selectedAttendance && (
         <AttendanceDetailDialog
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -378,7 +535,6 @@ export default function AdminAttendanceManagementPage() {
         />
       )}
 
-      {/* Verification Form Dialog */}
       {selectedAttendanceId && (
         <VerificationForm
           attendanceId={selectedAttendanceId}

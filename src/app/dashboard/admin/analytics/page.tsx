@@ -145,7 +145,7 @@ export default function AnalyticsDashboardPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="container mx-auto space-y-8 py-8">
       {/* Header */}
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-bold tracking-tight">

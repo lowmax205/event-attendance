@@ -53,6 +53,9 @@ export const attendanceListQuerySchema = z.object({
   status: z.nativeEnum(VerificationStatus).optional(),
   startDate: z.string().datetime().optional(),
   endDate: z.string().datetime().optional(),
+  department: z.string().min(1).optional(),
+  course: z.string().min(1).optional(),
+  search: z.string().min(1).optional(),
   sortBy: z
     .enum([
       "checkInSubmittedAt",
@@ -65,6 +68,29 @@ export const attendanceListQuerySchema = z.object({
 });
 
 export type AttendanceListQuery = z.infer<typeof attendanceListQuerySchema>;
+
+export const attendanceUserListQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(10).max(100).default(10),
+  status: z.nativeEnum(VerificationStatus).optional(),
+  startDate: z.string().datetime().optional(),
+  endDate: z.string().datetime().optional(),
+  search: z.string().min(1).optional(),
+  sortBy: z
+    .enum([
+      "checkInSubmittedAt",
+      "verifiedAt",
+      "verificationStatus",
+      "eventName",
+      "createdAt",
+    ])
+    .default("checkInSubmittedAt"),
+  sortOrder: z.enum(["asc", "desc"]).default("desc"),
+});
+
+export type AttendanceUserListQuery = z.infer<
+  typeof attendanceUserListQuerySchema
+>;
 
 /**
  * Dispute resolution request (FR-041)
