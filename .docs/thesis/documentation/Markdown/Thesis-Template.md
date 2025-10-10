@@ -43,7 +43,7 @@
 
 4.1 Research Design
 
-4.2 Research Respondents *(if applicable)*
+4.2 Research Respondents _(if applicable)_
 
 4.3 Research Instruments / Tools
 
