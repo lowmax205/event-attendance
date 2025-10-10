@@ -122,5 +122,16 @@
     "typescript": "typescriptreact",
     "javascript": "javascriptreact"
   },
-  "emmet.triggerExpansionOnTab": true
+  "emmet.triggerExpansionOnTab": true,
+
+  "editor.minimap.enabled": false,
+  "github.copilot.enable": {
+    "*": true,
+    "plaintext": false,
+    "markdown": true,
+    "scminput": false
+  },
+  "pieces.OS.launchOnStartup": "Yes",
+  "pieces.cloudCapabilities": "Blended",
+  "pieces.telemetry": true
 }
