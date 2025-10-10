@@ -132,6 +132,6 @@
     "scminput": false
   },
   "pieces.OS.launchOnStartup": "Yes",
-  "pieces.cloudCapabilities": "Blended",
+  "pieces.cloudCapabilities": "Local",
   "pieces.telemetry": true
 }
