@@ -4,15 +4,7 @@ import * as React from "react";
 import { DataTable } from "@/components/dashboard/shared/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Eye, CheckCircle } from "lucide-react";
+import { Eye, CheckCircle } from "lucide-react";
 import { VerificationStatus } from "@prisma/client";
 import { format } from "date-fns";
 import { ColumnDef } from "@tanstack/react-table";
@@ -26,6 +18,9 @@ export interface AttendanceRow {
     UserProfile: {
       studentId: string;
       department: string;
+      yearLevel: number;
+      section: string | null;
+      contactNumber: string | null;
     } | null;
   };
   event: {
@@ -34,7 +29,7 @@ export interface AttendanceRow {
   };
   checkInSubmittedAt: Date;
   verificationStatus: VerificationStatus;
-  distanceMeters: number | null;
+  checkInDistance: number | null;
 }
 
 interface AttendanceTableProps {
@@ -118,50 +113,23 @@ export function AttendanceTable({
       accessorKey: "distanceMeters",
       header: "Distance",
       cell: ({ row }) => (
-        <div className="text-center">
-          {row.original.distanceMeters !== null &&
-          row.original.distanceMeters !== undefined
-            ? `${row.original.distanceMeters.toFixed(0)}m`
+        <div className="text-sm text-muted-foreground">
+          {row.original.checkInDistance !== null &&
+          row.original.checkInDistance !== undefined
+            ? `${row.original.checkInDistance.toFixed(0)}m`
             : "N/A"}
         </div>
       ),
     },
-    onVerify
-      ? {
-          id: "actions",
-          header: "Actions",
-          cell: ({ row }) => (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0">
-                  <span className="sr-only">Open menu</span>
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => onViewDetails(row.original.id)}
-                >
-                  <Eye className="mr-2 h-4 w-4" />
-                  View Details
-                </DropdownMenuItem>
-                {row.original.verificationStatus ===
-                  VerificationStatus.Pending && (
-                  <DropdownMenuItem onClick={() => onVerify(row.original.id)}>
-                    <CheckCircle className="mr-2 h-4 w-4" />
-                    Verify
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ),
-        }
-      : {
-          id: "actions",
-          header: "Actions",
-          cell: ({ row }) => (
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => {
+        const isPending =
+          row.original.verificationStatus === VerificationStatus.Pending;
+
+        return (
+          <div className="flex flex-wrap items-center gap-2">
             <Button
               variant="outline"
               size="sm"
@@ -171,8 +139,20 @@ export function AttendanceTable({
               <Eye className="mr-2 h-4 w-4" />
               View
             </Button>
-          ),
-        },
+            {onVerify && isPending && (
+              <Button
+                size="sm"
+                onClick={() => onVerify(row.original.id)}
+                className="h-8"
+              >
+                <CheckCircle className="mr-2 h-4 w-4" />
+                Verify
+              </Button>
+            )}
+          </div>
+        );
+      },
+    },
   ];
 
   return (

@@ -29,6 +29,7 @@ interface AttendanceDetailDialogProps {
         department: string;
         yearLevel: number;
         section: string | null;
+        contactNumber: string | null;
       } | null;
     };
     event: {
@@ -37,14 +38,14 @@ interface AttendanceDetailDialogProps {
       venueName: string;
     };
     checkInSubmittedAt: Date;
-    checkInPhotoFrontUrl: string | null;
-    checkInPhotoBackUrl: string | null;
-    signatureUrl: string | null;
+    checkInFrontPhoto: string | null;
+    checkInBackPhoto: string | null;
+    checkInSignature: string | null;
     checkInLatitude: number | null;
     checkInLongitude: number | null;
-    distanceMeters: number | null;
+    checkInDistance: number | null;
     verificationStatus: VerificationStatus;
-    disputeNotes: string | null;
+    disputeNote: string | null;
     appealMessage: string | null;
     resolutionNotes: string | null;
     verifiedAt: Date | null;
@@ -90,7 +91,7 @@ export function AttendanceDetailDialog({
             <h3 className="font-semibold text-lg mb-3">Student Information</h3>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <span className="text-muted-foreground">Name:</span>
+                <span className="text-muted-foreground">Full Name:</span>
                 <p className="font-medium">
                   {attendance.user.firstName} {attendance.user.lastName}
                 </p>
@@ -102,13 +103,33 @@ export function AttendanceDetailDialog({
                 </p>
               </div>
               <div>
-                <span className="text-muted-foreground">Email:</span>
+                <span className="text-muted-foreground">Email Address:</span>
                 <p className="font-medium">{attendance.user.email}</p>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Contact Number:</span>
+                <p className="font-medium">
+                  {attendance.user.UserProfile?.contactNumber || "N/A"}
+                </p>
               </div>
               <div>
                 <span className="text-muted-foreground">Department:</span>
                 <p className="font-medium">
                   {attendance.user.UserProfile?.department || "N/A"}
+                </p>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Year Level:</span>
+                <p className="font-medium">
+                  {attendance.user.UserProfile?.yearLevel
+                    ? `Year ${attendance.user.UserProfile.yearLevel}`
+                    : "N/A"}
+                </p>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Section:</span>
+                <p className="font-medium">
+                  {attendance.user.UserProfile?.section || "N/A"}
                 </p>
               </div>
             </div>
@@ -166,8 +187,8 @@ export function AttendanceDetailDialog({
                   Distance from Venue:
                 </span>
                 <p className="font-medium">
-                  {attendance.distanceMeters !== null
-                    ? `${attendance.distanceMeters.toFixed(0)} meters`
+                  {attendance.checkInDistance !== null
+                    ? `${attendance.checkInDistance.toFixed(0)} meters`
                     : "N/A"}
                 </p>
               </div>
@@ -189,14 +210,14 @@ export function AttendanceDetailDialog({
           <div>
             <h3 className="font-semibold text-lg mb-3">Photos & Signature</h3>
             <div className="grid grid-cols-3 gap-4">
-              {attendance.checkInPhotoFrontUrl && (
+              {attendance.checkInFrontPhoto && (
                 <div>
                   <p className="text-sm text-muted-foreground mb-2">
                     Front Photo
                   </p>
                   <div className="relative h-40 border rounded overflow-hidden">
                     <Image
-                      src={attendance.checkInPhotoFrontUrl}
+                      src={attendance.checkInFrontPhoto}
                       alt="Front photo"
                       fill
                       className="object-cover"
@@ -204,14 +225,14 @@ export function AttendanceDetailDialog({
                   </div>
                 </div>
               )}
-              {attendance.checkInPhotoBackUrl && (
+              {attendance.checkInBackPhoto && (
                 <div>
                   <p className="text-sm text-muted-foreground mb-2">
                     Back Photo
                   </p>
                   <div className="relative h-40 border rounded overflow-hidden">
                     <Image
-                      src={attendance.checkInPhotoBackUrl}
+                      src={attendance.checkInBackPhoto}
                       alt="Back photo"
                       fill
                       className="object-cover"
@@ -219,14 +240,14 @@ export function AttendanceDetailDialog({
                   </div>
                 </div>
               )}
-              {attendance.signatureUrl && (
+              {attendance.checkInSignature && (
                 <div>
                   <p className="text-sm text-muted-foreground mb-2">
                     Signature
                   </p>
                   <div className="relative h-40 border rounded overflow-hidden bg-white">
                     <Image
-                      src={attendance.signatureUrl}
+                      src={attendance.checkInSignature}
                       alt="Signature"
                       fill
                       className="object-contain"
@@ -238,7 +259,7 @@ export function AttendanceDetailDialog({
           </div>
 
           {/* Verification Details */}
-          {(attendance.disputeNotes ||
+          {(attendance.disputeNote ||
             attendance.appealMessage ||
             attendance.resolutionNotes) && (
             <div>
@@ -246,13 +267,13 @@ export function AttendanceDetailDialog({
                 Verification Details
               </h3>
               <div className="space-y-3">
-                {attendance.disputeNotes && (
+                {attendance.disputeNote && (
                   <div>
                     <span className="text-sm text-muted-foreground">
                       Dispute Notes:
                     </span>
                     <p className="text-sm mt-1 p-3 bg-destructive/10 rounded">
-                      {attendance.disputeNotes}
+                      {attendance.disputeNote}
                     </p>
                   </div>
                 )}

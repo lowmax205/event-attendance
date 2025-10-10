@@ -224,6 +224,9 @@ export default function MyAttendancePage() {
             ? {
                 studentId: a.user.UserProfile.studentId,
                 department: a.user.UserProfile.department,
+                yearLevel: a.user.UserProfile.yearLevel,
+                section: a.user.UserProfile.section,
+                contactNumber: a.user.UserProfile.contactNumber,
               }
             : null,
         },
@@ -233,7 +236,7 @@ export default function MyAttendancePage() {
         },
         checkInSubmittedAt: a.checkInSubmittedAt,
         verificationStatus: a.verificationStatus,
-        distanceMeters: a.checkInDistance ?? a.distanceMeters ?? null,
+        checkInDistance: a.checkInDistance ?? a.distanceMeters ?? null,
       };
     });
   }, [fullAttendances]);

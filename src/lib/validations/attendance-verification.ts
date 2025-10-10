@@ -56,6 +56,10 @@ export const attendanceListQuerySchema = z.object({
   department: z.string().min(1).optional(),
   course: z.string().min(1).optional(),
   search: z.string().min(1).optional(),
+  myEventsOnly: z
+    .union([z.boolean(), z.string(), z.undefined()])
+    .transform((val) => val === true || val === "true")
+    .optional(),
   sortBy: z
     .enum([
       "checkInSubmittedAt",

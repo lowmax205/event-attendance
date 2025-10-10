@@ -5,6 +5,8 @@ import {
   useContext,
   useState,
   useEffect,
+  useCallback,
+  useRef,
   ReactNode,
 } from "react";
 import type { UserSession } from "@/lib/types/user";
@@ -31,25 +33,87 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const userRef = useRef<UserSession | null>(null);
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
+
+  const checkSession = useCallback(async () => {
+    try {
+      const response = await fetch("/api/auth/session", {
+        cache: "no-store",
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setUser(data.user);
+      } else {
+        // Session expired or invalid - clear user state and redirect
+        if (userRef.current) {
+          // Only redirect if user was previously logged in
+          setUser(null);
+          window.location.href = "/?error=session_expired";
+        } else {
+          setUser(null);
+        }
+      }
+    } catch (error) {
+      console.error("Session check failed:", error);
+      if (userRef.current) {
+        setUser(null);
+        window.location.href = "/?error=session_expired";
+      } else {
+        setUser(null);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, []); // No dependencies - stable function
 
   // Check for existing session on mount
   useEffect(() => {
     checkSession();
-  }, []);
+  }, [checkSession]);
 
-  async function checkSession() {
-    try {
-      const response = await fetch("/api/auth/session");
-      if (response.ok) {
-        const data = await response.json();
-        setUser(data.user);
+  // Periodic session validation every 2 minutes
+  useEffect(() => {
+    const interval = setInterval(
+      () => {
+        if (user) {
+          checkSession();
+        }
+      },
+      2 * 60 * 1000,
+    ); // 2 minutes
+
+    return () => clearInterval(interval);
+  }, [user, checkSession]);
+
+  // Validate session when page becomes visible
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && user) {
+        checkSession();
       }
-    } catch (error) {
-      console.error("Session check failed:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [user, checkSession]);
+
+  // Validate session when window regains focus
+  useEffect(() => {
+    const handleFocus = () => {
+      if (user) {
+        checkSession();
+      }
+    };
+
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
+  }, [user, checkSession]);
 
   function login(userData: UserSession) {
     setUser(userData);

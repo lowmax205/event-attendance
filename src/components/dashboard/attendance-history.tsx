@@ -33,6 +33,7 @@ interface AttendanceHistoryProps {
   attendances: AttendanceRecord[];
   currentPage: number;
   totalPages: number;
+  showPagination?: boolean;
   onPageChange?: (page: number) => void;
 }
 
@@ -47,6 +48,7 @@ export function AttendanceHistory({
   attendances,
   currentPage,
   totalPages,
+  showPagination = false,
   onPageChange,
 }: AttendanceHistoryProps) {
   const router = useRouter();
@@ -114,7 +116,7 @@ export function AttendanceHistory({
         </Table>
       </div>
 
-      {totalPages > 1 && (
+      {totalPages > 1 && showPagination && (
         <Pagination>
           <PaginationContent>
             <PaginationItem>

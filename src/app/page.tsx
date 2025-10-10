@@ -1,4 +1,8 @@
+"use client";
+
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useEffect, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -7,6 +11,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 import { StepCard } from "@/components/step-card";
 
 const steps = [
@@ -30,9 +36,70 @@ const steps = [
   },
 ];
 
+function ErrorAlert() {
+  const searchParams = useSearchParams();
+  const error = searchParams.get("error");
+
+  useEffect(() => {
+    // Clear error from URL after showing it
+    if (error) {
+      const timer = setTimeout(() => {
+        window.history.replaceState({}, "", "/");
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
+
+  const getErrorMessage = () => {
+    switch (error) {
+      case "session_expired":
+        return {
+          title: "Session Expired",
+          description:
+            "Your session has expired. Please log in again to continue.",
+        };
+      case "authentication_required":
+        return {
+          title: "Authentication Required",
+          description: "You need to be logged in to access that page.",
+        };
+      case "account_suspended":
+        return {
+          title: "Account Suspended",
+          description:
+            "Your account has been suspended. Please contact an administrator.",
+        };
+      case "insufficient_permissions":
+        return {
+          title: "Access Denied",
+          description: "You don't have permission to access that page.",
+        };
+      default:
+        return null;
+    }
+  };
+
+  const errorInfo = getErrorMessage();
+
+  if (!errorInfo) return null;
+
+  return (
+    <Alert variant="destructive" className="mb-6">
+      <AlertCircle className="h-4 w-4" />
+      <AlertTitle>{errorInfo.title}</AlertTitle>
+      <AlertDescription>{errorInfo.description}</AlertDescription>
+    </Alert>
+  );
+}
+
 export default function HomePage() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
+      {/* Error Alert */}
+      <Suspense fallback={null}>
+        <ErrorAlert />
+      </Suspense>
+
       {/* Hero Section */}
       <section className="text-center py-12 md:py-20">
         <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">

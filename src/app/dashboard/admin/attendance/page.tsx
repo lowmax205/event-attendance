@@ -16,12 +16,19 @@ import { DashboardSearchInput } from "@/components/dashboard/shared/dashboard-se
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { listAttendances } from "@/actions/moderator/attendance";
 import { VerificationStatus } from "@prisma/client";
 import { formatDistanceToNow } from "date-fns";
-import { RefreshCw, ShieldAlert } from "lucide-react";
+import { RefreshCw, ShieldAlert, Info } from "lucide-react";
 
 /**
  * Admin Attendance Management mirrors the user management layout, providing
@@ -37,6 +44,7 @@ type AttendanceSummary = {
 
 type PageFilterValues = AttendanceFilterValues & {
   search?: string;
+  myEventsOnly?: boolean;
 };
 
 const DEFAULT_FILTERS: PageFilterValues = {
@@ -48,6 +56,7 @@ const DEFAULT_FILTERS: PageFilterValues = {
   department: undefined,
   course: undefined,
   search: undefined,
+  myEventsOnly: false,
 };
 
 const EMPTY_SUMMARY: AttendanceSummary = {
@@ -96,6 +105,7 @@ export default function AdminAttendanceManagementPage() {
       department: params.get("department") || undefined,
       course: params.get("course") || undefined,
       search: params.get("search") || undefined,
+      myEventsOnly: params.get("myEventsOnly") === "true",
     } satisfies PageFilterValues;
   }, [searchParamsString]);
 
@@ -122,6 +132,7 @@ export default function AdminAttendanceManagementPage() {
       if (filters.department) params.set("department", filters.department);
       if (filters.course) params.set("course", filters.course);
       if (filters.search) params.set("search", filters.search);
+      if (filters.myEventsOnly) params.set("myEventsOnly", "true");
       if (filters.sortBy && filters.sortBy !== DEFAULT_FILTERS.sortBy)
         params.set("sortBy", filters.sortBy);
       if (filters.sortOrder && filters.sortOrder !== DEFAULT_FILTERS.sortOrder)
@@ -145,6 +156,7 @@ export default function AdminAttendanceManagementPage() {
         department: appliedFilters.department,
         course: appliedFilters.course,
         search: appliedFilters.search,
+        myEventsOnly: appliedFilters.myEventsOnly,
         sortBy: (appliedFilters.sortBy ?? DEFAULT_FILTERS.sortBy) as
           | "checkInSubmittedAt"
           | "verifiedAt"
@@ -185,6 +197,7 @@ export default function AdminAttendanceManagementPage() {
     appliedFilters.department,
     appliedFilters.endDate,
     appliedFilters.search,
+    appliedFilters.myEventsOnly,
     appliedFilters.sortBy,
     appliedFilters.sortOrder,
     appliedFilters.startDate,
@@ -202,6 +215,7 @@ export default function AdminAttendanceManagementPage() {
         appliedFilters.department ?? "",
         appliedFilters.course ?? "",
         appliedFilters.search ?? "",
+        appliedFilters.myEventsOnly ?? "",
         appliedFilters.sortBy ?? DEFAULT_FILTERS.sortBy,
         appliedFilters.sortOrder ?? DEFAULT_FILTERS.sortOrder,
         currentPage,
@@ -211,6 +225,7 @@ export default function AdminAttendanceManagementPage() {
       appliedFilters.department,
       appliedFilters.endDate,
       appliedFilters.search,
+      appliedFilters.myEventsOnly,
       appliedFilters.sortBy,
       appliedFilters.sortOrder,
       appliedFilters.startDate,
@@ -244,6 +259,9 @@ export default function AdminAttendanceManagementPage() {
             ? {
                 studentId: a.user.UserProfile.studentId,
                 department: a.user.UserProfile.department,
+                yearLevel: a.user.UserProfile.yearLevel,
+                section: a.user.UserProfile.section,
+                contactNumber: a.user.UserProfile.contactNumber,
               }
             : null,
         },
@@ -253,7 +271,7 @@ export default function AdminAttendanceManagementPage() {
         },
         checkInSubmittedAt: a.checkInSubmittedAt,
         verificationStatus: a.verificationStatus,
-        distanceMeters: a.checkInDistance ?? a.distanceMeters ?? null,
+        checkInDistance: a.checkInDistance ?? a.distanceMeters ?? null,
       };
     });
   }, [fullAttendances]);
@@ -340,6 +358,16 @@ export default function AdminAttendanceManagementPage() {
     void fetchAttendances();
   };
 
+  const handleMyEventsToggle = (checked: boolean) => {
+    updateUrlParams(
+      {
+        ...appliedFilters,
+        myEventsOnly: checked,
+      },
+      1,
+    );
+  };
+
   const appliedFilterCount = React.useMemo(() => {
     let count = 0;
     if (appliedFilters.status) count += 1;
@@ -348,6 +376,7 @@ export default function AdminAttendanceManagementPage() {
     if (appliedFilters.endDate) count += 1;
     if (appliedFilters.department) count += 1;
     if (appliedFilters.course) count += 1;
+    if (appliedFilters.myEventsOnly) count += 1;
     if (
       appliedFilters.sortBy &&
       appliedFilters.sortBy !== DEFAULT_FILTERS.sortBy
@@ -458,6 +487,35 @@ export default function AdminAttendanceManagementPage() {
               ariaLabel="Search all attendance records"
             />
             <div className="flex items-center gap-2">
+              <TooltipProvider>
+                <div className="flex items-center gap-2 rounded-md border border-border/60 bg-background px-3 py-2">
+                  <input
+                    type="checkbox"
+                    id="myEventsOnly"
+                    checked={appliedFilters.myEventsOnly ?? false}
+                    onChange={(e) => handleMyEventsToggle(e.target.checked)}
+                    disabled={isLoading}
+                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  />
+                  <Label
+                    htmlFor="myEventsOnly"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex items-center gap-1"
+                  >
+                    My Events Only
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-xs">
+                        <p className="text-sm">
+                          This checkbox is to show only the attendance where the
+                          students attended events that you created.
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </Label>
+                </div>
+              </TooltipProvider>
               <AttendanceFilterMenu
                 values={filterMenuValues}
                 onApplyFilters={handleApplyFilters}

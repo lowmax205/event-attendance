@@ -1,9 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AttendanceHistory } from "./attendance-history";
-import { QrCode, Calendar, CheckCircle, Clock } from "lucide-react";
+import {
+  QrCode,
+  Calendar,
+  CheckCircle,
+  Clock,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 import Link from "next/link";
 
 interface StudentStats {
@@ -34,6 +42,8 @@ interface StudentDashboardProps {
   upcomingEvents: UpcomingEvent[];
   currentPage: number;
   totalPages: number;
+  totalItems: number;
+  isExpanded?: boolean;
   onPageChange?: (page: number) => void;
 }
 
@@ -43,7 +53,20 @@ export function StudentDashboard({
   upcomingEvents,
   currentPage,
   totalPages,
+  totalItems,
+  isExpanded = false,
 }: StudentDashboardProps) {
+  const [showAll, setShowAll] = useState(isExpanded);
+
+  const handleViewAllToggle = () => {
+    setShowAll(!showAll);
+    // Reload page with appropriate limit
+    const params = new URLSearchParams(window.location.search);
+    params.set("expanded", (!showAll).toString());
+    params.set("page", "1"); // Reset to first page when toggling
+    window.location.href = `?${params.toString()}`;
+  };
+
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
@@ -137,14 +160,35 @@ export function StudentDashboard({
 
       {/* Attendance History Section */}
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <CardTitle>Attendance History</CardTitle>
+          {totalItems > 5 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleViewAllToggle}
+              className="flex items-center gap-2"
+            >
+              {showAll ? (
+                <>
+                  <ChevronUp className="h-4 w-4" />
+                  Show Less
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="h-4 w-4" />
+                  View All
+                </>
+              )}
+            </Button>
+          )}
         </CardHeader>
         <CardContent>
           <AttendanceHistory
             attendances={attendanceHistory}
             currentPage={currentPage}
             totalPages={totalPages}
+            showPagination={showAll}
           />
         </CardContent>
       </Card>

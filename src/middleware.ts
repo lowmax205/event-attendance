@@ -29,20 +29,20 @@ const roleBasedRoutes: Record<
   string,
   Array<"Student" | "Moderator" | "Administrator">
 > = {
-  "/dashboard/student": ["Student", "Moderator", "Administrator"],
-  "/dashboard/moderator": ["Moderator", "Administrator"],
-  "/dashboard/admin": ["Administrator", "Moderator"],
+  "/dashboard/student": ["Student"],
+  "/dashboard/moderator": ["Moderator"],
+  "/dashboard/admin": ["Administrator"],
   "/events/create": ["Moderator", "Administrator"],
   "/events/manage": ["Moderator", "Administrator"],
-  // Analytics dashboard (admin only)
+  // Analytics dashboard (admin only, but moderator can view)
   "/dashboard/admin/analytics": ["Administrator", "Moderator"],
-  // User management (admin primary, moderator limited)
+  // User management (admin primary, moderator read-only)
   "/dashboard/admin/users": ["Administrator", "Moderator"],
-  // Event management by moderators
+  // Event management by moderators and admins
   "/dashboard/moderator/events": ["Moderator", "Administrator"],
-  // Attendance management by moderators
+  // Attendance management by moderators and admins
   "/dashboard/moderator/attendance": ["Moderator", "Administrator"],
-  // All events and attendance views (moderator limited access)
+  // All events and attendance views (both roles)
   "/dashboard/admin/events": ["Administrator", "Moderator"],
   "/dashboard/admin/attendance": ["Administrator", "Moderator"],
 };
@@ -147,7 +147,12 @@ export async function middleware(request: NextRequest) {
   }
 
   // Check role-based access for dashboard routes
-  for (const [route, allowedRoles] of Object.entries(roleBasedRoutes)) {
+  // Sort routes by length (longest first) to check most specific routes first
+  const sortedRoutes = Object.entries(roleBasedRoutes).sort(
+    ([a], [b]) => b.length - a.length,
+  );
+
+  for (const [route, allowedRoles] of sortedRoutes) {
     if (pathname.startsWith(route)) {
       if (!allowedRoles.includes(payload.role)) {
         // User doesn't have permission - redirect to their appropriate dashboard

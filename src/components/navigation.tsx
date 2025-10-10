@@ -50,11 +50,43 @@ export function Navigation() {
   // Check if we're on profile or dashboard pages
   const isOnProfilePage =
     pathname === "/profile" || pathname === "/profile/create";
-  const isOnDashboardPage = pathname?.startsWith("/dashboard") || false;
   const isOnMyEventsPage =
     pathname?.startsWith("/dashboard/moderator/events") || false;
   const isOnMyAttendancePage =
     pathname?.startsWith("/dashboard/moderator/attendance") || false;
+
+  // Hide dashboard button ONLY when on main dashboard pages
+  const shouldHideDashboardButton =
+    pathname === "/dashboard/student" ||
+    pathname === "/dashboard/moderator" ||
+    pathname === "/dashboard/admin" ||
+    pathname === "/dashboard";
+
+  // Periodically check session validity when user is logged in
+  useEffect(() => {
+    if (!user) return;
+
+    const checkSessionValidity = async () => {
+      try {
+        const response = await fetch("/api/auth/session");
+        if (!response.ok) {
+          // Session expired - logout and redirect
+          await logout();
+          router.push("/?error=session_expired");
+        }
+      } catch (error) {
+        console.error("Session check failed:", error);
+      }
+    };
+
+    // Check immediately
+    checkSessionValidity();
+
+    // Then check every 5 minutes
+    const interval = setInterval(checkSessionValidity, 5 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, [user, logout, router]);
 
   // Fetch upcoming/ongoing events when user is authenticated
   useEffect(() => {
@@ -342,7 +374,7 @@ export function Navigation() {
                         </Link>
                       </DropdownMenuItem>
                     )}
-                    {!isOnDashboardPage && (
+                    {!shouldHideDashboardButton && (
                       <DropdownMenuItem asChild>
                         <Link
                           href={getDashboardRoute()}
@@ -441,7 +473,7 @@ export function Navigation() {
                       </p>
                     </div>
 
-                    {!isOnDashboardPage && (
+                    {!shouldHideDashboardButton && (
                       <Link
                         href={getDashboardRoute()}
                         onClick={() => setIsOpen(false)}

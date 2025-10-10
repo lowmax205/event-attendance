@@ -7,7 +7,11 @@ import { StudentDashboard } from "@/components/dashboard/student-dashboard";
  * Student dashboard page
  * Displays attendance history, upcoming events, and stats
  */
-export default async function StudentDashboardPage() {
+export default async function StudentDashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string; expanded?: string }>;
+}) {
   // Check authentication and role
   const user = await getCurrentUser();
 
@@ -19,10 +23,16 @@ export default async function StudentDashboardPage() {
     redirect("/dashboard");
   }
 
+  // Get search params
+  const params = await searchParams;
+  const page = parseInt(params.page || "1", 10);
+  const isExpanded = params.expanded === "true";
+  const limit = isExpanded ? 10 : 5;
+
   // Fetch dashboard data
   const result = await getStudentDashboard({
-    page: 1,
-    limit: 10,
+    page,
+    limit,
   });
 
   if (!result.success || !result.data) {
@@ -77,6 +87,8 @@ export default async function StudentDashboardPage() {
         }))}
         currentPage={pagination.page}
         totalPages={pagination.totalPages}
+        totalItems={pagination.totalItems}
+        isExpanded={isExpanded}
       />
     </div>
   );

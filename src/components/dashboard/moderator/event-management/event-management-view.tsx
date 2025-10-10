@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import {
   EventTable,
   type EventRow,
@@ -96,7 +97,6 @@ export function EventManagementView({
   const [lastSyncedAt, setLastSyncedAt] = React.useState<Date | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [searchDraft, setSearchDraft] = React.useState<string | undefined>();
-  const [createDialogOpen, setCreateDialogOpen] = React.useState(false);
   const [editDialogOpen, setEditDialogOpen] = React.useState(false);
   const [selectedEventId, setSelectedEventId] = React.useState<string | null>(
     null,
@@ -474,9 +474,11 @@ export function EventManagementView({
         </div>
         {showCreateButton && !readOnly && (
           <div className="flex justify-end lg:items-start">
-            <Button onClick={() => setCreateDialogOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Create Event
+            <Button asChild>
+              <Link href="/dashboard/moderator/events/create">
+                <Plus className="mr-2 h-4 w-4" />
+                Create Event
+              </Link>
             </Button>
           </div>
         )}
@@ -536,18 +538,6 @@ export function EventManagementView({
         isLoading={isLoading}
         isReadOnly={readOnly}
       />
-
-      {showCreateButton && !readOnly && (
-        <EventForm
-          open={createDialogOpen}
-          onOpenChange={setCreateDialogOpen}
-          mode="create"
-          onSuccess={() => {
-            setCreateDialogOpen(false);
-            void fetchEvents();
-          }}
-        />
-      )}
 
       {selectedEventId && !readOnly && (
         <EventForm

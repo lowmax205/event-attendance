@@ -25,7 +25,7 @@ export async function listAttendances(
 
     const baseFilters: Prisma.AttendanceWhereInput[] = [];
 
-    if (user.role === "Moderator") {
+    if (validatedQuery.myEventsOnly === true) {
       baseFilters.push({
         event: {
           createdById: user.userId,
@@ -223,6 +223,8 @@ export async function listAttendances(
                 studentId: true,
                 department: true,
                 yearLevel: true,
+                section: true,
+                contactNumber: true,
               },
             },
           },

@@ -12,16 +12,27 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { EventDetailDialog } from "@/components/dashboard/moderator/event-management/event-detail-dialog";
-import { Calendar, Users, CheckCircle, Clock, Eye } from "lucide-react";
+import { AttendanceDetailDialog } from "@/components/dashboard/moderator/attendance-management/attendance-detail-dialog";
+import {
+  Calendar,
+  Users,
+  CheckCircle,
+  Clock,
+  Eye,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 interface ModeratorStats {
@@ -31,34 +42,74 @@ interface ModeratorStats {
   totalAttendances: number;
 }
 
+interface SystemStats {
+  totalUsers: number;
+  disputedAttendance: number;
+}
+
 interface Event {
   id: string;
   name: string;
   startDateTime: Date;
   status: "Draft" | "Active" | "Completed" | "Cancelled";
   attendanceCount: number;
+  creatorName?: string; // For admin view
 }
 
 interface PendingVerification {
   id: string;
-  studentName: string;
-  eventName: string;
+  user: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    UserProfile: {
+      studentId: string;
+      department: string;
+      yearLevel: number;
+      section: string | null;
+      contactNumber: string | null;
+    } | null;
+  };
+  event: {
+    name: string;
+    startDateTime: Date;
+    venueName: string;
+  };
   checkInSubmittedAt: Date | null;
   checkOutSubmittedAt: Date | null;
   checkInFrontPhoto: string | null;
   checkInBackPhoto: string | null;
   checkInSignature: string | null;
+  checkInLatitude: number | null;
+  checkInLongitude: number | null;
+  checkInDistance: number | null;
+  checkOutDistance: number | null;
   checkOutFrontPhoto: string | null;
   checkOutBackPhoto: string | null;
   checkOutSignature: string | null;
-  checkInDistance: number | null;
-  checkOutDistance: number | null;
+  checkOutLatitude: number | null;
+  checkOutLongitude: number | null;
+  verificationStatus: "Pending" | "Approved" | "Rejected" | "Disputed";
+  disputeNote: string | null;
+  appealMessage: string | null;
+  resolutionNotes: string | null;
+  verifiedAt: Date | null;
+  verifiedBy: {
+    firstName: string;
+    lastName: string;
+  } | null;
 }
 
 interface ModeratorDashboardProps {
+  userRole: "Moderator" | "Administrator";
   stats: ModeratorStats;
+  systemStats?: SystemStats; // Only for admins
   myEvents: Event[];
   pendingVerifications: PendingVerification[];
+  totalItems: number;
+  currentPage: number;
+  totalPages: number;
+  isExpanded?: boolean;
 }
 
 const statusColors = {
@@ -69,14 +120,32 @@ const statusColors = {
 } as const;
 
 export function ModeratorDashboard({
+  userRole,
   stats,
+  systemStats,
   myEvents,
   pendingVerifications,
+  totalItems,
+  currentPage,
+  totalPages,
+  isExpanded = false,
 }: ModeratorDashboardProps) {
+  const router = useRouter();
   const [selectedVerification, setSelectedVerification] =
     useState<PendingVerification | null>(null);
+  const [isAttendanceDialogOpen, setIsAttendanceDialogOpen] = useState(false);
   const [viewEventId, setViewEventId] = useState<string | null>(null);
   const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
+  const [showAll, setShowAll] = useState(isExpanded);
+
+  const handleViewAllToggle = () => {
+    setShowAll(!showAll);
+    // Reload page with appropriate limit
+    const params = new URLSearchParams(window.location.search);
+    params.set("expanded", (!showAll).toString());
+    params.set("page", "1"); // Reset to first page when toggling
+    window.location.href = `?${params.toString()}`;
+  };
 
   const handleViewEvent = (eventId: string) => {
     setViewEventId(eventId);
@@ -140,15 +209,78 @@ export function ModeratorDashboard({
             </p>
           </CardContent>
         </Card>
+
+        {/* Admin-only stats */}
+        {systemStats && (
+          <>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Total Users
+                </CardTitle>
+                <Users className="h-4 w-4 text-blue-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {systemStats.totalUsers}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Registered users
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Disputed Records
+                </CardTitle>
+                <Clock className="h-4 w-4 text-red-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {systemStats.disputedAttendance}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Requires attention
+                </p>
+              </CardContent>
+            </Card>
+          </>
+        )}
       </div>
 
       {/* My Events Table */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>My Events</CardTitle>
-          <Button asChild>
-            <Link href="/dashboard/moderator/events/create">Create Event</Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            {totalItems > 5 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleViewAllToggle}
+                className="flex items-center gap-2"
+              >
+                {showAll ? (
+                  <>
+                    <ChevronUp className="h-4 w-4" />
+                    Show Less
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="h-4 w-4" />
+                    View All
+                  </>
+                )}
+              </Button>
+            )}
+            <Button asChild>
+              <Link href="/dashboard/moderator/events/create">
+                Create Event
+              </Link>
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="rounded-md border">
@@ -159,18 +291,24 @@ export function ModeratorDashboard({
                   <TableHead>Start Date</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Attendances</TableHead>
+                  {userRole === "Administrator" && (
+                    <TableHead>Created By</TableHead>
+                  )}
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {myEvents.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center">
+                    <TableCell
+                      colSpan={userRole === "Administrator" ? 6 : 5}
+                      className="h-24 text-center"
+                    >
                       No events found. Create your first event!
                     </TableCell>
                   </TableRow>
                 ) : (
-                  myEvents.slice(0, 5).map((event) => (
+                  myEvents.map((event) => (
                     <TableRow key={event.id}>
                       <TableCell className="font-medium">
                         {event.name}
@@ -184,6 +322,9 @@ export function ModeratorDashboard({
                         </Badge>
                       </TableCell>
                       <TableCell>{event.attendanceCount}</TableCell>
+                      {userRole === "Administrator" && (
+                        <TableCell>{event.creatorName || "N/A"}</TableCell>
+                      )}
                       <TableCell className="text-right">
                         <Button
                           variant="ghost"
@@ -201,11 +342,91 @@ export function ModeratorDashboard({
               </TableBody>
             </Table>
           </div>
-          {myEvents.length > 0 && (
-            <div className="mt-4 flex justify-end">
-              <Button variant="outline" asChild>
-                <Link href="/dashboard/moderator/events">View All</Link>
-              </Button>
+          {showAll && totalPages > 1 && (
+            <div className="mt-4">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (currentPage > 1) {
+                          const params = new URLSearchParams(
+                            window.location.search,
+                          );
+                          params.set("page", (currentPage - 1).toString());
+                          window.location.href = `?${params.toString()}`;
+                        }
+                      }}
+                      className={
+                        currentPage === 1
+                          ? "pointer-events-none opacity-50"
+                          : ""
+                      }
+                    />
+                  </PaginationItem>
+
+                  {[...Array(totalPages)].map((_, i) => {
+                    const page = i + 1;
+                    if (
+                      page === 1 ||
+                      page === totalPages ||
+                      (page >= currentPage - 1 && page <= currentPage + 1)
+                    ) {
+                      return (
+                        <PaginationItem key={page}>
+                          <PaginationLink
+                            href="#"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              const params = new URLSearchParams(
+                                window.location.search,
+                              );
+                              params.set("page", page.toString());
+                              window.location.href = `?${params.toString()}`;
+                            }}
+                            isActive={currentPage === page}
+                          >
+                            {page}
+                          </PaginationLink>
+                        </PaginationItem>
+                      );
+                    } else if (
+                      page === currentPage - 2 ||
+                      page === currentPage + 2
+                    ) {
+                      return (
+                        <PaginationItem key={page}>
+                          <PaginationEllipsis />
+                        </PaginationItem>
+                      );
+                    }
+                    return null;
+                  })}
+
+                  <PaginationItem>
+                    <PaginationNext
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (currentPage < totalPages) {
+                          const params = new URLSearchParams(
+                            window.location.search,
+                          );
+                          params.set("page", (currentPage + 1).toString());
+                          window.location.href = `?${params.toString()}`;
+                        }
+                      }}
+                      className={
+                        currentPage === totalPages
+                          ? "pointer-events-none opacity-50"
+                          : ""
+                      }
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
             </div>
           )}
         </CardContent>
@@ -216,7 +437,7 @@ export function ModeratorDashboard({
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Pending Verifications</CardTitle>
           <Button variant="outline" asChild>
-            <Link href="/dashboard/moderator/attendance">View All</Link>
+            <Link href="/dashboard/admin/attendance">View All</Link>
           </Button>
         </CardHeader>
         <CardContent>
@@ -232,9 +453,11 @@ export function ModeratorDashboard({
                   className="flex items-center justify-between rounded-lg border p-4"
                 >
                   <div className="space-y-1">
-                    <p className="font-medium">{verification.studentName}</p>
+                    <p className="font-medium">
+                      {verification.user.firstName} {verification.user.lastName}
+                    </p>
                     <p className="text-sm text-muted-foreground">
-                      {verification.eventName}
+                      {verification.event.name}
                     </p>
                     {verification.checkInSubmittedAt && (
                       <p className="text-xs text-muted-foreground">
@@ -266,137 +489,16 @@ export function ModeratorDashboard({
                     )}
                   </div>
                   <div className="flex gap-2">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setSelectedVerification(verification)}
-                        >
-                          <Eye className="mr-2 h-4 w-4" />
-                          Preview
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-2xl">
-                        <DialogHeader>
-                          <DialogTitle>Attendance Preview</DialogTitle>
-                        </DialogHeader>
-                        {selectedVerification && (
-                          <div className="space-y-4">
-                            <h3 className="font-semibold">Check-In</h3>
-                            <div className="grid gap-4 md:grid-cols-2">
-                              {selectedVerification.checkInFrontPhoto && (
-                                <div>
-                                  <p className="mb-2 text-sm font-medium">
-                                    Front Photo
-                                  </p>
-                                  <Image
-                                    src={selectedVerification.checkInFrontPhoto}
-                                    alt="Check-in front photo"
-                                    width={300}
-                                    height={300}
-                                    className="rounded-lg border"
-                                  />
-                                </div>
-                              )}
-                              {selectedVerification.checkInBackPhoto && (
-                                <div>
-                                  <p className="mb-2 text-sm font-medium">
-                                    Back Photo
-                                  </p>
-                                  <Image
-                                    src={selectedVerification.checkInBackPhoto}
-                                    alt="Check-in back photo"
-                                    width={300}
-                                    height={300}
-                                    className="rounded-lg border"
-                                  />
-                                </div>
-                              )}
-                            </div>
-                            {selectedVerification.checkInSignature && (
-                              <div>
-                                <p className="mb-2 text-sm font-medium">
-                                  Signature
-                                </p>
-                                <Image
-                                  src={selectedVerification.checkInSignature}
-                                  alt="Check-in signature"
-                                  width={400}
-                                  height={150}
-                                  className="rounded-lg border bg-white"
-                                />
-                              </div>
-                            )}
-                            {(selectedVerification.checkOutFrontPhoto ||
-                              selectedVerification.checkOutBackPhoto ||
-                              selectedVerification.checkOutSignature) && (
-                              <>
-                                <h3 className="font-semibold mt-6">
-                                  Check-Out
-                                </h3>
-                                <div className="grid gap-4 md:grid-cols-2">
-                                  {selectedVerification.checkOutFrontPhoto && (
-                                    <div>
-                                      <p className="mb-2 text-sm font-medium">
-                                        Front Photo
-                                      </p>
-                                      <Image
-                                        src={
-                                          selectedVerification.checkOutFrontPhoto
-                                        }
-                                        alt="Check-out front photo"
-                                        width={300}
-                                        height={300}
-                                        className="rounded-lg border"
-                                      />
-                                    </div>
-                                  )}
-                                  {selectedVerification.checkOutBackPhoto && (
-                                    <div>
-                                      <p className="mb-2 text-sm font-medium">
-                                        Back Photo
-                                      </p>
-                                      <Image
-                                        src={
-                                          selectedVerification.checkOutBackPhoto
-                                        }
-                                        alt="Check-out back photo"
-                                        width={300}
-                                        height={300}
-                                        className="rounded-lg border"
-                                      />
-                                    </div>
-                                  )}
-                                </div>
-                                {selectedVerification.checkOutSignature && (
-                                  <div>
-                                    <p className="mb-2 text-sm font-medium">
-                                      Signature
-                                    </p>
-                                    <Image
-                                      src={
-                                        selectedVerification.checkOutSignature
-                                      }
-                                      alt="Check-out signature"
-                                      width={400}
-                                      height={150}
-                                      className="rounded-lg border bg-white"
-                                    />
-                                  </div>
-                                )}
-                              </>
-                            )}
-                          </div>
-                        )}
-                      </DialogContent>
-                    </Dialog>
-                    <Button size="sm" asChild>
-                      <Link
-                        href={`/dashboard/moderator/attendance/${verification.id}`}
-                      >
-                        Verify
-                      </Link>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedVerification(verification);
+                        setIsAttendanceDialogOpen(true);
+                      }}
+                    >
+                      <Eye className="mr-2 h-4 w-4" />
+                      Preview
                     </Button>
                   </div>
                 </div>
@@ -415,6 +517,39 @@ export function ModeratorDashboard({
             setViewEventId(null);
           }
         }}
+      />
+
+      <AttendanceDetailDialog
+        open={isAttendanceDialogOpen}
+        onOpenChange={(open) => {
+          setIsAttendanceDialogOpen(open);
+          if (!open) {
+            setSelectedVerification(null);
+          }
+        }}
+        attendance={
+          selectedVerification
+            ? {
+                ...selectedVerification,
+                checkInSubmittedAt:
+                  selectedVerification.checkInSubmittedAt || new Date(),
+                verificationStatus: selectedVerification.verificationStatus as
+                  | "Pending"
+                  | "Approved"
+                  | "Rejected"
+                  | "Disputed",
+              }
+            : null
+        }
+        onVerify={
+          selectedVerification
+            ? () => {
+                router.push(
+                  `/dashboard/moderator/attendance/${selectedVerification.id}`,
+                );
+              }
+            : undefined
+        }
       />
     </div>
   );
