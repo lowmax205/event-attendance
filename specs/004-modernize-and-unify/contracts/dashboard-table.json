@@ -1,0 +1,85 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DashboardTableResponse",
+  "type": "object",
+  "properties": {
+    "tableId": { "type": "string" },
+    "role": {
+      "type": "string",
+      "enum": ["admin", "moderator", "student"]
+    },
+    "filters": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["key", "value"],
+        "properties": {
+          "key": { "type": "string" },
+          "value": {},
+          "appliedAt": { "type": "string", "format": "date-time" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "pagination": {
+      "type": "object",
+      "required": ["page", "pageSize", "total"],
+      "properties": {
+        "page": { "type": "integer", "minimum": 1 },
+        "pageSize": { "type": "integer", "minimum": 1 },
+        "total": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "columns": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["key", "header"],
+        "properties": {
+          "key": { "type": "string" },
+          "header": { "type": "string" },
+          "format": {
+            "type": "string",
+            "enum": ["text", "date", "status", "avatar"]
+          },
+          "responsive": {
+            "type": "object",
+            "properties": {
+              "minWidth": { "type": "integer", "minimum": 0 },
+              "maxWidth": { "type": "integer", "minimum": 0 }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "rows": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "state": {
+      "type": "string",
+      "enum": ["loaded", "loading", "empty", "error"]
+    },
+    "messageKey": {
+      "type": ["string", "null"],
+      "description": "Reference into StateMessageRegistry when state != loaded"
+    }
+  },
+  "required": [
+    "tableId",
+    "role",
+    "filters",
+    "pagination",
+    "columns",
+    "rows",
+    "state"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,49 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DashboardWidgetsResponse",
+  "type": "object",
+  "properties": {
+    "role": {
+      "type": "string",
+      "enum": ["admin", "moderator", "student"]
+    },
+    "timeframe": {
+      "type": "string",
+      "enum": ["today", "week", "month", "custom"]
+    },
+    "widgets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["widgetKey", "definitionId", "data"],
+        "properties": {
+          "widgetKey": { "type": "string" },
+          "definitionId": { "type": "string" },
+          "data": {
+            "type": "object",
+            "description": "Normalized payload matching WidgetDefinition.dataShape"
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "lastSynced": { "type": "string", "format": "date-time" },
+              "refreshInterval": { "type": "integer", "minimum": 0 }
+            },
+            "additionalProperties": false
+          },
+          "state": {
+            "type": "string",
+            "enum": ["loaded", "loading", "empty", "error"]
+          },
+          "messageKey": {
+            "type": ["string", "null"],
+            "description": "Reference into StateMessageRegistry when state != loaded"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["role", "timeframe", "widgets"],
+  "additionalProperties": false
+}
