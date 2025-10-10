@@ -47,7 +47,7 @@ interface AttendanceTableProps {
   };
   onPaginationChange: (pageIndex: number) => void;
   onViewDetails: (attendanceId: string) => void;
-  onVerify: (attendanceId: string) => void;
+  onVerify?: (attendanceId: string) => void;
   isLoading?: boolean;
 }
 
@@ -126,34 +126,53 @@ export function AttendanceTable({
         </div>
       ),
     },
-    {
-      id: "actions",
-      header: "Actions",
-      cell: ({ row }) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => onViewDetails(row.original.id)}>
+    onVerify
+      ? {
+          id: "actions",
+          header: "Actions",
+          cell: ({ row }) => (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                  <span className="sr-only">Open menu</span>
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => onViewDetails(row.original.id)}
+                >
+                  <Eye className="mr-2 h-4 w-4" />
+                  View Details
+                </DropdownMenuItem>
+                {row.original.verificationStatus ===
+                  VerificationStatus.Pending && (
+                  <DropdownMenuItem onClick={() => onVerify(row.original.id)}>
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Verify
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ),
+        }
+      : {
+          id: "actions",
+          header: "Actions",
+          cell: ({ row }) => (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onViewDetails(row.original.id)}
+              className="h-8"
+            >
               <Eye className="mr-2 h-4 w-4" />
-              View Details
-            </DropdownMenuItem>
-            {row.original.verificationStatus === VerificationStatus.Pending && (
-              <DropdownMenuItem onClick={() => onVerify(row.original.id)}>
-                <CheckCircle className="mr-2 h-4 w-4" />
-                Verify
-              </DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ),
-    },
+              View
+            </Button>
+          ),
+        },
   ];
 
   return (

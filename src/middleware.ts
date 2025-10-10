@@ -31,17 +31,20 @@ const roleBasedRoutes: Record<
 > = {
   "/dashboard/student": ["Student", "Moderator", "Administrator"],
   "/dashboard/moderator": ["Moderator", "Administrator"],
-  "/dashboard/admin": ["Administrator"],
+  "/dashboard/admin": ["Administrator", "Moderator"],
   "/events/create": ["Moderator", "Administrator"],
   "/events/manage": ["Moderator", "Administrator"],
   // Analytics dashboard (admin only)
-  "/dashboard/admin/analytics": ["Administrator"],
-  // User management (admin only)
-  "/dashboard/admin/users": ["Administrator"],
+  "/dashboard/admin/analytics": ["Administrator", "Moderator"],
+  // User management (admin primary, moderator limited)
+  "/dashboard/admin/users": ["Administrator", "Moderator"],
   // Event management by moderators
   "/dashboard/moderator/events": ["Moderator", "Administrator"],
   // Attendance management by moderators
   "/dashboard/moderator/attendance": ["Moderator", "Administrator"],
+  // All events and attendance views (moderator limited access)
+  "/dashboard/admin/events": ["Administrator", "Moderator"],
+  "/dashboard/admin/attendance": ["Administrator", "Moderator"],
 };
 
 // Public routes that don't require authentication

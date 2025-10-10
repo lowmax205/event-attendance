@@ -18,6 +18,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { EventDetailDialog } from "@/components/dashboard/moderator/event-management/event-detail-dialog";
 import { Calendar, Users, CheckCircle, Clock, Eye } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -74,6 +75,13 @@ export function ModeratorDashboard({
 }: ModeratorDashboardProps) {
   const [selectedVerification, setSelectedVerification] =
     useState<PendingVerification | null>(null);
+  const [viewEventId, setViewEventId] = useState<string | null>(null);
+  const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
+
+  const handleViewEvent = (eventId: string) => {
+    setViewEventId(eventId);
+    setIsEventDialogOpen(true);
+  };
 
   return (
     <div className="space-y-6">
@@ -177,12 +185,14 @@ export function ModeratorDashboard({
                       </TableCell>
                       <TableCell>{event.attendanceCount}</TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link
-                            href={`/dashboard/moderator/events/${event.id}/edit`}
-                          >
-                            View
-                          </Link>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="gap-1"
+                          onClick={() => handleViewEvent(event.id)}
+                        >
+                          <Eye className="h-4 w-4" />
+                          View
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -395,6 +405,17 @@ export function ModeratorDashboard({
           </div>
         </CardContent>
       </Card>
+
+      <EventDetailDialog
+        eventId={viewEventId}
+        open={isEventDialogOpen}
+        onOpenChange={(open) => {
+          setIsEventDialogOpen(open);
+          if (!open) {
+            setViewEventId(null);
+          }
+        }}
+      />
     </div>
   );
 }

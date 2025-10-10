@@ -3,76 +3,108 @@
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  AttendanceTable,
-  type AttendanceRow,
-} from "@/components/dashboard/moderator/attendance-management/attendance-table";
-import { AttendanceDetailDialog } from "@/components/dashboard/moderator/attendance-management/attendance-detail-dialog";
+  EventTable,
+  type EventRow,
+} from "@/components/dashboard/moderator/event-management/event-table";
+import { EventForm } from "@/components/dashboard/moderator/event-management/event-form";
+import { EventDetailDialog } from "@/components/dashboard/moderator/event-management/event-detail-dialog";
 import {
-  AttendanceFilterMenu,
-  type AttendanceFilterValues,
-} from "@/components/dashboard/shared/attendance-filter-menu";
+  EventFilterMenu,
+  type EventFilterValues,
+} from "@/components/dashboard/moderator/event-management/event-filters";
 import { DashboardSearchInput } from "@/components/dashboard/shared/dashboard-search-input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
-import { listMyAttendances } from "@/actions/attendance/list-mine";
-import { VerificationStatus } from "@prisma/client";
+import { listEvents } from "@/actions/events/list";
+import { deleteEvent } from "@/actions/events/delete";
+import { EventStatus } from "@prisma/client";
 import { formatDistanceToNow } from "date-fns";
-import { RefreshCw } from "lucide-react";
+import { Plus, RefreshCw, ShieldAlert } from "lucide-react";
 
-type AttendanceSummary = {
-  totalPending: number;
-  totalApproved: number;
-  totalRejected: number;
-  totalDisputed: number;
+interface EventSummary {
+  totalActive: number;
+  totalCompleted: number;
+  totalCancelled: number;
+  upcomingEvents: number;
+}
+
+const EMPTY_SUMMARY: EventSummary = {
+  totalActive: 0,
+  totalCompleted: 0,
+  totalCancelled: 0,
+  upcomingEvents: 0,
 };
 
-type PageFilterValues = {
-  status?: string;
-  sortBy?: string;
-  sortOrder?: string;
-  startDate?: string;
-  endDate?: string;
+interface EventManagementViewProps {
+  title: string;
+  description: string;
+  scope: "mine" | "all";
+  basePath: string;
+  showCreateButton?: boolean;
+  searchPlaceholder?: string;
+  readOnly?: boolean;
+  readOnlyMessage?: string;
+}
+
+type PageFilterValues = EventFilterValues & {
   search?: string;
 };
 
 const DEFAULT_FILTERS: PageFilterValues = {
   status: undefined,
-  sortBy: "checkInSubmittedAt",
+  sortBy: "startDateTime",
   sortOrder: "desc",
   startDate: undefined,
   endDate: undefined,
   search: undefined,
 };
 
-const EMPTY_SUMMARY: AttendanceSummary = {
-  totalPending: 0,
-  totalApproved: 0,
-  totalRejected: 0,
-  totalDisputed: 0,
-};
-
-export default function MyAttendancePage() {
+export function EventManagementView({
+  title,
+  description,
+  scope,
+  basePath,
+  showCreateButton = true,
+  searchPlaceholder = "Search by event or venue",
+  readOnly = false,
+  readOnlyMessage,
+}: EventManagementViewProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [fullAttendances, setFullAttendances] = React.useState<any[]>([]);
+  const [events, setEvents] = React.useState<EventRow[]>([]);
   const [pagination, setPagination] = React.useState({
     pageIndex: 0,
     pageSize: 20,
     totalPages: 0,
     totalItems: 0,
   });
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [detailDialogOpen, setDetailDialogOpen] = React.useState(false);
-  const [selectedAttendanceId, setSelectedAttendanceId] = React.useState<
-    string | null
-  >(null);
-  const [summary, setSummary] =
-    React.useState<AttendanceSummary>(EMPTY_SUMMARY);
+  const [summary, setSummary] = React.useState<EventSummary>(EMPTY_SUMMARY);
   const [lastSyncedAt, setLastSyncedAt] = React.useState<Date | null>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [searchDraft, setSearchDraft] = React.useState<string | undefined>();
+  const [createDialogOpen, setCreateDialogOpen] = React.useState(false);
+  const [editDialogOpen, setEditDialogOpen] = React.useState(false);
+  const [selectedEventId, setSelectedEventId] = React.useState<string | null>(
+    null,
+  );
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
+  const [eventToDelete, setEventToDelete] = React.useState<string | null>(null);
+  const [viewDialogOpen, setViewDialogOpen] = React.useState(false);
+  const [viewEventId, setViewEventId] = React.useState<string | null>(null);
 
   const PAGE_SIZE = 20;
   const searchParamsString = searchParams.toString();
@@ -88,10 +120,6 @@ export default function MyAttendancePage() {
       search: params.get("search") || undefined,
     } satisfies PageFilterValues;
   }, [searchParamsString]);
-
-  const [searchDraft, setSearchDraft] = React.useState<string | undefined>(
-    appliedFilters.search,
-  );
 
   React.useEffect(() => {
     setSearchDraft(appliedFilters.search);
@@ -120,33 +148,43 @@ export default function MyAttendancePage() {
     [],
   );
 
-  const fetchAttendances = React.useCallback(async () => {
+  const fetchEvents = React.useCallback(async () => {
     try {
       setIsLoading(true);
-
-      const result = await listMyAttendances({
+      const result = await listEvents({
         page: currentPage,
         limit: PAGE_SIZE,
-        status: appliedFilters.status as VerificationStatus | undefined,
+        status: appliedFilters.status as EventStatus | undefined,
         startDate: appliedFilters.startDate,
         endDate: appliedFilters.endDate,
         search: appliedFilters.search,
         sortBy: (appliedFilters.sortBy ?? DEFAULT_FILTERS.sortBy) as
-          | "checkInSubmittedAt"
-          | "verifiedAt"
-          | "verificationStatus"
-          | "eventName"
+          | "name"
+          | "startDateTime"
+          | "endDateTime"
+          | "status"
           | "createdAt",
         sortOrder: (appliedFilters.sortOrder ?? DEFAULT_FILTERS.sortOrder) as
           | "asc"
           | "desc",
+        scope,
       });
 
       if (!result.success || !result.data) {
-        throw new Error(result.error || "Failed to fetch attendances");
+        throw new Error(result.error || "Failed to fetch events");
       }
 
-      setFullAttendances(result.data.attendances);
+      setEvents(
+        result.data.events.map((event) => ({
+          id: event.id,
+          name: event.name,
+          startDateTime: new Date(event.startDateTime),
+          endDateTime: new Date(event.endDateTime),
+          status: event.status,
+          venueName: event.venueName ?? "",
+          _count: event._count,
+        })) as EventRow[],
+      );
       setPagination({
         pageIndex: currentPage - 1,
         pageSize: PAGE_SIZE,
@@ -159,9 +197,7 @@ export default function MyAttendancePage() {
       toast({
         title: "Error",
         description:
-          error instanceof Error
-            ? error.message
-            : "Failed to fetch attendances",
+          error instanceof Error ? error.message : "Failed to fetch events",
         variant: "destructive",
       });
     } finally {
@@ -175,6 +211,7 @@ export default function MyAttendancePage() {
     appliedFilters.startDate,
     appliedFilters.status,
     currentPage,
+    scope,
     toast,
   ]);
 
@@ -188,6 +225,7 @@ export default function MyAttendancePage() {
         appliedFilters.sortBy ?? DEFAULT_FILTERS.sortBy,
         appliedFilters.sortOrder ?? DEFAULT_FILTERS.sortOrder,
         currentPage,
+        scope,
       ].join("|"),
     [
       appliedFilters.endDate,
@@ -197,6 +235,7 @@ export default function MyAttendancePage() {
       appliedFilters.startDate,
       appliedFilters.status,
       currentPage,
+      scope,
     ],
   );
 
@@ -207,41 +246,8 @@ export default function MyAttendancePage() {
       return;
     }
     lastFetchKeyRef.current = fetchKey;
-    void fetchAttendances();
-  }, [fetchAttendances, fetchKey]);
-
-  const attendances = React.useMemo<AttendanceRow[]>(() => {
-    return fullAttendances.map((att) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const a = att as any;
-      return {
-        id: a.id,
-        user: {
-          firstName: a.user.firstName,
-          lastName: a.user.lastName,
-          email: a.user.email,
-          UserProfile: a.user.UserProfile
-            ? {
-                studentId: a.user.UserProfile.studentId,
-                department: a.user.UserProfile.department,
-              }
-            : null,
-        },
-        event: {
-          id: a.event.id,
-          name: a.event.name,
-        },
-        checkInSubmittedAt: a.checkInSubmittedAt,
-        verificationStatus: a.verificationStatus,
-        distanceMeters: a.checkInDistance ?? a.distanceMeters ?? null,
-      };
-    });
-  }, [fullAttendances]);
-
-  const selectedAttendance = React.useMemo(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return fullAttendances.find((a: any) => a.id === selectedAttendanceId);
-  }, [fullAttendances, selectedAttendanceId]);
+    void fetchEvents();
+  }, [fetchEvents, fetchKey]);
 
   const updateUrlParams = React.useCallback(
     (newFilters: PageFilterValues, page = 1) => {
@@ -251,12 +257,10 @@ export default function MyAttendancePage() {
         return;
       }
 
-      const targetPath = nextQuery
-        ? `/dashboard/moderator/attendance?${nextQuery}`
-        : `/dashboard/moderator/attendance`;
+      const targetPath = nextQuery ? `${basePath}?${nextQuery}` : basePath;
       router.push(targetPath);
     },
-    [appliedFilters, buildQueryString, currentPage, router],
+    [appliedFilters, basePath, buildQueryString, currentPage, router],
   );
 
   const handleSearchChange = (value: string | undefined) => {
@@ -293,7 +297,7 @@ export default function MyAttendancePage() {
     }
   };
 
-  const handleApplyFilters = (newFilters: AttendanceFilterValues) => {
+  const handleApplyFilters = (newFilters: EventFilterValues) => {
     const normalizedFilters: PageFilterValues = {
       ...appliedFilters,
       status: newFilters.status,
@@ -314,7 +318,7 @@ export default function MyAttendancePage() {
   };
 
   const handleRefresh = () => {
-    void fetchAttendances();
+    void fetchEvents();
   };
 
   const appliedFilterCount = React.useMemo(() => {
@@ -336,7 +340,7 @@ export default function MyAttendancePage() {
     return count;
   }, [appliedFilters]);
 
-  const filterMenuValues: AttendanceFilterValues = {
+  const filterMenuValues: EventFilterValues = {
     status: appliedFilters.status,
     startDate: appliedFilters.startDate,
     endDate: appliedFilters.endDate,
@@ -344,29 +348,85 @@ export default function MyAttendancePage() {
     sortOrder: appliedFilters.sortOrder,
   };
 
-  const detailCountLabel = React.useMemo(() => {
-    if (pagination.totalItems === 0) {
-      return "No attendance records found";
+  const handleEdit = (eventId: string) => {
+    if (readOnly) return;
+    setSelectedEventId(eventId);
+    setEditDialogOpen(true);
+  };
+
+  const handleView = (eventId: string) => {
+    setViewEventId(eventId);
+    setViewDialogOpen(true);
+  };
+
+  const handleDownloadQR = async (eventId: string) => {
+    if (readOnly) return;
+    toast({
+      title: "Download QR",
+      description: `QR code download for event ${eventId} will be available soon.`,
+    });
+  };
+
+  const handleDelete = (eventId: string) => {
+    if (readOnly) return;
+    setEventToDelete(eventId);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = React.useCallback(async () => {
+    if (!eventToDelete || readOnly) return;
+    try {
+      const result = await deleteEvent(eventToDelete);
+      if (!result.success) {
+        throw new Error(result.error || "Failed to delete event");
+      }
+      toast({
+        title: "Event deleted",
+        description: "Event has been deleted successfully",
+      });
+      setDeleteDialogOpen(false);
+      setEventToDelete(null);
+      void fetchEvents();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error ? error.message : "Failed to delete event",
+        variant: "destructive",
+      });
     }
+  }, [eventToDelete, fetchEvents, readOnly, toast]);
+
+  const detailCountLabel = React.useMemo(() => {
     const firstItem = pagination.pageIndex * pagination.pageSize + 1;
     const lastItem = Math.min(
       (pagination.pageIndex + 1) * pagination.pageSize,
       pagination.totalItems,
     );
-    return `Showing ${firstItem}-${lastItem} of ${pagination.totalItems} records`;
+    if (pagination.totalItems === 0) {
+      return "No events found";
+    }
+    return `Showing ${firstItem}-${lastItem} of ${pagination.totalItems} events`;
   }, [pagination.pageIndex, pagination.pageSize, pagination.totalItems]);
 
   return (
     <div className="container mx-auto space-y-8 py-8">
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+      {readOnly && (
+        <Alert className="border-border/60">
+          <ShieldAlert className="mt-0.5 h-4 w-4 text-muted-foreground" />
+          <AlertTitle>View-only access</AlertTitle>
+          <AlertDescription>
+            {readOnlyMessage ??
+              "You can review events from across the institution but cannot make changes with moderator permissions."}
+          </AlertDescription>
+        </Alert>
+      )}
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
         <div className="space-y-4">
-          <h1 className="text-3xl font-semibold tracking-tight">
-            My Attendance
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Keep track of your attendance submissions across every event you
-            joined.
-          </p>
+          <div>
+            <h1 className="text-3xl font-semibold tracking-tight">{title}</h1>
+            <p className="text-sm text-muted-foreground">{description}</p>
+          </div>
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             <span>{detailCountLabel}</span>
             {lastSyncedAt && (
@@ -386,11 +446,11 @@ export default function MyAttendancePage() {
               onSubmit={handleSearchSubmit}
               onClear={handleSearchClear}
               disabled={isLoading}
-              placeholder="Search by event or venue"
-              ariaLabel="Search my attendance records"
+              placeholder={searchPlaceholder}
+              ariaLabel="Search events"
             />
             <div className="flex items-center gap-2">
-              <AttendanceFilterMenu
+              <EventFilterMenu
                 values={filterMenuValues}
                 onApplyFilters={handleApplyFilters}
                 onClearFilters={handleClearFilters}
@@ -412,84 +472,134 @@ export default function MyAttendancePage() {
             </div>
           </div>
         </div>
+        {showCreateButton && !readOnly && (
+          <div className="flex justify-end lg:items-start">
+            <Button onClick={() => setCreateDialogOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Create Event
+            </Button>
+          </div>
+        )}
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Records</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Events</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-semibold">{pagination.totalItems}</p>
             <p className="text-xs text-muted-foreground">
-              Across your filtered attendance history
+              Across current filters
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">
-              Pending Review
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Active</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-semibold">{summary.totalPending}</p>
+            <p className="text-3xl font-semibold">{summary.totalActive}</p>
             <p className="text-xs text-muted-foreground">
-              Awaiting moderator verification
+              Includes {summary.upcomingEvents} upcoming
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Approved</CardTitle>
+            <CardTitle className="text-sm font-medium">Completed</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-semibold">{summary.totalApproved}</p>
-            <p className="text-xs text-muted-foreground">
-              Confirmed attendances
-            </p>
+            <p className="text-3xl font-semibold">{summary.totalCompleted}</p>
+            <p className="text-xs text-muted-foreground">Already finished</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">
-              Attention Needed
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Cancelled</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-semibold">
-              {summary.totalRejected + summary.totalDisputed}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Rejected or disputed submissions
-            </p>
+            <p className="text-3xl font-semibold">{summary.totalCancelled}</p>
+            <p className="text-xs text-muted-foreground">Called off events</p>
           </CardContent>
         </Card>
       </div>
 
-      <AttendanceTable
-        attendances={attendances}
+      <EventTable
+        events={events}
         pagination={pagination}
         onPaginationChange={handlePaginationChange}
-        onViewDetails={(attendanceId) => {
-          setSelectedAttendanceId(attendanceId);
-          setDetailDialogOpen(true);
-        }}
+        onView={handleView}
+        onEdit={handleEdit}
+        onDownloadQR={handleDownloadQR}
+        onDelete={handleDelete}
         isLoading={isLoading}
+        isReadOnly={readOnly}
       />
 
-      {selectedAttendance && (
-        <AttendanceDetailDialog
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          attendance={selectedAttendance as any}
-          open={detailDialogOpen}
-          onOpenChange={(open) => {
-            setDetailDialogOpen(open);
-            if (!open) {
-              setSelectedAttendanceId(null);
-            }
+      {showCreateButton && !readOnly && (
+        <EventForm
+          open={createDialogOpen}
+          onOpenChange={setCreateDialogOpen}
+          mode="create"
+          onSuccess={() => {
+            setCreateDialogOpen(false);
+            void fetchEvents();
           }}
         />
+      )}
+
+      {selectedEventId && !readOnly && (
+        <EventForm
+          open={editDialogOpen}
+          onOpenChange={(open) => {
+            setEditDialogOpen(open);
+            if (!open) {
+              setSelectedEventId(null);
+            }
+          }}
+          mode="edit"
+          eventId={selectedEventId}
+          onSuccess={() => {
+            setEditDialogOpen(false);
+            setSelectedEventId(null);
+            void fetchEvents();
+          }}
+        />
+      )}
+
+      <EventDetailDialog
+        eventId={viewEventId}
+        open={viewDialogOpen}
+        onOpenChange={(open) => {
+          setViewDialogOpen(open);
+          if (!open) {
+            setViewEventId(null);
+          }
+        }}
+      />
+
+      {!readOnly && (
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete event?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently remove the
+                event and associated attendance records.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={confirmDelete}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       )}
     </div>
   );

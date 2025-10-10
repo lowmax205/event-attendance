@@ -23,36 +23,194 @@ export async function listAttendances(
     const validatedQuery = attendanceListQuerySchema.parse(query);
     const skip = (validatedQuery.page - 1) * validatedQuery.limit;
 
-    const where: Prisma.AttendanceWhereInput = {};
+    const baseFilters: Prisma.AttendanceWhereInput[] = [];
 
     if (user.role === "Moderator") {
-      where.event = {
-        createdById: user.userId,
-      };
-    }
-
-    if (validatedQuery.status) {
-      where.verificationStatus = validatedQuery.status;
+      baseFilters.push({
+        event: {
+          createdById: user.userId,
+        },
+      });
     }
 
     if (validatedQuery.eventId) {
-      where.eventId = validatedQuery.eventId;
+      baseFilters.push({ eventId: validatedQuery.eventId });
     }
 
     if (validatedQuery.startDate || validatedQuery.endDate) {
-      where.checkInSubmittedAt = {};
+      const dateFilter: Prisma.AttendanceWhereInput = {};
+      const range: Prisma.DateTimeFilter = {};
+
       if (validatedQuery.startDate) {
-        where.checkInSubmittedAt.gte = new Date(validatedQuery.startDate);
+        range.gte = new Date(validatedQuery.startDate);
       }
+
       if (validatedQuery.endDate) {
-        where.checkInSubmittedAt.lte = new Date(validatedQuery.endDate);
+        range.lte = new Date(validatedQuery.endDate);
       }
+
+      dateFilter.checkInSubmittedAt = range;
+      baseFilters.push(dateFilter);
     }
 
-    const total = await db.attendance.count({ where });
+    if (validatedQuery.department) {
+      baseFilters.push({
+        user: {
+          UserProfile: {
+            is: {
+              department: {
+                contains: validatedQuery.department,
+                mode: "insensitive",
+              },
+            },
+          },
+        },
+      });
+    }
+
+    if (validatedQuery.course) {
+      baseFilters.push({
+        user: {
+          UserProfile: {
+            is: {
+              // Course data maps to department until dedicated field exists
+              department: {
+                contains: validatedQuery.course,
+                mode: "insensitive",
+              },
+            },
+          },
+        },
+      });
+    }
+
+    if (validatedQuery.search) {
+      const searchTerm = validatedQuery.search.trim();
+      baseFilters.push({
+        OR: [
+          {
+            user: {
+              firstName: {
+                contains: searchTerm,
+                mode: "insensitive",
+              },
+            },
+          },
+          {
+            user: {
+              lastName: {
+                contains: searchTerm,
+                mode: "insensitive",
+              },
+            },
+          },
+          {
+            user: {
+              email: {
+                contains: searchTerm,
+                mode: "insensitive",
+              },
+            },
+          },
+          {
+            event: {
+              name: {
+                contains: searchTerm,
+                mode: "insensitive",
+              },
+            },
+          },
+        ],
+      });
+    }
+
+    const listFilters = [...baseFilters];
+
+    if (validatedQuery.status) {
+      listFilters.push({ verificationStatus: validatedQuery.status });
+    }
+
+    const listWhere =
+      listFilters.length > 0
+        ? ({ AND: listFilters } satisfies Prisma.AttendanceWhereInput)
+        : {};
+
+    const total = await db.attendance.count({ where: listWhere });
+
+    const pendingCountPromise =
+      !validatedQuery.status ||
+      validatedQuery.status === VerificationStatus.Pending
+        ? db.attendance.count({
+            where:
+              baseFilters.length > 0
+                ? {
+                    AND: [
+                      ...baseFilters,
+                      { verificationStatus: VerificationStatus.Pending },
+                    ],
+                  }
+                : { verificationStatus: VerificationStatus.Pending },
+          })
+        : Promise.resolve(0);
+
+    const approvedCountPromise =
+      !validatedQuery.status ||
+      validatedQuery.status === VerificationStatus.Approved
+        ? db.attendance.count({
+            where:
+              baseFilters.length > 0
+                ? {
+                    AND: [
+                      ...baseFilters,
+                      { verificationStatus: VerificationStatus.Approved },
+                    ],
+                  }
+                : { verificationStatus: VerificationStatus.Approved },
+          })
+        : Promise.resolve(0);
+
+    const rejectedCountPromise =
+      !validatedQuery.status ||
+      validatedQuery.status === VerificationStatus.Rejected
+        ? db.attendance.count({
+            where:
+              baseFilters.length > 0
+                ? {
+                    AND: [
+                      ...baseFilters,
+                      { verificationStatus: VerificationStatus.Rejected },
+                    ],
+                  }
+                : { verificationStatus: VerificationStatus.Rejected },
+          })
+        : Promise.resolve(0);
+
+    const disputedCountPromise =
+      !validatedQuery.status ||
+      validatedQuery.status === VerificationStatus.Disputed
+        ? db.attendance.count({
+            where:
+              baseFilters.length > 0
+                ? {
+                    AND: [
+                      ...baseFilters,
+                      { verificationStatus: VerificationStatus.Disputed },
+                    ],
+                  }
+                : { verificationStatus: VerificationStatus.Disputed },
+          })
+        : Promise.resolve(0);
+
+    const [totalPending, totalApproved, totalRejected, totalDisputed] =
+      await Promise.all([
+        pendingCountPromise,
+        approvedCountPromise,
+        rejectedCountPromise,
+        disputedCountPromise,
+      ]);
 
     const attendances = await db.attendance.findMany({
-      where,
+      where: listWhere,
       include: {
         user: {
           select: {
@@ -111,6 +269,12 @@ export async function listAttendances(
           limit: validatedQuery.limit,
           total,
           totalPages: Math.ceil(total / validatedQuery.limit),
+        },
+        summary: {
+          totalPending,
+          totalApproved,
+          totalRejected,
+          totalDisputed,
         },
       },
     };

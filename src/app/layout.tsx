@@ -21,6 +21,11 @@ export const metadata: Metadata = {
   title: "Event Attendance System",
   description:
     "A modern event attendance tracking system for educational institutions",
+  icons: {
+    icon: "/images/USC-Logo.png",
+    shortcut: "/images/USC-Logo.png",
+    apple: "/images/USC-Logo.png",
+  },
 };
 
 export default function RootLayout({

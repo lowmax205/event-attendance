@@ -5,7 +5,6 @@ import { useState, useEffect } from "react";
 import {
   Menu,
   X,
-  QrCode,
   LogOut,
   User,
   Calendar,
@@ -52,6 +51,10 @@ export function Navigation() {
   const isOnProfilePage =
     pathname === "/profile" || pathname === "/profile/create";
   const isOnDashboardPage = pathname?.startsWith("/dashboard") || false;
+  const isOnMyEventsPage =
+    pathname?.startsWith("/dashboard/moderator/events") || false;
+  const isOnMyAttendancePage =
+    pathname?.startsWith("/dashboard/moderator/attendance") || false;
 
   // Fetch upcoming/ongoing events when user is authenticated
   useEffect(() => {
@@ -174,7 +177,7 @@ export function Navigation() {
                             href="/events"
                             className="w-full text-center font-medium"
                           >
-                            View All Events
+                            Browse All Events
                           </Link>
                         </DropdownMenuItem>
                       </>
@@ -186,7 +189,7 @@ export function Navigation() {
                         <DropdownMenuSeparator />
                         <DropdownMenuItem asChild>
                           <Link href="/events" className="w-full text-center">
-                            Browse All Events
+                            View All Events
                           </Link>
                         </DropdownMenuItem>
                       </>
@@ -209,7 +212,7 @@ export function Navigation() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-[200px]">
-                      {user.role === "Administrator" && (
+                      {user.role === "Administrator" ? (
                         <>
                           <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
                             Admin
@@ -227,30 +230,77 @@ export function Navigation() {
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>
+                            <Link href="/dashboard/admin/events">
+                              <Calendar className="h-4 w-4 mr-2" />
+                              All Events
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
                             <Link href="/dashboard/admin/attendance">
                               <ClipboardCheck className="h-4 w-4 mr-2" />
                               All Attendances
                             </Link>
                           </DropdownMenuItem>
-                          <DropdownMenuSeparator />
                         </>
-                      )}
-                      {(user.role === "Administrator" ||
-                        user.role === "Moderator") && (
+                      ) : (
                         <>
                           <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-                            {user.role === "Moderator" ? "Moderator" : "Events"}
+                            Limited Actions
                           </div>
                           <DropdownMenuItem asChild>
-                            <Link href="/dashboard/moderator/events">
-                              <Calendar className="h-4 w-4 mr-2" />
-                              My Events
+                            <Link
+                              href="/dashboard/admin/users"
+                              className="flex items-start gap-2 text-sm"
+                            >
+                              <Users className="h-4 w-4 mt-0.5" />
+                              <div className="flex flex-col">
+                                <span>User Management</span>
+                                <span className="text-xs text-muted-foreground">
+                                  Read-only moderator access
+                                </span>
+                              </div>
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>
-                            <Link href="/dashboard/moderator/attendance">
-                              <ClipboardCheck className="h-4 w-4 mr-2" />
-                              My Attendances
+                            <Link
+                              href="/dashboard/admin/analytics"
+                              className="flex items-start gap-2 text-sm"
+                            >
+                              <BarChart3 className="h-4 w-4 mt-0.5" />
+                              <div className="flex flex-col">
+                                <span>Analytics</span>
+                                <span className="text-xs text-muted-foreground">
+                                  Explore institutional trends
+                                </span>
+                              </div>
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link
+                              href="/dashboard/admin/events"
+                              className="flex items-start gap-2 text-sm"
+                            >
+                              <Calendar className="h-4 w-4 mt-0.5" />
+                              <div className="flex flex-col">
+                                <span>All Events</span>
+                                <span className="text-xs text-muted-foreground">
+                                  Manage with moderator limits
+                                </span>
+                              </div>
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link
+                              href="/dashboard/admin/attendance"
+                              className="flex items-start gap-2 text-sm"
+                            >
+                              <ClipboardCheck className="h-4 w-4 mt-0.5" />
+                              <div className="flex flex-col">
+                                <span>All Attendances</span>
+                                <span className="text-xs text-muted-foreground">
+                                  Monitor verifications
+                                </span>
+                              </div>
                             </Link>
                           </DropdownMenuItem>
                         </>
@@ -303,6 +353,32 @@ export function Navigation() {
                         </Link>
                       </DropdownMenuItem>
                     )}
+                    {(user.role === "Moderator" ||
+                      user.role === "Administrator") &&
+                      !isOnMyEventsPage && (
+                        <DropdownMenuItem asChild>
+                          <Link
+                            href="/dashboard/moderator/events"
+                            className="cursor-pointer"
+                          >
+                            <Calendar className="h-4 w-4 mr-2" />
+                            My Events
+                          </Link>
+                        </DropdownMenuItem>
+                      )}
+                    {(user.role === "Moderator" ||
+                      user.role === "Administrator") &&
+                      !isOnMyAttendancePage && (
+                        <DropdownMenuItem asChild>
+                          <Link
+                            href="/dashboard/moderator/attendance"
+                            className="cursor-pointer"
+                          >
+                            <ClipboardCheck className="h-4 w-4 mr-2" />
+                            My Attendances
+                          </Link>
+                        </DropdownMenuItem>
+                      )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onClick={handleLogout}
@@ -365,7 +441,6 @@ export function Navigation() {
                       </p>
                     </div>
 
-                    {/* Dashboard Link */}
                     {!isOnDashboardPage && (
                       <Link
                         href={getDashboardRoute()}
@@ -376,6 +451,32 @@ export function Navigation() {
                         Dashboard
                       </Link>
                     )}
+
+                    {(user.role === "Moderator" ||
+                      user.role === "Administrator") &&
+                      !isOnMyEventsPage && (
+                        <Link
+                          href="/dashboard/moderator/events"
+                          onClick={() => setIsOpen(false)}
+                          className="flex items-center gap-3 text-lg font-medium text-foreground/80 hover:text-foreground transition-colors min-h-[44px]"
+                        >
+                          <Calendar className="h-5 w-5" />
+                          My Events
+                        </Link>
+                      )}
+
+                    {(user.role === "Moderator" ||
+                      user.role === "Administrator") &&
+                      !isOnMyAttendancePage && (
+                        <Link
+                          href="/dashboard/moderator/attendance"
+                          onClick={() => setIsOpen(false)}
+                          className="flex items-center gap-3 text-lg font-medium text-foreground/80 hover:text-foreground transition-colors min-h-[44px]"
+                        >
+                          <ClipboardCheck className="h-5 w-5" />
+                          My Attendances
+                        </Link>
+                      )}
 
                     {/* Profile Link */}
                     {!isOnProfilePage && (
@@ -408,17 +509,6 @@ export function Navigation() {
                       <Map className="h-5 w-5" />
                       Road Map
                     </Link>
-
-                    {/* Scan QR Link */}
-                    <Link
-                      href="/attendance"
-                      onClick={() => setIsOpen(false)}
-                      className="flex items-center gap-3 text-lg font-medium text-foreground/80 hover:text-foreground transition-colors min-h-[44px]"
-                    >
-                      <QrCode className="h-5 w-5" />
-                      Scan QR
-                    </Link>
-
                     {/* Events Section */}
                     <div className="space-y-2">
                       <div className="flex items-center gap-3 text-lg font-medium text-foreground/80 min-h-[44px]">
@@ -468,7 +558,7 @@ export function Navigation() {
                           Management
                         </div>
                         <div className="ml-8 space-y-2">
-                          {user.role === "Administrator" && (
+                          {user.role === "Administrator" ? (
                             <>
                               <Link
                                 href="/dashboard/admin/users"
@@ -491,6 +581,16 @@ export function Navigation() {
                                 </div>
                               </Link>
                               <Link
+                                href="/dashboard/admin/events"
+                                onClick={() => setIsOpen(false)}
+                                className="block py-2 text-sm text-foreground/70 hover:text-foreground"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <Calendar className="h-4 w-4" />
+                                  All Events
+                                </div>
+                              </Link>
+                              <Link
                                 href="/dashboard/admin/attendance"
                                 onClick={() => setIsOpen(false)}
                                 className="block py-2 text-sm text-foreground/70 hover:text-foreground"
@@ -501,27 +601,81 @@ export function Navigation() {
                                 </div>
                               </Link>
                             </>
+                          ) : (
+                            <>
+                              <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                                Limited Actions
+                              </div>
+                              <Link
+                                href="/dashboard/admin/users"
+                                onClick={() => setIsOpen(false)}
+                                className="block rounded-md border border-dashed border-border/60 px-2 py-2 text-sm text-foreground/70 hover:text-foreground"
+                              >
+                                <div className="flex items-start gap-2">
+                                  <Users className="h-4 w-4 mt-0.5" />
+                                  <div className="flex flex-col">
+                                    <span className="text-sm font-medium">
+                                      User Management
+                                    </span>
+                                    <span className="text-xs text-muted-foreground">
+                                      Review users (read-only)
+                                    </span>
+                                  </div>
+                                </div>
+                              </Link>
+                              <Link
+                                href="/dashboard/admin/analytics"
+                                onClick={() => setIsOpen(false)}
+                                className="block rounded-md border border-dashed border-border/60 px-2 py-2 text-sm text-foreground/70 hover:text-foreground"
+                              >
+                                <div className="flex items-start gap-2">
+                                  <BarChart3 className="h-4 w-4 mt-0.5" />
+                                  <div className="flex flex-col">
+                                    <span className="text-sm font-medium">
+                                      Analytics
+                                    </span>
+                                    <span className="text-xs text-muted-foreground">
+                                      Insights with moderator scope
+                                    </span>
+                                  </div>
+                                </div>
+                              </Link>
+                              <Link
+                                href="/dashboard/admin/events"
+                                onClick={() => setIsOpen(false)}
+                                className="block rounded-md border border-dashed border-border/60 px-2 py-2 text-sm text-foreground/70 hover:text-foreground"
+                              >
+                                <div className="flex items-start gap-2">
+                                  <Calendar className="h-4 w-4 mt-0.5" />
+                                  <div className="flex flex-col">
+                                    <span className="text-sm font-medium">
+                                      All Events
+                                    </span>
+                                    <span className="text-xs text-muted-foreground">
+                                      View all event records
+                                    </span>
+                                  </div>
+                                </div>
+                              </Link>
+                              <Link
+                                href="/dashboard/admin/attendance"
+                                onClick={() => setIsOpen(false)}
+                                className="block rounded-md border border-dashed border-border/60 px-2 py-2 text-sm text-foreground/70 hover:text-foreground"
+                              >
+                                <div className="flex items-start gap-2">
+                                  <ClipboardCheck className="h-4 w-4 mt-0.5" />
+                                  <div className="flex flex-col">
+                                    <span className="text-sm font-medium">
+                                      All Attendances
+                                    </span>
+                                    <span className="text-xs text-muted-foreground">
+                                      Monitor disputes and approvals
+                                    </span>
+                                  </div>
+                                </div>
+                              </Link>
+                            </>
                           )}
-                          <Link
-                            href="/dashboard/moderator/events"
-                            onClick={() => setIsOpen(false)}
-                            className="block py-2 text-sm text-foreground/70 hover:text-foreground"
-                          >
-                            <div className="flex items-center gap-2">
-                              <Calendar className="h-4 w-4" />
-                              My Events
-                            </div>
-                          </Link>
-                          <Link
-                            href="/dashboard/moderator/attendance"
-                            onClick={() => setIsOpen(false)}
-                            className="block py-2 text-sm text-foreground/70 hover:text-foreground"
-                          >
-                            <div className="flex items-center gap-2">
-                              <ClipboardCheck className="h-4 w-4" />
-                              My Attendances
-                            </div>
-                          </Link>
                         </div>
                       </div>
                     )}

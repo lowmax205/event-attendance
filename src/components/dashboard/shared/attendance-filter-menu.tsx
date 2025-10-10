@@ -2,9 +2,10 @@
 
 import * as React from "react";
 import { format } from "date-fns";
-import { EventStatus } from "@prisma/client";
+import { VerificationStatus } from "@prisma/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Popover,
@@ -22,37 +23,40 @@ import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon, Filter, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type EventFilterValues = {
+export type AttendanceFilterValues = {
   status?: string;
   sortBy?: string;
   sortOrder?: string;
   startDate?: string;
   endDate?: string;
+  department?: string;
+  course?: string;
 };
 
-interface EventFilterMenuProps {
-  values: EventFilterValues;
-  onApplyFilters: (values: EventFilterValues) => void;
+interface AttendanceFilterMenuProps {
+  values: AttendanceFilterValues;
+  onApplyFilters: (values: AttendanceFilterValues) => void;
   onClearFilters: () => void;
   isLoading?: boolean;
   activeFilterCount?: number;
+  showDepartmentFilters?: boolean;
 }
 
 const STATUS_ALL = "__all_statuses";
-const SORT_DEFAULT = "startDateTime";
+const SORT_DEFAULT = "checkInSubmittedAt";
 const SORT_ORDER_DEFAULT = "desc";
 
 const statusOptions = [
-  { value: EventStatus.Active, label: "Active" },
-  { value: EventStatus.Completed, label: "Completed" },
-  { value: EventStatus.Cancelled, label: "Cancelled" },
+  { value: VerificationStatus.Pending, label: "Pending" },
+  { value: VerificationStatus.Approved, label: "Approved" },
+  { value: VerificationStatus.Rejected, label: "Rejected" },
+  { value: VerificationStatus.Disputed, label: "Disputed" },
 ];
 
 const sortOptions = [
-  { value: "startDateTime", label: "Start Date" },
-  { value: "endDateTime", label: "End Date" },
-  { value: "name", label: "Name" },
-  { value: "status", label: "Status" },
+  { value: "checkInSubmittedAt", label: "Newest" },
+  { value: "verifiedAt", label: "Verified Date" },
+  { value: "verificationStatus", label: "Status" },
   { value: "createdAt", label: "Created Date" },
 ];
 
@@ -61,15 +65,16 @@ const sortOrderOptions = [
   { value: "asc", label: "Ascending" },
 ];
 
-export function EventFilterMenu({
+export function AttendanceFilterMenu({
   values,
   onApplyFilters,
   onClearFilters,
   isLoading = false,
   activeFilterCount = 0,
-}: EventFilterMenuProps) {
+  showDepartmentFilters = false,
+}: AttendanceFilterMenuProps) {
   const [open, setOpen] = React.useState(false);
-  const [draft, setDraft] = React.useState<EventFilterValues>(values);
+  const [draft, setDraft] = React.useState<AttendanceFilterValues>(values);
 
   React.useEffect(() => {
     if (!open) {
@@ -109,7 +114,7 @@ export function EventFilterMenu({
           variant="outline"
           size="sm"
           className="gap-2"
-          aria-label="Toggle event filters"
+          aria-label="Toggle attendance filters"
           disabled={isLoading && !open}
         >
           <Filter className="h-4 w-4" />
@@ -128,7 +133,7 @@ export function EventFilterMenu({
         <div className="p-4 space-y-4">
           <div className="grid grid-cols-1 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="event-status">Status</Label>
+              <Label htmlFor="attendance-status">Status</Label>
               <Select
                 value={statusValue}
                 onValueChange={(value) =>
@@ -139,7 +144,7 @@ export function EventFilterMenu({
                 }
                 disabled={isLoading}
               >
-                <SelectTrigger id="event-status">
+                <SelectTrigger id="attendance-status">
                   <SelectValue placeholder="All statuses" />
                 </SelectTrigger>
                 <SelectContent>
@@ -154,7 +159,7 @@ export function EventFilterMenu({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="event-sort">Sort By</Label>
+              <Label htmlFor="attendance-sort">Sort By</Label>
               <Select
                 value={sortValue}
                 onValueChange={(value) =>
@@ -165,7 +170,7 @@ export function EventFilterMenu({
                 }
                 disabled={isLoading}
               >
-                <SelectTrigger id="event-sort">
+                <SelectTrigger id="attendance-sort">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -179,7 +184,7 @@ export function EventFilterMenu({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="event-sort-order">Sort Order</Label>
+              <Label htmlFor="attendance-sort-order">Sort Order</Label>
               <Select
                 value={sortOrderValue}
                 onValueChange={(value) =>
@@ -190,7 +195,7 @@ export function EventFilterMenu({
                 }
                 disabled={isLoading}
               >
-                <SelectTrigger id="event-sort-order">
+                <SelectTrigger id="attendance-sort-order">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -204,7 +209,7 @@ export function EventFilterMenu({
             </div>
 
             <div className="space-y-2">
-              <Label>Event Date</Label>
+              <Label>Submission Date</Label>
               <div className="grid grid-cols-1 gap-2">
                 <Popover>
                   <PopoverTrigger asChild>
@@ -264,6 +269,41 @@ export function EventFilterMenu({
                 </Popover>
               </div>
             </div>
+
+            {showDepartmentFilters && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="attendance-department">Department</Label>
+                  <Input
+                    id="attendance-department"
+                    placeholder="e.g. Computer Science"
+                    value={draft.department ?? ""}
+                    onChange={(event) =>
+                      setDraft((prev) => ({
+                        ...prev,
+                        department: event.target.value || undefined,
+                      }))
+                    }
+                    disabled={isLoading}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="attendance-course">Course</Label>
+                  <Input
+                    id="attendance-course"
+                    placeholder="e.g. BSCS"
+                    value={draft.course ?? ""}
+                    onChange={(event) =>
+                      setDraft((prev) => ({
+                        ...prev,
+                        course: event.target.value || undefined,
+                      }))
+                    }
+                    disabled={isLoading}
+                  />
+                </div>
+              </>
+            )}
           </div>
 
           <div className="flex items-center justify-between gap-2">

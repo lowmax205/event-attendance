@@ -60,6 +60,7 @@ interface ListUsersResponse {
       totalModerators: number;
     };
   };
+  message?: string;
   error?: string;
 }
 
@@ -82,20 +83,15 @@ interface UserActionResponse {
 /**
  * T014: List users with filtering, pagination, and sorting
  * Endpoint: GET /api/admin/users
- * Roles: ADMIN
+ * Roles: ADMIN (full access), MODERATOR (read-only)
  */
 export async function listUsers(
   query: Partial<UserListQuery>,
 ): Promise<ListUsersResponse> {
   try {
     // Verify authentication and authorization
-    const user = await requireRole(["Administrator"]);
-    if (!user || user.role !== "Administrator") {
-      return {
-        success: false,
-        error: "Forbidden: Admin access required",
-      };
-    }
+    const user = await requireRole(["Administrator", "Moderator"]);
+    const isAdministrator = user.role === "Administrator";
 
     // Validate and parse query parameters
     const validatedQuery = userListQuerySchema.parse(query);
@@ -238,6 +234,12 @@ export async function listUsers(
           totalModerators,
         },
       },
+      // Provide hint to clients about capability level
+      ...(isAdministrator
+        ? {}
+        : {
+            message: "Limited access: moderator permissions are read-only",
+          }),
     };
   } catch (error: unknown) {
     console.error("List users error:", error);

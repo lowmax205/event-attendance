@@ -6,7 +6,7 @@ import {
   eventListQuerySchema,
   type EventListQuery,
 } from "@/lib/validations/event-management";
-import { Prisma } from "@prisma/client";
+import { EventStatus, Prisma } from "@prisma/client";
 
 /**
  * T020: List events with moderator scope filtering and enhanced pagination
@@ -24,34 +24,120 @@ export async function listEvents(query: Partial<EventListQuery> = {}) {
 
     const skip = (validatedQuery.page - 1) * validatedQuery.limit;
 
-    // Build where clause
-    const where: Prisma.EventWhereInput = {
-      deletedAt: null, // Exclude soft-deleted events (FR-020)
-    };
+    const baseFilters: Prisma.EventWhereInput[] = [{ deletedAt: null }];
 
-    // Moderator scope: only see own events (FR-026)
-    if (user.role === "Moderator") {
-      where.createdById = user.userId;
+    if (validatedQuery.scope === "mine") {
+      baseFilters.push({ createdById: user.userId });
     }
-    // Admin can see all events (no filter)
+
+    if (validatedQuery.search) {
+      const searchTerm = validatedQuery.search.trim();
+      baseFilters.push({
+        OR: [
+          {
+            name: {
+              contains: searchTerm,
+              mode: "insensitive",
+            },
+          },
+          {
+            venueName: {
+              contains: searchTerm,
+              mode: "insensitive",
+            },
+          },
+          {
+            description: {
+              contains: searchTerm,
+              mode: "insensitive",
+            },
+          },
+        ],
+      });
+    }
+
+    if (validatedQuery.startDate || validatedQuery.endDate) {
+      const dateFilter: Prisma.EventWhereInput = {};
+      const range: Prisma.DateTimeFilter = {};
+
+      if (validatedQuery.startDate) {
+        range.gte = new Date(validatedQuery.startDate);
+      }
+
+      if (validatedQuery.endDate) {
+        range.lte = new Date(validatedQuery.endDate);
+      }
+
+      dateFilter.startDateTime = range;
+      baseFilters.push(dateFilter);
+    }
+
+    const listFilters = [...baseFilters];
 
     if (validatedQuery.status) {
-      where.status = validatedQuery.status;
+      listFilters.push({ status: validatedQuery.status });
     }
 
-    // Date range filtering (FR-024, FR-028)
-    if (validatedQuery.startDate || validatedQuery.endDate) {
-      where.startDateTime = {};
-      if (validatedQuery.startDate) {
-        where.startDateTime.gte = new Date(validatedQuery.startDate);
-      }
-      if (validatedQuery.endDate) {
-        where.startDateTime.lte = new Date(validatedQuery.endDate);
-      }
-    }
+    const where =
+      listFilters.length > 0
+        ? ({ AND: listFilters } satisfies Prisma.EventWhereInput)
+        : {};
 
     // Get total count
     const total = await db.event.count({ where });
+
+    const statusWhere = (status: EventStatus) =>
+      baseFilters.length > 0
+        ? { AND: [...baseFilters, { status }] }
+        : { status };
+
+    const activeCountPromise =
+      !validatedQuery.status || validatedQuery.status === EventStatus.Active
+        ? db.event.count({ where: statusWhere(EventStatus.Active) })
+        : Promise.resolve(0);
+
+    const completedCountPromise =
+      !validatedQuery.status || validatedQuery.status === EventStatus.Completed
+        ? db.event.count({ where: statusWhere(EventStatus.Completed) })
+        : Promise.resolve(0);
+
+    const cancelledCountPromise =
+      !validatedQuery.status || validatedQuery.status === EventStatus.Cancelled
+        ? db.event.count({ where: statusWhere(EventStatus.Cancelled) })
+        : Promise.resolve(0);
+
+    const upcomingCountPromise =
+      !validatedQuery.status || validatedQuery.status === EventStatus.Active
+        ? db.event.count({
+            where:
+              baseFilters.length > 0
+                ? {
+                    AND: [
+                      ...baseFilters,
+                      { status: EventStatus.Active },
+                      {
+                        startDateTime: {
+                          gte: new Date(),
+                        },
+                      },
+                    ],
+                  }
+                : {
+                    status: EventStatus.Active,
+                    startDateTime: {
+                      gte: new Date(),
+                    },
+                  },
+          })
+        : Promise.resolve(0);
+
+    const [totalActive, totalCompleted, totalCancelled, upcomingEvents] =
+      await Promise.all([
+        activeCountPromise,
+        completedCountPromise,
+        cancelledCountPromise,
+        upcomingCountPromise,
+      ]);
 
     // Get events with creator information
     const events = await db.event.findMany({
@@ -87,6 +173,12 @@ export async function listEvents(query: Partial<EventListQuery> = {}) {
           limit: validatedQuery.limit,
           total,
           totalPages: Math.ceil(total / validatedQuery.limit),
+        },
+        summary: {
+          totalActive,
+          totalCompleted,
+          totalCancelled,
+          upcomingEvents,
         },
       },
     };

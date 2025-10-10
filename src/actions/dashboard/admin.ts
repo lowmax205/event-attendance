@@ -168,7 +168,7 @@ export async function getAnalyticsDashboard(input: {
   refresh?: boolean;
 }) {
   try {
-    const user = await requireRole(["Administrator"]);
+    const user = await requireRole(["Administrator", "Moderator"]);
 
     // Validate input
     const validatedInput = analyticsQuerySchema.parse(input);
@@ -207,7 +207,7 @@ export async function getAnalyticsDashboard(input: {
 
     const queryTimeMs = Date.now() - startTime;
 
-    // Optionally log analytics access
+    // Optionally log analytics access (captures moderator read-only views too)
     await db.securityLog.create({
       data: {
         userId: user.userId,
@@ -218,6 +218,7 @@ export async function getAnalyticsDashboard(input: {
           startDate: startDate.toISOString(),
           endDate: endDate.toISOString(),
           queryTimeMs,
+          role: user.role,
         },
       },
     });

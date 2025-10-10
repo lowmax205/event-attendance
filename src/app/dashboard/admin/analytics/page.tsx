@@ -12,6 +12,9 @@ import { CourseBreakdownChart } from "@/components/dashboard/admin/analytics/cou
 import { TimePeriodFilter } from "@/components/dashboard/admin/analytics/time-period-filter";
 import { getAnalyticsDashboard } from "@/actions/dashboard/admin";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ShieldAlert } from "lucide-react";
 import { DateRange } from "react-day-picker";
 
 /**
@@ -33,6 +36,8 @@ export default function AnalyticsDashboardPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const isReadOnly = user?.role === "Moderator";
 
   const [analyticsData, setAnalyticsData] =
     React.useState<AnalyticsData | null>(null);
@@ -145,7 +150,18 @@ export default function AnalyticsDashboardPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="container mx-auto space-y-8 py-8">
+      {isReadOnly && (
+        <Alert className="border-border/60">
+          <ShieldAlert className="mt-0.5 h-4 w-4 text-muted-foreground" />
+          <AlertTitle>View-only access</AlertTitle>
+          <AlertDescription>
+            Moderator accounts can explore analytics but cannot adjust data
+            sources or configuration. Contact an administrator for elevated
+            access.
+          </AlertDescription>
+        </Alert>
+      )}
       {/* Header */}
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-bold tracking-tight">
