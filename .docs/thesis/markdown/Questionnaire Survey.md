@@ -1,6 +1,10 @@
-**Purpose:** Evaluate the **“A COMPREHENSIVE MOBILE WEB-BASED ATTENDANCE MONITORING SYSTEM WITH INTEGRATED ANALYTICS FOR SCHOOL EVENT OF THE UNIVERSITY”** for SNSU events.
+**Purpose:** Evaluate the **"A COMPREHENSIVE MOBILE WEB-BASED ATTENDANCE MONITORING SYSTEM WITH INTEGRATED ANALYTICS FOR SCHOOL EVENT OF THE UNIVERSITY"** for SNSU events.
 
-**Instructions:** Complete the profile items, then answer every question in Section B. For statements, rate on a 1–5 scale (1 = Strongly Disagree, 5 = Strongly Agree). Select one option for multiple-choice items. Provide concise, honest answers for the open-ended questions.
+**Target Respondents:** Bachelor of Science in Computer Science (BSCS) students (all year levels), College of Computing and Information Sciences (CCIS), Surigao del Norte State University.
+
+**Note:** This is Phase 1 of our evaluation. After incorporating feedback and addressing issues from BSCS students, the system will be expanded to other CCIS programs, and eventually to university-wide USC-organized events.
+
+**Instructions:** Complete the profile items, then answer every question in Section B. For statements, rate on a 1–5 scale (1 = Strongly Disagree, 5 = Strongly Agree). Select one option for multiple-choice items. Provide concise, honest answers for the open-ended questions.
 
 **Section A – Respondent Profile**
 
@@ -12,17 +16,17 @@
 <thead>
 <tr>
 <th><ol type="1">
-<li><p>Which year level are you currently enrolled in?</p></li>
+<li><p>Which year level are you currently enrolled in as a BSCS student?</p></li>
 </ol></th>
-<th>☐ 1st year ☐ 2nd year ☐ 3rd year ☐ 4th year ☐ 5th year or higher ☐ Graduate student ☐ Faculty/Staff/Administrator</th>
+<th>☐ 1st year ☐ 2nd year ☐ 3rd year ☐ 4th year</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><ol start="2" type="1">
-<li><p>How often do you attend university events that require attendance each semester?</p></li>
+<li><p>How often do you attend BSCS program or CCIS department events that require attendance each semester?</p></li>
 </ol></td>
-<td>☐ 0–1 event ☐ 2–3 events ☐ 4–5 events ☐ 6 or more events</td>
+<td>☐ 0–1 event ☐ 2–3 events ☐ 4–5 events ☐ 6 or more events</td>
 </tr>
 </tbody>
 </table>
@@ -334,7 +338,7 @@
     \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
     \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
 
-23. What improvements or additional features would make the system more effective for future SNSU events? (Open)
+23. What improvements or additional features would make the system more effective for future CCIS department and SNSU events? (Open)
 
 \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
 

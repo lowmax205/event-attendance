@@ -14,7 +14,7 @@ Good Day!
 
 We, the 3rd-year Bachelor of Science in Computer Science (BSCS) students of Surigao del Norte State University (SNSU), have successfully completed the development phase of our thesis project titled **"A Comprehensive Mobile Web-Based Attendance Monitoring System with Integrated Analytics for School Event of the University."**
 
-Incorporating the valuable recommendations from our proposal defense panel members (Mr. Renz M. Buctuan, MIT; Mr. Robert R. Bacarro, MECE, MBA; and Ms. Unife O. Cagas, DTE), we have developed a fully functional system that addresses the challenges of traditional attendance monitoring methods.
+Incorporating the valuable recommendations from our proposal defense panel members (Mr. Renz M. Buctuan, MIT; Mr. Robert R. Bacarro, MECE, MBA; and Mrs. Unife O. Cagas, DTE), we have developed a fully functional system that addresses the challenges of traditional attendance monitoring methods.
 
 **System Overview:**
 
@@ -36,7 +36,6 @@ Our developed system features the following key functionalities:
    - Real-time attendance statistics and trends
    - Visual analytics including histograms showing check-in patterns
    - Peak attendance time analysis
-   - Automated anomaly detection for suspicious activities
 
 4. **Reporting and Data Export**
    - Downloadable attendance reports in university-standard format (PDF/CSV)
@@ -46,23 +45,20 @@ Our developed system features the following key functionalities:
 
 With this in mind, we respectfully request your permission to:
 
-1. **Deploy the Event Attendance System** for pilot testing during upcoming university events, specifically those organized by the University Student Council (USC).
+1. **Deploy the Event Attendance System** following a systematic three-phase approach:
+   - **Phase 1 (BSCS Pilot Testing)**: Initial deployment with BSCS students across all year levels during BSCS-specific and CCIS department events. This phase focuses on gathering detailed feedback, identifying bugs, and validating core system functionality with a focused user group.
 
-2. **Conduct User Acceptance Testing (UAT)** with actual event participants, including students, faculty, staff, and event organizers to validate system functionality and usability.
+   - **Phase 2 (CCIS-Wide Deployment)**: After incorporating feedback and resolving issues from Phase 1, expand deployment to all CCIS programs (BSIT, BSIS, and BSIS) for department-wide events. This phase validates the system's effectiveness across diverse user groups within the college.
+
+   - **Phase 3 (University-Wide USC Events)**: Following successful validation across the entire CCIS department, deploy the system for university-wide events organized by the University Student Council (USC), making it available to the entire SNSU community.
+
+2. **Conduct User Acceptance Testing (UAT)** with actual event participants during each phase, starting with BSCS students, then expanding to all CCIS students, and finally to the broader university community.
 
 3. **Gather real-time feedback** from system users during the pilot deployment phase to assess performance, security, and reliability under actual operating conditions.
 
 4. **Monitor system performance** including response time, concurrent user handling, GPS accuracy, and QR code scanning efficiency during live events.
 
 5. **Provide training sessions** to USC members and event organizers on system administration, event creation, QR code generation, and report generation.
-
-**Proposed Deployment Schedule:**
-
-- **Phase 1:** System installation and configuration (1 week)
-- **Phase 2:** Training sessions for administrators and organizers (3 days)
-- **Phase 3:** Pilot testing during 2-3 upcoming USC events (2-3 weeks)
-- **Phase 4:** Data collection and evaluation (1 week)
-- **Phase 5:** System refinement based on feedback (1 week)
 
 **Technical Requirements:**
 
@@ -96,15 +92,24 @@ The deployment of this system will provide:
 - **Data-driven insights** through integrated analytics
 - **Scalable solution** applicable to various university events
 
-We believe that this pilot deployment is crucial for validating our research findings and demonstrating the practical benefits of our proposed solution. The success of this deployment will provide empirical evidence for our thesis and potentially offer SNSU a reliable, long-term solution for event attendance monitoring.
+We believe that this systematic three-phase deployment approach is crucial for validating our research findings and demonstrating the practical benefits of our proposed solution. Starting with BSCS students allows us to:
+
+1. Gather focused, detailed feedback from students familiar with technology systems
+2. Identify and resolve bugs in a controlled environment
+3. Refine the system based on real-world usage before wider deployment
+4. Ensure the system meets the needs of diverse user groups through progressive expansion
+
+The success of each phase will provide actual evidence for our thesis and ensure SNSU receives a thoroughly tested, reliable solution for event attendance monitoring.
 
 We assure you that throughout the deployment process, we will:
 
 - Ensure minimal disruption to event operations
 - Provide immediate technical support during events
-- Maintain comprehensive documentation of the deployment process
-- Present regular progress reports to the university administration
+- Maintain comprehensive documentation of each deployment phase
+- Present regular progress reports to the USC and Thesis Adviser
 - Address any issues or concerns promptly and professionally
+- Complete thorough validation at each phase before proceeding to the next
+- Document lessons learned and improvements made between phases
 
 Your approval and support for this deployment phase are essential to completing our research and contributing a valuable tool to our university community. We are fully committed to ensuring the successful implementation and evaluation of this system.
 
@@ -126,7 +131,7 @@ Noted by:
 
 UNIFE O. CAGAS, DTE
 
-Thesis Professor
+Thesis Adviser
 
 Recommending Approval:
 

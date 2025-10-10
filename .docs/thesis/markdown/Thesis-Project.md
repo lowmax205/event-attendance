@@ -319,8 +319,6 @@ The attendance management system features various essential modules designed for
 
 This thesis chapter discussed the methods and sources from which the researcher gathered data for the current study. The Event Attendance System was developed using a combination of agile and Rapid Application Development (RAD) under the software development life cycle (SDLC) is the methodology used. This explains various methodologies, including the phases of Agile and RAD, which are essential for the developers and are: requirement gathering, design and prototyping, development, testing and students\' feedback, and deployment and review.
 
-![Figure 4: Agile and RAD Methodology Model](images/System-Design.png)
-
 **Figure 4: Agile and RAD Methodology Model**
 
 Figure 4 shows the combination of Agile and RAD development processes. This methodology was employed to systematically guide the development of the Event Attendance System (EAS). This initial planning is the starting point of the development, where planning ensures that the system requirements are organized before the design and prototyping begin. The cyclical structure of the model represents the core phases of the phase development: requirement gathering, design and prototyping, development, testing, and students\' feedback. These phases indicate a continuous and flexible workflow, where each step is interconnected and can be revisited based on the testing and students\' feedback. lastly, the deployment marks the final stage where the system is launched for real-world use and ensures the full deployment of the Event Attendance System (EAS).
