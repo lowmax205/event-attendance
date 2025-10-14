@@ -109,6 +109,9 @@ interface ModeratorDashboardProps {
   totalItems: number;
   currentPage: number;
   totalPages: number;
+  pendingCurrentPage: number;
+  pendingTotalPages: number;
+  pendingLimit: number;
   isExpanded?: boolean;
 }
 
@@ -128,6 +131,9 @@ export function ModeratorDashboard({
   totalItems,
   currentPage,
   totalPages,
+  pendingCurrentPage,
+  pendingTotalPages,
+  pendingLimit,
   isExpanded = false,
 }: ModeratorDashboardProps) {
   const router = useRouter();
@@ -144,12 +150,23 @@ export function ModeratorDashboard({
     const params = new URLSearchParams(window.location.search);
     params.set("expanded", (!showAll).toString());
     params.set("page", "1"); // Reset to first page when toggling
+    params.set("pendingPage", "1");
     window.location.href = `?${params.toString()}`;
   };
 
   const handleViewEvent = (eventId: string) => {
     setViewEventId(eventId);
     setIsEventDialogOpen(true);
+  };
+
+  const handlePendingPageChange = (pageNumber: number) => {
+    if (pageNumber === pendingCurrentPage) {
+      return;
+    }
+    const params = new URLSearchParams(window.location.search);
+    params.set("pendingPage", pageNumber.toString());
+    params.set("pendingLimit", pendingLimit.toString());
+    window.location.href = `?${params.toString()}`;
   };
 
   return (
@@ -447,7 +464,7 @@ export function ModeratorDashboard({
                 No pending verifications
               </p>
             ) : (
-              pendingVerifications.slice(0, 5).map((verification) => (
+              pendingVerifications.map((verification) => (
                 <div
                   key={verification.id}
                   className="flex items-center justify-between rounded-lg border p-4"
@@ -505,6 +522,85 @@ export function ModeratorDashboard({
               ))
             )}
           </div>
+          {pendingVerifications.length > 0 && pendingTotalPages > 1 && (
+            <div className="mt-4">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (pendingCurrentPage > 1) {
+                          handlePendingPageChange(pendingCurrentPage - 1);
+                        }
+                      }}
+                      className={
+                        pendingCurrentPage === 1
+                          ? "pointer-events-none opacity-50"
+                          : ""
+                      }
+                    />
+                  </PaginationItem>
+
+                  {Array.from({ length: pendingTotalPages }).map((_, i) => {
+                    const page = i + 1;
+                    if (
+                      page === 1 ||
+                      page === pendingTotalPages ||
+                      (page >= pendingCurrentPage - 1 &&
+                        page <= pendingCurrentPage + 1)
+                    ) {
+                      return (
+                        <PaginationItem key={page}>
+                          <PaginationLink
+                            href="#"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handlePendingPageChange(page);
+                            }}
+                            isActive={pendingCurrentPage === page}
+                          >
+                            {page}
+                          </PaginationLink>
+                        </PaginationItem>
+                      );
+                    }
+
+                    if (
+                      page === pendingCurrentPage - 2 ||
+                      page === pendingCurrentPage + 2
+                    ) {
+                      return (
+                        <PaginationItem key={`ellipsis-${page}`}>
+                          <PaginationEllipsis />
+                        </PaginationItem>
+                      );
+                    }
+
+                    return null;
+                  })}
+
+                  <PaginationItem>
+                    <PaginationNext
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (pendingCurrentPage < pendingTotalPages) {
+                          handlePendingPageChange(pendingCurrentPage + 1);
+                        }
+                      }}
+                      className={
+                        pendingCurrentPage === pendingTotalPages
+                          ? "pointer-events-none opacity-50"
+                          : ""
+                      }
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
         </CardContent>
       </Card>
 

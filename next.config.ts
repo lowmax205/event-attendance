@@ -1,5 +1,35 @@
 import type { NextConfig } from "next";
 
+const buildSecurityHeaders = () => {
+  const headers = [
+    {
+      key: "X-Content-Type-Options",
+      value: "nosniff",
+    },
+    {
+      key: "X-XSS-Protection",
+      value: "1; mode=block",
+    },
+    {
+      key: "Referrer-Policy",
+      value: "strict-origin-when-cross-origin",
+    },
+    {
+      key: "Permissions-Policy",
+      value: "camera=(), microphone=(), geolocation=(), payment=()",
+    },
+  ];
+
+  if (process.env.NODE_ENV !== "development") {
+    headers.unshift({
+      key: "X-Frame-Options",
+      value: "DENY",
+    });
+  }
+
+  return headers;
+};
+
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
@@ -23,28 +53,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/:path*",
-        headers: [
-          {
-            key: "X-Frame-Options",
-            value: "DENY",
-          },
-          {
-            key: "X-Content-Type-Options",
-            value: "nosniff",
-          },
-          {
-            key: "X-XSS-Protection",
-            value: "1; mode=block",
-          },
-          {
-            key: "Referrer-Policy",
-            value: "strict-origin-when-cross-origin",
-          },
-          {
-            key: "Permissions-Policy",
-            value: "camera=(), microphone=(), geolocation=(), payment=()",
-          },
-        ],
+        headers: buildSecurityHeaders(),
       },
     ];
   },

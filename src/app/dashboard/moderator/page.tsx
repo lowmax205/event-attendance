@@ -10,7 +10,12 @@ import { ModeratorDashboard } from "@/components/dashboard/moderator-dashboard";
 export default async function ModeratorDashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; expanded?: string }>;
+  searchParams: Promise<{
+    page?: string;
+    expanded?: string;
+    pendingPage?: string;
+    pendingLimit?: string;
+  }>;
 }) {
   // Check authentication and role
   const user = await getCurrentUser();
@@ -28,11 +33,23 @@ export default async function ModeratorDashboardPage({
   const page = parseInt(params.page || "1", 10);
   const isExpanded = params.expanded === "true";
   const limit = isExpanded ? 10 : 5;
+  const parsedPendingPage = parseInt(params.pendingPage || "1", 10);
+  const pendingPage =
+    Number.isNaN(parsedPendingPage) || parsedPendingPage < 1
+      ? 1
+      : parsedPendingPage;
+  const parsedPendingLimit = parseInt(params.pendingLimit || "5", 10);
+  const pendingLimit =
+    Number.isNaN(parsedPendingLimit) || parsedPendingLimit < 1
+      ? 5
+      : parsedPendingLimit;
 
   // Fetch dashboard data
   const result = await getModeratorDashboard({
     page,
     limit,
+    pendingPage,
+    pendingLimit,
   });
 
   if (!result.success || !result.data) {
@@ -57,6 +74,7 @@ export default async function ModeratorDashboardPage({
     systemStats,
     userRole,
     pagination,
+    pendingPagination,
   } = result.data;
 
   // Type assertion: we know userRole is Moderator or Administrator because we checked above
@@ -144,6 +162,9 @@ export default async function ModeratorDashboardPage({
         totalItems={pagination.totalItems}
         currentPage={pagination.page}
         totalPages={pagination.totalPages}
+        pendingCurrentPage={pendingPagination.page}
+        pendingTotalPages={pendingPagination.totalPages}
+        pendingLimit={pendingPagination.limit}
         isExpanded={isExpanded}
       />
     </div>

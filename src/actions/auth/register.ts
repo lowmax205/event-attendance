@@ -7,6 +7,10 @@ import { createSession } from "@/lib/auth/session";
 import { checkAuthRateLimit } from "@/lib/rate-limit";
 import { registerSchema, type RegisterInput } from "@/lib/validations/auth";
 import type { AuthResponse } from "@/lib/types/auth";
+import {
+  getAccessTokenCookieOptions,
+  getRefreshTokenCookieOptions,
+} from "@/lib/auth/cookies";
 
 /**
  * Register Server Action
@@ -74,19 +78,11 @@ export async function register(data: RegisterInput): Promise<AuthResponse> {
     // 7. Set cookies
     const cookieStore = await cookies();
     cookieStore.set("accessToken", accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60, // 1 hour
-      path: "/",
+      ...getAccessTokenCookieOptions(),
     });
 
     cookieStore.set("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 30, // 30 days
-      path: "/",
+      ...getRefreshTokenCookieOptions(),
     });
 
     // 8. Log security event

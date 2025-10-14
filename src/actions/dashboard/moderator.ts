@@ -7,6 +7,8 @@ interface UnifiedDashboardParams {
   page?: number;
   limit?: number;
   status?: "Active" | "Completed" | "Cancelled";
+  pendingPage?: number;
+  pendingLimit?: number;
 }
 
 /**
@@ -22,7 +24,14 @@ export async function getModeratorDashboard(
     // Require Moderator or Administrator role
     const user = await requireRole(["Moderator", "Administrator"]);
 
-    const { page = 1, limit = 20, status } = params;
+    const {
+      page = 1,
+      limit = 20,
+      status,
+      pendingPage = 1,
+      pendingLimit: pendingLimitParam = 5,
+    } = params;
+    const pendingLimit = Math.max(pendingLimitParam, 1);
     const skip = (page - 1) * limit;
 
     const isModerator = user.role === "Moderator";
@@ -96,6 +105,20 @@ export async function getModeratorDashboard(
       };
     }
 
+    const pendingVerificationsCount = await db.attendance.count({
+      where: attendanceWhere,
+    });
+
+    const pendingTotalPages =
+      pendingVerificationsCount === 0
+        ? 1
+        : Math.ceil(pendingVerificationsCount / pendingLimit);
+    const normalizedPendingPage = Math.min(
+      Math.max(pendingPage, 1),
+      pendingTotalPages,
+    );
+    const pendingSkip = (normalizedPendingPage - 1) * pendingLimit;
+
     // Get pending verifications
     const pendingVerifications = await db.attendance.findMany({
       where: attendanceWhere,
@@ -133,7 +156,8 @@ export async function getModeratorDashboard(
       orderBy: {
         checkInSubmittedAt: "asc",
       },
-      take: 10, // Show top 10 pending
+      skip: pendingSkip,
+      take: pendingLimit,
     });
 
     // Get statistics based on role
@@ -155,10 +179,6 @@ export async function getModeratorDashboard(
             },
           }
         : {},
-    });
-
-    const pendingVerificationsCount = await db.attendance.count({
-      where: attendanceWhere,
     });
 
     // Admin-only: Get system-wide statistics
@@ -240,6 +260,12 @@ export async function getModeratorDashboard(
           limit,
           totalItems,
           totalPages: Math.ceil(totalItems / limit),
+        },
+        pendingPagination: {
+          page: normalizedPendingPage,
+          limit: pendingLimit,
+          totalItems: pendingVerificationsCount,
+          totalPages: pendingTotalPages,
         },
       },
     };

@@ -5,6 +5,10 @@ import { db } from "@/lib/db";
 import { verifyToken } from "@/lib/auth/jwt";
 import { profileSchema, type ProfileInput } from "@/lib/validations/auth";
 import { createSession } from "@/lib/auth/session";
+import {
+  getAccessTokenCookieOptions,
+  getRefreshTokenCookieOptions,
+} from "@/lib/auth/cookies";
 
 interface ProfileResponse {
   success: boolean;
@@ -116,19 +120,11 @@ export async function createProfile(
 
     // 8. Update cookies with new tokens
     cookieStore.set("accessToken", newAccessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60, // 1 hour
-      path: "/",
+      ...getAccessTokenCookieOptions(),
     });
 
     cookieStore.set("refreshToken", newRefreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 30, // 30 days
-      path: "/",
+      ...getRefreshTokenCookieOptions(),
     });
 
     // 9. Log security event

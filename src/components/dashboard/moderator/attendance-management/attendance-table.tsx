@@ -30,6 +30,8 @@ export interface AttendanceRow {
   checkInSubmittedAt: Date;
   verificationStatus: VerificationStatus;
   checkInDistance: number | null;
+  /** Flag for per-record verification capability */
+  canVerify?: boolean;
 }
 
 interface AttendanceTableProps {
@@ -127,6 +129,7 @@ export function AttendanceTable({
       cell: ({ row }) => {
         const isPending =
           row.original.verificationStatus === VerificationStatus.Pending;
+        const isAllowed = row.original.canVerify ?? true;
 
         return (
           <div className="flex flex-wrap items-center gap-2">
@@ -139,7 +142,7 @@ export function AttendanceTable({
               <Eye className="mr-2 h-4 w-4" />
               View
             </Button>
-            {onVerify && isPending && (
+            {onVerify && isPending && isAllowed && (
               <Button
                 size="sm"
                 onClick={() => onVerify(row.original.id)}

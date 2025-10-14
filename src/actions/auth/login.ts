@@ -7,6 +7,10 @@ import { createSession } from "@/lib/auth/session";
 import { checkAuthRateLimit } from "@/lib/rate-limit";
 import { loginSchema, type LoginInput } from "@/lib/validations/auth";
 import type { AuthResponse } from "@/lib/types/auth";
+import {
+  getAccessTokenCookieOptions,
+  getRefreshTokenCookieOptions,
+} from "@/lib/auth/cookies";
 
 /**
  * Login Server Action
@@ -87,19 +91,11 @@ export async function login(data: LoginInput): Promise<AuthResponse> {
     // 8. Set cookies
     const cookieStore = await cookies();
     cookieStore.set("accessToken", accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60, // 1 hour
-      path: "/",
+      ...getAccessTokenCookieOptions(),
     });
 
     cookieStore.set("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 30, // 30 days
-      path: "/",
+      ...getRefreshTokenCookieOptions(),
     });
 
     // Log successful login

@@ -11,7 +11,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
-import { VerificationStatus } from "@prisma/client";
 import { CheckCircle } from "lucide-react";
 import Image from "next/image";
 
@@ -44,7 +43,7 @@ interface AttendanceDetailDialogProps {
     checkInLatitude: number | null;
     checkInLongitude: number | null;
     checkInDistance: number | null;
-    verificationStatus: VerificationStatus;
+    verificationStatus: VerificationStatusValue;
     disputeNote: string | null;
     appealMessage: string | null;
     resolutionNotes: string | null;
@@ -57,15 +56,36 @@ interface AttendanceDetailDialogProps {
   onVerify?: () => void;
 }
 
+const VERIFICATION_STATUSES = [
+  "Pending",
+  "Approved",
+  "Rejected",
+  "Disputed",
+] as const;
+
+type VerificationStatusValue = (typeof VERIFICATION_STATUSES)[number];
+
 const statusVariant: Record<
-  VerificationStatus,
+  VerificationStatusValue,
   "default" | "secondary" | "destructive" | "outline"
 > = {
-  [VerificationStatus.Pending]: "secondary",
-  [VerificationStatus.Approved]: "default",
-  [VerificationStatus.Rejected]: "destructive",
-  [VerificationStatus.Disputed]: "outline",
+  Pending: "secondary",
+  Approved: "default",
+  Rejected: "destructive",
+  Disputed: "outline",
 };
+
+function normalizeVerificationStatus(value: unknown): VerificationStatusValue {
+  if (typeof value === "string") {
+    const match = VERIFICATION_STATUSES.find(
+      (status) => status.toLowerCase() === value.toLowerCase(),
+    );
+    if (match) {
+      return match;
+    }
+  }
+  return "Pending";
+}
 
 export function AttendanceDetailDialog({
   open,
@@ -74,6 +94,11 @@ export function AttendanceDetailDialog({
   onVerify,
 }: AttendanceDetailDialogProps) {
   if (!attendance) return null;
+
+  const normalizedStatus = normalizeVerificationStatus(
+    attendance.verificationStatus,
+  );
+  const canTriggerVerify = Boolean(onVerify) && normalizedStatus === "Pending";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -177,8 +202,8 @@ export function AttendanceDetailDialog({
               <div>
                 <span className="text-muted-foreground">Status:</span>
                 <div className="mt-1">
-                  <Badge variant={statusVariant[attendance.verificationStatus]}>
-                    {attendance.verificationStatus}
+                  <Badge variant={statusVariant[normalizedStatus]}>
+                    {normalizedStatus}
                   </Badge>
                 </div>
               </div>
@@ -313,15 +338,14 @@ export function AttendanceDetailDialog({
           )}
 
           {/* Actions */}
-          {attendance.verificationStatus === VerificationStatus.Pending &&
-            onVerify && (
-              <div className="flex justify-end pt-4">
-                <Button onClick={onVerify}>
-                  <CheckCircle className="mr-2 h-4 w-4" />
-                  Verify Attendance
-                </Button>
-              </div>
-            )}
+          {canTriggerVerify && (
+            <div className="flex justify-end pt-4">
+              <Button onClick={onVerify}>
+                <CheckCircle className="mr-2 h-4 w-4" />
+                Verify Attendance
+              </Button>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>

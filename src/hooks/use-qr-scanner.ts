@@ -8,6 +8,7 @@ interface UseQRScannerReturn {
   stopScanning: () => Promise<void>;
   isScanning: boolean;
   error: string | null;
+  containerId: string;
 }
 
 /**
@@ -42,8 +43,19 @@ export function useQRScanner(
     try {
       setError(null);
 
+      const containerId = elementIdRef.current;
+      const container = document.getElementById(containerId);
+
+      if (!container) {
+        throw new Error("Scanner viewport is not available");
+      }
+
       if (!scannerRef.current) {
-        scannerRef.current = new Html5Qrcode(elementIdRef.current);
+        scannerRef.current = new Html5Qrcode(containerId, {
+          experimentalFeatures: {
+            useBarCodeDetectorIfSupported: true,
+          },
+        });
       }
 
       await scannerRef.current.start(
@@ -76,6 +88,7 @@ export function useQRScanner(
     try {
       if (scannerRef.current && isScanning) {
         await scannerRef.current.stop();
+        await scannerRef.current.clear();
         setIsScanning(false);
       }
     } catch (err) {
@@ -91,5 +104,6 @@ export function useQRScanner(
     stopScanning,
     isScanning,
     error,
+    containerId: elementIdRef.current,
   };
 }

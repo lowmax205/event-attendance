@@ -320,6 +320,13 @@ export default function MyAttendancePage() {
     void fetchAttendances();
   };
 
+  const handleVerifyAttendance = React.useCallback(
+    (attendanceId: string) => {
+      router.push(`/dashboard/moderator/attendance/${attendanceId}`);
+    },
+    [router],
+  );
+
   const appliedFilterCount = React.useMemo(() => {
     let count = 0;
     if (appliedFilters.status) count += 1;
@@ -478,6 +485,7 @@ export default function MyAttendancePage() {
           setSelectedAttendanceId(attendanceId);
           setDetailDialogOpen(true);
         }}
+        onVerify={handleVerifyAttendance}
         isLoading={isLoading}
       />
 
@@ -492,6 +500,7 @@ export default function MyAttendancePage() {
               setSelectedAttendanceId(null);
             }
           }}
+          onVerify={() => handleVerifyAttendance(selectedAttendance.id)}
         />
       )}
     </div>

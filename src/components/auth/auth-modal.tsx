@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -16,15 +16,42 @@ import { RegisterForm } from "./register-form";
 interface AuthModalProps {
   trigger?: React.ReactNode;
   defaultTab?: "login" | "register";
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function AuthModal({ trigger, defaultTab = "login" }: AuthModalProps) {
+export function AuthModal({
+  trigger,
+  defaultTab = "login",
+  open: controlledOpen,
+  onOpenChange,
+}: AuthModalProps) {
   const [activeTab, setActiveTab] = useState<"login" | "register">(defaultTab);
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const wasOpenRef = useRef<boolean>(controlledOpen ?? internalOpen);
+
+  const open =
+    typeof controlledOpen === "boolean" ? controlledOpen : internalOpen;
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (typeof controlledOpen !== "boolean") {
+      setInternalOpen(nextOpen);
+    }
+    onOpenChange?.(nextOpen);
+  };
+
+  useEffect(() => {
+    if (!wasOpenRef.current && open) {
+      setActiveTab(defaultTab);
+    } else if (!open) {
+      setActiveTab(defaultTab);
+    }
+    wasOpenRef.current = open;
+  }, [open, defaultTab]);
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      {trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">
@@ -116,7 +143,10 @@ export function AuthModalTrigger({
     <AuthModal
       defaultTab={defaultTab}
       trigger={
-        <button className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors font-medium min-h-11 min-w-24">
+        <button
+          type="button"
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors font-medium min-h-11 min-w-24"
+        >
           Login
         </button>
       }

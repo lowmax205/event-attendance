@@ -23,13 +23,12 @@ interface QRScannerProps {
  * Uses html5-qrcode library via custom hook
  */
 export function QRScanner({ open, onOpenChange, onScan }: QRScannerProps) {
-  const { startScanning, stopScanning, isScanning, error } = useQRScanner(
-    (payload) => {
+  const { startScanning, stopScanning, isScanning, error, containerId } =
+    useQRScanner((payload) => {
       onScan(payload);
       stopScanning();
       onOpenChange(false);
-    },
-  );
+    });
 
   const handleOpenChange = async (newOpen: boolean) => {
     if (newOpen) {
@@ -83,7 +82,7 @@ export function QRScanner({ open, onOpenChange, onScan }: QRScannerProps) {
             )}
 
             {/* html5-qrcode will inject video element here */}
-            <div id="qr-reader" className="w-full" aria-live="polite" />
+            <div id={containerId} className="w-full" aria-live="polite" />
           </div>
 
           {/* Scanner controls */}

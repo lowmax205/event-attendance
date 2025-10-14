@@ -71,7 +71,9 @@ export default function AdminAttendanceManagementPage() {
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const { user } = useAuth();
-  const isReadOnly = user?.role === "Moderator";
+  const isModerator = user?.role === "Moderator";
+  const isAdministrator = user?.role === "Administrator";
+  const canInitiateVerification = isAdministrator || isModerator;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [fullAttendances, setFullAttendances] = React.useState<any[]>([]);
@@ -206,6 +208,27 @@ export default function AdminAttendanceManagementPage() {
     toast,
   ]);
 
+  const canModerateAttendance = React.useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (attendance: any | null | undefined) => {
+      if (!attendance || !user) {
+        return false;
+      }
+
+      if (isAdministrator) {
+        return true;
+      }
+
+      if (isModerator) {
+        const creatorId = attendance.event?.createdBy?.id;
+        return creatorId === user.userId;
+      }
+
+      return false;
+    },
+    [isAdministrator, isModerator, user],
+  );
+
   const fetchKey = React.useMemo(
     () =>
       [
@@ -272,15 +295,21 @@ export default function AdminAttendanceManagementPage() {
         checkInSubmittedAt: a.checkInSubmittedAt,
         verificationStatus: a.verificationStatus,
         checkInDistance: a.checkInDistance ?? a.distanceMeters ?? null,
+        canVerify: canModerateAttendance(a),
       };
     });
-  }, [fullAttendances]);
+  }, [fullAttendances, canModerateAttendance]);
 
   // Get selected attendance for dialogs
   const selectedAttendance = React.useMemo(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return fullAttendances.find((a: any) => a.id === selectedAttendanceId);
   }, [fullAttendances, selectedAttendanceId]);
+
+  const canVerifySelectedAttendance = React.useMemo(
+    () => canModerateAttendance(selectedAttendance),
+    [canModerateAttendance, selectedAttendance],
+  );
 
   const updateUrlParams = React.useCallback(
     (newFilters: PageFilterValues, page = 1) => {
@@ -408,21 +437,41 @@ export default function AdminAttendanceManagementPage() {
 
   const handleVerify = React.useCallback(
     (attendanceId: string) => {
-      if (isReadOnly) return;
+      const targetAttendance = fullAttendances.find(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (attendance: any) => attendance.id === attendanceId,
+      );
+
+      if (!canModerateAttendance(targetAttendance)) {
+        toast({
+          title: "Action not allowed",
+          description:
+            "You can only verify attendances for events you created.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       setSelectedAttendanceId(attendanceId);
       setVerifyDialogOpen(true);
     },
-    [isReadOnly],
+    [canModerateAttendance, fullAttendances, toast],
   );
 
   const handleVerifyFromDetails = React.useCallback(() => {
-    if (isReadOnly) return;
+    if (!selectedAttendance || !canModerateAttendance(selectedAttendance)) {
+      toast({
+        title: "Action not allowed",
+        description: "You can only verify attendances for events you created.",
+        variant: "destructive",
+      });
+      return;
+    }
     setDetailDialogOpen(false);
     setVerifyDialogOpen(true);
-  }, [isReadOnly]);
+  }, [canModerateAttendance, selectedAttendance, toast]);
 
   const handleVerifySuccess = React.useCallback(() => {
-    if (isReadOnly) return;
     setVerifyDialogOpen(false);
     setSelectedAttendanceId(null);
     void fetchAttendances();
@@ -430,9 +479,12 @@ export default function AdminAttendanceManagementPage() {
       title: "Success",
       description: "Attendance verification updated successfully",
     });
-  }, [fetchAttendances, isReadOnly, toast]);
+  }, [fetchAttendances, toast]);
 
   const detailCountLabel = React.useMemo(() => {
+    if (pagination.totalItems === 0) {
+      return "No attendance records found";
+    }
     const firstItem = pagination.pageIndex * pagination.pageSize + 1;
     const lastItem = Math.min(
       (pagination.pageIndex + 1) * pagination.pageSize,
@@ -443,13 +495,14 @@ export default function AdminAttendanceManagementPage() {
 
   return (
     <div className="container mx-auto space-y-8 py-8">
-      {isReadOnly && (
+      {isModerator && (
         <Alert className="border-border/60">
           <ShieldAlert className="mt-0.5 h-4 w-4 text-muted-foreground" />
-          <AlertTitle>View-only access</AlertTitle>
+          <AlertTitle>Limited access</AlertTitle>
           <AlertDescription>
-            Moderators can review attendance submissions here but must request
-            an administrator to verify or resolve records.
+            Moderators can review all attendance submissions here. You may
+            verify records for events you created; other records still require
+            an administrator.
           </AlertDescription>
         </Alert>
       )}
@@ -598,8 +651,8 @@ export default function AdminAttendanceManagementPage() {
         attendances={attendances}
         pagination={pagination}
         onPaginationChange={handlePaginationChange}
+        onVerify={canInitiateVerification ? handleVerify : undefined}
         onViewDetails={handleViewDetails}
-        onVerify={isReadOnly ? undefined : handleVerify}
         isLoading={isLoading}
       />
 
@@ -608,16 +661,28 @@ export default function AdminAttendanceManagementPage() {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           attendance={selectedAttendance as any}
           open={detailDialogOpen}
-          onOpenChange={setDetailDialogOpen}
-          onVerify={isReadOnly ? undefined : handleVerifyFromDetails}
+          onOpenChange={(open) => {
+            setDetailDialogOpen(open);
+            if (!open) {
+              setSelectedAttendanceId(null);
+            }
+          }}
+          onVerify={
+            canVerifySelectedAttendance ? handleVerifyFromDetails : undefined
+          }
         />
       )}
 
-      {!isReadOnly && selectedAttendanceId && (
+      {canVerifySelectedAttendance && selectedAttendanceId && (
         <VerificationForm
-          attendanceId={selectedAttendanceId}
           open={verifyDialogOpen}
-          onOpenChange={setVerifyDialogOpen}
+          onOpenChange={(open) => {
+            setVerifyDialogOpen(open);
+            if (!open) {
+              setSelectedAttendanceId(null);
+            }
+          }}
+          attendanceId={selectedAttendanceId}
           onSuccess={handleVerifySuccess}
         />
       )}

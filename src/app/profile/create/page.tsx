@@ -11,6 +11,10 @@ import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { createSession } from "@/lib/auth/session";
+import {
+  getAccessTokenCookieOptions,
+  getRefreshTokenCookieOptions,
+} from "@/lib/auth/cookies";
 
 export default async function CreateProfilePage() {
   const user = await getCurrentUser();
@@ -48,19 +52,11 @@ export default async function CreateProfilePage() {
       // Update cookies
       const cookieStore = await cookies();
       cookieStore.set("accessToken", accessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 60 * 60,
-        path: "/",
+        ...getAccessTokenCookieOptions(),
       });
 
       cookieStore.set("refreshToken", refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 60 * 60 * 24 * 30,
-        path: "/",
+        ...getRefreshTokenCookieOptions(),
       });
 
       // Redirect to dashboard based on role

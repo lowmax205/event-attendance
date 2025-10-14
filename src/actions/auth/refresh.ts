@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { validateRefreshToken } from "@/lib/auth/session";
 import { generateAccessToken, verifyToken } from "@/lib/auth/jwt";
 import type { TokenRefreshResponse } from "@/lib/types/auth";
+import { getAccessTokenCookieOptions } from "@/lib/auth/cookies";
 
 /**
  * Refresh Token Server Action
@@ -50,11 +51,7 @@ export async function refreshToken(): Promise<TokenRefreshResponse> {
 
     // 4. Update access token cookie
     cookieStore.set("accessToken", newAccessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60, // 1 hour
-      path: "/",
+      ...getAccessTokenCookieOptions(),
     });
 
     return {
