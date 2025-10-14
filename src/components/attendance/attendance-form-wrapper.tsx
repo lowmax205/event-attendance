@@ -352,7 +352,10 @@ export function AttendanceFormWrapper({
                     Sign your name in the box below to confirm your attendance.
                   </AlertDescription>
                 </Alert>
-                <SignatureCanvasComponent onSignature={handleSignature} />
+                <SignatureCanvasComponent
+                  onSignature={handleSignature}
+                  value={form.watch("signature")}
+                />
                 {form.watch("signature") && (
                   <div className="flex justify-center">
                     <Button onClick={() => setCurrentStep(5)}>

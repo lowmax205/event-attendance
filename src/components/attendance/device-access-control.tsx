@@ -22,11 +22,16 @@ export function DeviceAccessControl({
   requireMobile = true,
 }: DeviceAccessControlProps) {
   const isMobile = useIsMobile();
+  const [hasMounted, setHasMounted] = useState(false);
   const [overrideEnabled, setOverrideEnabled] = useState(false);
   const { toast } = useToast();
 
   // Check if override is allowed
   const canOverride = userRole === "moderator" || userRole === "admin";
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   // Handle ALT+O keyboard shortcut
   useEffect(() => {
@@ -62,6 +67,19 @@ export function DeviceAccessControl({
   // 3. Override is enabled (moderator/admin only)
   const hasAccess =
     isMobile || !requireMobile || (canOverride && overrideEnabled);
+
+  if (!hasMounted && requireMobile) {
+    return (
+      <div
+        className="flex items-center justify-center py-16"
+        aria-live="polite"
+      >
+        <div className="text-sm text-muted-foreground">
+          Checking device access...
+        </div>
+      </div>
+    );
+  }
 
   if (hasAccess) {
     return <>{children}</>;

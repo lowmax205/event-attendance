@@ -2,7 +2,7 @@ import QRCode from "qrcode";
 
 /**
  * Generate QR code as data URL
- * @param payload - QR code payload (e.g., "attendance:{eventId}:{timestamp}")
+ * @param payload - QR code payload (e.g., "https://app.example.com/attendance/{eventId}?t=...&src=qr")
  * @returns Promise<string> Data URL (data:image/png;base64,...)
  */
 export async function generateQRCode(payload: string): Promise<string> {
@@ -33,7 +33,17 @@ export async function generateQRCode(payload: string): Promise<string> {
  */
 export function generateQRPayload(eventId: string): string {
   const timestamp = Date.now();
-  return `attendance:${eventId}:${timestamp}`;
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
+
+  if (!baseUrl) {
+    throw new Error("NEXT_PUBLIC_APP_URL is not configured");
+  }
+
+  const url = new URL(`/attendance/${eventId}`, baseUrl);
+  url.searchParams.set("t", timestamp.toString());
+  url.searchParams.set("src", "qr");
+
+  return url.toString();
 }
 
 /**
@@ -43,17 +53,42 @@ export function generateQRPayload(eventId: string): string {
  */
 export function parseQRPayload(payload: string): {
   eventId: string;
-  timestamp: number;
+  timestamp: number | null;
+  source?: string;
 } | null {
-  const pattern = /^attendance:([a-z0-9]+):(\d+)$/;
-  const match = payload.match(pattern);
+  try {
+    const url = new URL(payload);
+    const attendanceMatch = url.pathname.match(/\/attendance\/([a-z0-9]+)/);
 
-  if (!match) {
+    if (!attendanceMatch) {
+      return null;
+    }
+
+    const eventId = attendanceMatch[1];
+    const timestampParam = url.searchParams.get("t");
+    const sourceParam = url.searchParams.get("src") || undefined;
+
+    return {
+      eventId,
+      timestamp: timestampParam ? parseInt(timestampParam, 10) : null,
+      source: sourceParam,
+    };
+  } catch (error) {
+    if (error instanceof TypeError) {
+      const legacyMatch = payload.match(/^attendance:([a-z0-9]+):([0-9]+)$/);
+
+      if (!legacyMatch) {
+        return null;
+      }
+
+      return {
+        eventId: legacyMatch[1],
+        timestamp: parseInt(legacyMatch[2], 10),
+        source: undefined,
+      };
+    }
+
+    console.error("Failed to parse QR payload:", error);
     return null;
   }
-
-  return {
-    eventId: match[1],
-    timestamp: parseInt(match[2], 10),
-  };
 }

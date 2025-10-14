@@ -11,7 +11,18 @@ import { headers } from "next/headers";
 const validateQRSchema = z.object({
   qrPayload: z
     .string()
-    .regex(/^attendance:[a-z0-9]+:[0-9]+$/, "Invalid QR code format"),
+    .min(1, "QR code payload is required")
+    .refine((value) => {
+      try {
+        const url = new URL(value);
+        return /\/attendance\/[a-z0-9]+/i.test(url.pathname);
+      } catch (error) {
+        if (error instanceof TypeError) {
+          return /^attendance:[a-z0-9]+:[0-9]+$/.test(value);
+        }
+        return false;
+      }
+    }, "Invalid QR code format"),
 });
 
 /**
@@ -52,7 +63,8 @@ export async function validateQR(input: any) {
       return {
         success: false,
         error: "Invalid QR code format",
-        expected: "attendance:{eventId}:{timestamp}",
+        expected:
+          "https://{app-domain}/attendance/{eventId}?t={timestamp}&src=qr",
       };
     }
 

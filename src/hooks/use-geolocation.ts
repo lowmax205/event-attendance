@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface GeolocationCoords {
   latitude: number;
@@ -85,20 +85,24 @@ export function useGeolocation(): UseGeolocationReturn {
  * @returns Boolean indicating if device is mobile
  */
 export function useIsMobile(): boolean {
-  if (typeof window === "undefined") return false;
+  const [isMobile, setIsMobile] = useState(false);
 
-  const windowWithOpera = window as Window & { opera?: string };
-  const userAgent =
-    navigator.userAgent || navigator.vendor || windowWithOpera.opera || "";
+  useEffect(() => {
+    const windowWithOpera = window as Window & { opera?: string };
+    const userAgent =
+      navigator.userAgent || navigator.vendor || windowWithOpera.opera || "";
 
-  // Check for mobile devices
-  const isMobileDevice =
-    /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(
-      userAgent.toLowerCase(),
-    );
+    const isMobileDevice =
+      /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(
+        userAgent.toLowerCase(),
+      );
 
-  // Also check screen size as backup
-  const isSmallScreen = window.innerWidth <= 768;
+    const isSmallScreen = window.matchMedia
+      ? window.matchMedia("(max-width: 768px)").matches
+      : window.innerWidth <= 768;
 
-  return isMobileDevice || isSmallScreen;
+    setIsMobile(isMobileDevice || isSmallScreen);
+  }, []);
+
+  return isMobile;
 }

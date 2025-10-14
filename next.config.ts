@@ -1,5 +1,32 @@
 import type { NextConfig } from "next";
 
+const buildAllowedServerActionOrigins = () => {
+  const origins = new Set<string>();
+
+  const addOrigin = (value: string | undefined) => {
+    if (!value) return;
+    try {
+      const parsed = new URL(value);
+      origins.add(parsed.origin);
+      origins.add(parsed.host);
+    } catch (error) {
+      console.warn(
+        `Invalid origin provided for server actions: ${value} (${String(error)})`,
+      );
+    }
+  };
+
+  addOrigin(process.env.NEXT_PUBLIC_APP_URL);
+  addOrigin(process.env.NEXT_PUBLIC_APP_URL_PROD);
+
+  addOrigin("http://localhost:3000");
+  addOrigin("http://127.0.0.1:3000");
+
+  return Array.from(origins);
+};
+
+const allowedServerActionOrigins = buildAllowedServerActionOrigins();
+
 const buildSecurityHeaders = () => {
   const headers = [
     {
@@ -31,6 +58,11 @@ const buildSecurityHeaders = () => {
 };
 
 const nextConfig: NextConfig = {
+  experimental: {
+    serverActions: {
+      allowedOrigins: allowedServerActionOrigins,
+    },
+  },
   images: {
     remotePatterns: [
       {
@@ -40,6 +72,10 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "via.placeholder.com",
+      },
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
       },
     ],
     formats: ["image/avif", "image/webp"],

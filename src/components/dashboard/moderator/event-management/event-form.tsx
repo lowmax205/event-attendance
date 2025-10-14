@@ -33,6 +33,19 @@ import { createEvent } from "@/actions/events/create";
 import { updateEvent } from "@/actions/events/update";
 import { Loader2 } from "lucide-react";
 
+const FALLBACK_EVENT_VALUES: EventCreate = {
+  name: "",
+  description: "",
+  startDateTime: "",
+  endDateTime: "",
+  venueName: "",
+  venueAddress: "",
+  venueLatitude: 0,
+  venueLongitude: 0,
+  checkInBufferMins: 30,
+  checkOutBufferMins: 30,
+};
+
 interface EventFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -52,30 +65,28 @@ export function EventForm({
 }: EventFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const defaultValues = React.useMemo(() => ({ ...FALLBACK_EVENT_VALUES }), []);
 
   const form = useForm<EventCreate | EventUpdate>({
     resolver: zodResolver(
       mode === "create" ? eventCreateSchema : eventUpdateSchema,
     ),
-    defaultValues: initialData || {
-      name: "",
-      description: "",
-      startDateTime: "",
-      endDateTime: "",
-      venueName: "",
-      venueAddress: "",
-      venueLatitude: 0,
-      venueLongitude: 0,
-      checkInBufferMins: 30,
-      checkOutBufferMins: 30,
-    },
+    defaultValues: initialData
+      ? { ...defaultValues, ...initialData }
+      : { ...defaultValues },
   });
 
   React.useEffect(() => {
-    if (initialData && open) {
-      form.reset(initialData);
+    if (!open) {
+      return;
     }
-  }, [initialData, open, form]);
+
+    if (initialData) {
+      form.reset({ ...defaultValues, ...initialData });
+    } else {
+      form.reset({ ...defaultValues });
+    }
+  }, [defaultValues, form, initialData, open]);
 
   const handleSubmit = async (data: EventCreate | EventUpdate) => {
     try {
@@ -136,7 +147,11 @@ export function EventForm({
                 <FormItem>
                   <FormLabel>Event Name *</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter event name" {...field} />
+                    <Input
+                      placeholder="Enter event name"
+                      {...field}
+                      value={field.value ?? ""}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -155,6 +170,7 @@ export function EventForm({
                       className="resize-none"
                       rows={3}
                       {...field}
+                      value={field.value ?? ""}
                     />
                   </FormControl>
                   <FormMessage />
@@ -170,7 +186,11 @@ export function EventForm({
                   <FormItem>
                     <FormLabel>Start Date & Time *</FormLabel>
                     <FormControl>
-                      <Input type="datetime-local" {...field} />
+                      <Input
+                        type="datetime-local"
+                        {...field}
+                        value={field.value ?? ""}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -184,7 +204,11 @@ export function EventForm({
                   <FormItem>
                     <FormLabel>End Date & Time *</FormLabel>
                     <FormControl>
-                      <Input type="datetime-local" {...field} />
+                      <Input
+                        type="datetime-local"
+                        {...field}
+                        value={field.value ?? ""}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -199,7 +223,11 @@ export function EventForm({
                 <FormItem>
                   <FormLabel>Venue Name *</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter venue name" {...field} />
+                    <Input
+                      placeholder="Enter venue name"
+                      {...field}
+                      value={field.value ?? ""}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -213,7 +241,11 @@ export function EventForm({
                 <FormItem>
                   <FormLabel>Venue Address</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter venue address" {...field} />
+                    <Input
+                      placeholder="Enter venue address"
+                      {...field}
+                      value={field.value ?? ""}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -233,9 +265,18 @@ export function EventForm({
                         step="any"
                         placeholder="0.0"
                         {...field}
-                        onChange={(e) =>
-                          field.onChange(parseFloat(e.target.value))
-                        }
+                        onChange={(e) => {
+                          const rawValue = e.target.value;
+                          if (rawValue === "") {
+                            field.onChange(undefined);
+                            return;
+                          }
+                          const parsed = parseFloat(rawValue);
+                          field.onChange(
+                            Number.isNaN(parsed) ? undefined : parsed,
+                          );
+                        }}
+                        value={field.value ?? ""}
                       />
                     </FormControl>
                     <FormMessage />
@@ -255,9 +296,18 @@ export function EventForm({
                         step="any"
                         placeholder="0.0"
                         {...field}
-                        onChange={(e) =>
-                          field.onChange(parseFloat(e.target.value))
-                        }
+                        onChange={(e) => {
+                          const rawValue = e.target.value;
+                          if (rawValue === "") {
+                            field.onChange(undefined);
+                            return;
+                          }
+                          const parsed = parseFloat(rawValue);
+                          field.onChange(
+                            Number.isNaN(parsed) ? undefined : parsed,
+                          );
+                        }}
+                        value={field.value ?? ""}
                       />
                     </FormControl>
                     <FormMessage />
@@ -279,9 +329,18 @@ export function EventForm({
                         min="0"
                         max="120"
                         {...field}
-                        onChange={(e) =>
-                          field.onChange(parseInt(e.target.value, 10))
-                        }
+                        onChange={(e) => {
+                          const rawValue = e.target.value;
+                          if (rawValue === "") {
+                            field.onChange(undefined);
+                            return;
+                          }
+                          const parsed = parseInt(rawValue, 10);
+                          field.onChange(
+                            Number.isNaN(parsed) ? undefined : parsed,
+                          );
+                        }}
+                        value={field.value ?? ""}
                       />
                     </FormControl>
                     <FormDescription>
@@ -304,9 +363,18 @@ export function EventForm({
                         min="0"
                         max="120"
                         {...field}
-                        onChange={(e) =>
-                          field.onChange(parseInt(e.target.value, 10))
-                        }
+                        onChange={(e) => {
+                          const rawValue = e.target.value;
+                          if (rawValue === "") {
+                            field.onChange(undefined);
+                            return;
+                          }
+                          const parsed = parseInt(rawValue, 10);
+                          field.onChange(
+                            Number.isNaN(parsed) ? undefined : parsed,
+                          );
+                        }}
+                        value={field.value ?? ""}
                       />
                     </FormControl>
                     <FormDescription>

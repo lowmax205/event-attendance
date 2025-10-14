@@ -8,6 +8,7 @@ import { uploadQRCode } from "@/lib/cloudinary";
 import { logAction } from "@/lib/security/audit-log";
 import { ZodError } from "zod";
 import { headers } from "next/headers";
+import { randomUUID } from "crypto";
 
 /**
  * Create a new event with QR code generation
@@ -87,66 +88,87 @@ export async function createEvent(input: any) {
       };
     }
 
-    // Create event in database first to get ID
-    const event = await db.event.create({
-      data: {
-        name: validatedData.name,
-        description: validatedData.description || null,
-        startDateTime: validatedData.startDateTime,
-        endDateTime: validatedData.endDateTime,
-        venueLatitude: validatedData.venueLatitude,
-        venueLongitude: validatedData.venueLongitude,
-        venueName: validatedData.venueName,
-        venueAddress: validatedData.venueAddress || null,
-        checkInBufferMins: validatedData.checkInBufferMins ?? 30,
-        checkOutBufferMins: validatedData.checkOutBufferMins ?? 30,
-        qrCodePayload: "", // Temporary, will update below
-        status: "Active",
-        createdById: user.userId,
-      },
-    });
+    const temporaryQrCodePayload = `placeholder:${randomUUID()}`;
+    let eventId: string | null = null;
+    let qrCodeFinalized = false;
 
-    // Generate QR code payload with event ID
-    const qrPayload = generateQRPayload(event.id);
+    try {
+      // Create event in database first to get ID
+      const event = await db.event.create({
+        data: {
+          name: validatedData.name,
+          description: validatedData.description || null,
+          startDateTime: validatedData.startDateTime,
+          endDateTime: validatedData.endDateTime,
+          venueLatitude: validatedData.venueLatitude,
+          venueLongitude: validatedData.venueLongitude,
+          venueName: validatedData.venueName,
+          venueAddress: validatedData.venueAddress || null,
+          checkInBufferMins: validatedData.checkInBufferMins ?? 30,
+          checkOutBufferMins: validatedData.checkOutBufferMins ?? 30,
+          qrCodePayload: temporaryQrCodePayload,
+          status: "Active",
+          createdById: user.userId,
+        },
+      });
+      eventId = event.id;
 
-    // Generate QR code image (data URL)
-    const qrDataUrl = await generateQRCode(qrPayload);
+      // Generate QR code payload with event ID
+      const qrPayload = generateQRPayload(event.id);
 
-    // Upload to Cloudinary
-    const cloudinaryFolder = `${process.env.CLOUDINARY_FOLDER}/events/${event.id}`;
-    const qrCodeUrl = await uploadQRCode(
-      qrDataUrl,
-      cloudinaryFolder,
-      `qr_${Date.now()}`,
-    );
+      // Generate QR code image (data URL)
+      const qrDataUrl = await generateQRCode(qrPayload);
 
-    // Update event with QR code information
-    const updatedEvent = await db.event.update({
-      where: { id: event.id },
-      data: {
-        qrCodePayload: qrPayload,
-        qrCodeUrl,
-      },
-    });
+      // Upload to Cloudinary
+      const cloudinaryFolder = `${process.env.CLOUDINARY_FOLDER}/events/${event.id}`;
+      const qrCodeUrl = await uploadQRCode(
+        qrDataUrl,
+        cloudinaryFolder,
+        `qr_${Date.now()}`,
+      );
 
-    // Log security action
-    const headersList = await headers();
-    await logAction(
-      "EVENT_CREATED",
-      user.userId,
-      "Event",
-      event.id,
-      { eventName: validatedData.name, venueName: validatedData.venueName },
-      headersList.get("x-forwarded-for") ||
-        headersList.get("x-real-ip") ||
-        undefined,
-      headersList.get("user-agent") || undefined,
-    );
+      // Update event with QR code information
+      const updatedEvent = await db.event.update({
+        where: { id: event.id },
+        data: {
+          qrCodePayload: qrPayload,
+          qrCodeUrl,
+        },
+      });
+      qrCodeFinalized = true;
 
-    return {
-      success: true,
-      data: updatedEvent,
-    };
+      // Log security action
+      const headersList = await headers();
+      await logAction(
+        "EVENT_CREATED",
+        user.userId,
+        "Event",
+        event.id,
+        { eventName: validatedData.name, venueName: validatedData.venueName },
+        headersList.get("x-forwarded-for") ||
+          headersList.get("x-real-ip") ||
+          undefined,
+        headersList.get("user-agent") || undefined,
+      );
+
+      return {
+        success: true,
+        data: updatedEvent,
+      };
+    } catch (actionError) {
+      if (eventId && !qrCodeFinalized) {
+        try {
+          await db.event.delete({ where: { id: eventId } });
+        } catch (cleanupError) {
+          console.error(
+            "Failed to cleanup event after QR generation error:",
+            cleanupError,
+          );
+        }
+      }
+
+      throw actionError;
+    }
   } catch (error) {
     if (error instanceof ZodError) {
       return {

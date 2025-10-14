@@ -1,7 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import SignatureCanvas from "react-signature-canvas";
+import type SignaturePad from "signature_pad";
 import {
   Card,
   CardContent,
@@ -27,18 +28,96 @@ export function SignatureCanvasComponent({
 }: SignatureCanvasComponentProps) {
   const sigCanvas = useRef<SignatureCanvas>(null);
   const [isEmpty, setIsEmpty] = useState(true);
+  const hasPatchedSignaturePad = useRef(false);
+
+  useEffect(() => {
+    const canvasInstance = sigCanvas.current;
+    if (!canvasInstance || hasPatchedSignaturePad.current) {
+      return;
+    }
+
+    const signaturePad = canvasInstance.getSignaturePad() as SignaturePad & {
+      _strokeUpdate: (event: PointerEvent | Touch | MouseEvent) => void;
+      _strokeEnd: (event: PointerEvent | Touch | MouseEvent) => void;
+      _data: unknown[];
+    };
+    const originalStrokeUpdate = signaturePad._strokeUpdate;
+    const originalStrokeEnd = signaturePad._strokeEnd;
+    const boundStrokeUpdate = originalStrokeUpdate.bind(signaturePad);
+    const boundStrokeEnd = originalStrokeEnd.bind(signaturePad);
+
+    signaturePad._strokeUpdate = function patchedStrokeUpdate(event) {
+      if (!Array.isArray(this._data)) {
+        this._data = [];
+      }
+
+      if (this._data.length === 0) {
+        this._data.push([]);
+      }
+
+      return boundStrokeUpdate(event);
+    };
+
+    signaturePad._strokeEnd = function patchedStrokeEnd(event) {
+      if (!Array.isArray(this._data) || this._data.length === 0) {
+        return;
+      }
+
+      return boundStrokeEnd(event);
+    };
+
+    hasPatchedSignaturePad.current = true;
+
+    return () => {
+      signaturePad._strokeUpdate = originalStrokeUpdate;
+      signaturePad._strokeEnd = originalStrokeEnd;
+      hasPatchedSignaturePad.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const canvasInstance = sigCanvas.current;
+    if (!canvasInstance) return;
+
+    if (value) {
+      try {
+        canvasInstance.fromDataURL(value);
+        setIsEmpty(false);
+      } catch (error) {
+        console.error("Failed to load saved signature", error);
+        try {
+          canvasInstance.clear();
+        } catch (clearError) {
+          console.error("Failed to reset signature canvas", clearError);
+        }
+        setIsEmpty(true);
+      }
+      return;
+    }
+
+    try {
+      canvasInstance.clear();
+    } catch (error) {
+      console.error("Failed to clear signature canvas", error);
+    }
+    setIsEmpty(true);
+  }, [value]);
 
   const handleClear = () => {
     sigCanvas.current?.clear();
     setIsEmpty(true);
+    onSignature("");
   };
 
   const handleEnd = () => {
     if (sigCanvas.current && !sigCanvas.current.isEmpty()) {
       setIsEmpty(false);
-      // Export as transparent PNG
-      const dataUrl = sigCanvas.current.toDataURL("image/png");
-      onSignature(dataUrl);
+      try {
+        const dataUrl = sigCanvas.current.toDataURL("image/png");
+        onSignature(dataUrl);
+      } catch (error) {
+        console.error("Failed to capture signature", error);
+      }
     }
   };
 
@@ -87,7 +166,7 @@ export function SignatureCanvasComponent({
 
           {/* Existing signature preview */}
           {value && isEmpty && (
-            <div className="absolute inset-0 flex items-center justify-center p-4">
+            <div className="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={value}

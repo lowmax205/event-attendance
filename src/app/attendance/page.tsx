@@ -1,13 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { QRScanner } from "@/components/attendance/qr-scanner";
 import { useOnline } from "@/hooks/use-online";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, QrCode, Wifi, WifiOff } from "lucide-react";
-import { validateQR } from "@/actions/attendance/validate-qr";
+import { AlertCircle, ExternalLink, QrCode, Wifi, WifiOff } from "lucide-react";
 
 /**
  * QR Scanner landing page
@@ -16,41 +15,21 @@ import { validateQR } from "@/actions/attendance/validate-qr";
 export default function AttendancePage() {
   const router = useRouter();
   const { isOnline } = useOnline();
-  const [scannerOpen, setScannerOpen] = useState(false);
-  const [isValidating, setIsValidating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [eventCode, setEventCode] = useState("");
+  const [manualError, setManualError] = useState<string | null>(null);
 
-  const handleScan = async (payload: string) => {
-    setIsValidating(true);
-    setError(null);
+  const handleManualNavigation = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
 
-    try {
-      // Validate QR code with server
-      const result = await validateQR(payload);
+    const trimmedCode = eventCode.trim();
 
-      if (!result.success || !result.data) {
-        setError(result.error || "Invalid QR code");
-        return;
-      }
-
-      // Check if validation passed
-      if (!result.data.valid) {
-        setError(
-          result.data.validationErrors.join(". ") ||
-            "QR code validation failed",
-        );
-        return;
-      }
-
-      // Redirect to attendance form for this event
-      router.push(`/attendance/${result.data.eventId}`);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to validate QR code",
-      );
-    } finally {
-      setIsValidating(false);
+    if (!trimmedCode) {
+      setManualError("Enter the event access code printed below the QR.");
+      return;
     }
+
+    setManualError(null);
+    router.push(`/attendance/${encodeURIComponent(trimmedCode)}`);
   };
 
   return (
@@ -85,32 +64,12 @@ export default function AttendancePage() {
             <Wifi className="h-4 w-4" />
             <AlertTitle>Connected</AlertTitle>
             <AlertDescription>
-              Ready to scan. Click the button below to open your camera.
+              Use your device&apos;s built-in camera or Google Lens to scan the
+              event QR code. The QR link will open automatically in your
+              browser.
             </AlertDescription>
           </Alert>
         )}
-
-        {/* Validation Error */}
-        {error && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>QR Code Validation Failed</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
-        {/* Scan QR Button */}
-        <div className="flex justify-center">
-          <Button
-            size="lg"
-            onClick={() => setScannerOpen(true)}
-            disabled={!isOnline || isValidating}
-            className="w-full sm:w-auto"
-          >
-            <QrCode className="mr-2 h-5 w-5" />
-            {isValidating ? "Validating..." : "Scan QR Code"}
-          </Button>
-        </div>
 
         {/* Instructions */}
         <div className="rounded-lg border bg-muted/50 p-6 space-y-4">
@@ -119,24 +78,62 @@ export default function AttendancePage() {
             <li className="flex gap-2">
               <span className="font-semibold text-foreground">1.</span>
               <span>
-                Click the &quot;Scan QR Code&quot; button above to open your
-                camera
+                Open your phone&apos;s camera app or Google Lens. Make sure the
+                QR scanning feature is enabled.
               </span>
             </li>
             <li className="flex gap-2">
               <span className="font-semibold text-foreground">2.</span>
               <span>
-                Point your camera at the event QR code displayed at the venue
+                Point it at the event QR code displayed at the venue and follow
+                the link that appears on-screen.
               </span>
             </li>
             <li className="flex gap-2">
               <span className="font-semibold text-foreground">3.</span>
               <span>
-                Complete the attendance form by verifying your location, taking
-                photos, and signing
+                Complete the check-in steps (location verification, photos, and
+                signature) using the page that opens.
               </span>
             </li>
           </ol>
+        </div>
+
+        {/* Manual Entry */}
+        <div className="rounded-lg border bg-background p-6 space-y-4">
+          <h2 className="font-semibold text-lg">Need to enter it manually?</h2>
+          <p className="text-sm text-muted-foreground">
+            If your camera can&apos;t open the QR link, type the event access
+            code printed under the QR and continue from here.
+          </p>
+          <form onSubmit={handleManualNavigation} className="space-y-3">
+            <div className="space-y-2">
+              <Input
+                value={eventCode}
+                onChange={(event) => setEventCode(event.target.value)}
+                placeholder="e.g. evt_123abc"
+                aria-label="Event access code"
+                aria-invalid={manualError ? true : undefined}
+              />
+              {manualError && (
+                <p className="text-sm text-destructive">{manualError}</p>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button type="submit" className="flex-1 sm:flex-none">
+                Go to Event
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.push("/events")}
+                className="flex-1 sm:flex-none"
+              >
+                <ExternalLink className="mr-2 h-4 w-4" />
+                Browse Events
+              </Button>
+            </div>
+          </form>
         </div>
 
         {/* Requirements Notice */}
@@ -154,13 +151,6 @@ export default function AttendancePage() {
           </AlertDescription>
         </Alert>
       </div>
-
-      {/* QR Scanner Modal */}
-      <QRScanner
-        open={scannerOpen}
-        onOpenChange={setScannerOpen}
-        onScan={handleScan}
-      />
     </div>
   );
 }
