@@ -2,7 +2,8 @@
 
 import { getCurrentUser } from "@/lib/auth/server";
 import { db } from "@/lib/db";
-import { uploadPhoto } from "@/lib/cloudinary";
+import { uploadImageToCloudflare } from "@/lib/cloudflare-images";
+import { uploadFileToR2 } from "@/lib/cloudflare-r2";
 import { revalidatePath } from "next/cache";
 
 interface UpdateProfileResult {
@@ -29,6 +30,9 @@ export async function updateProfile(
     const studentId = formData.get("studentId") as string;
     const profilePicture = formData.get("profilePicture") as File | null;
 
+    const MAX_PROFILE_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB
+    const MAX_DOCUMENT_SIZE = 10 * 1024 * 1024; // 10 MB
+
     // Validate required fields
     if (!firstName || !lastName || !department || !yearLevel || !studentId) {
       return { success: false, message: "Missing required fields" };
@@ -37,14 +41,27 @@ export async function updateProfile(
     // Handle profile picture upload
     let profilePictureUrl: string | undefined;
     if (profilePicture && profilePicture.size > 0) {
+      if (profilePicture.size > MAX_PROFILE_IMAGE_SIZE) {
+        return {
+          success: false,
+          message: "Profile picture must be 5 MB or smaller",
+        };
+      }
+
+      if (!profilePicture.type.startsWith("image/")) {
+        return {
+          success: false,
+          message: "Profile picture must be an image file",
+        };
+      }
+
       try {
-        const arrayBuffer = await profilePicture.arrayBuffer();
-        const base64 = Buffer.from(arrayBuffer).toString("base64");
-        const base64WithPrefix = `data:${profilePicture.type};base64,${base64}`;
-        profilePictureUrl = await uploadPhoto(
-          base64WithPrefix,
-          `profiles/${user.userId}`,
-        );
+        const uploadResult = await uploadImageToCloudflare(profilePicture, {
+          folder: `profiles/${user.userId}`,
+          filename: `profile-${Date.now()}`,
+          metadata: { userId: user.userId, type: "profilePicture" },
+        });
+        profilePictureUrl = uploadResult.url;
       } catch (error) {
         console.error("Failed to upload profile picture:", error);
         return { success: false, message: "Failed to upload profile picture" };
@@ -57,15 +74,30 @@ export async function updateProfile(
     while (formData.has(`document_${docIndex}`)) {
       const document = formData.get(`document_${docIndex}`) as File;
       if (document && document.size > 0) {
-        try {
-          const arrayBuffer = await document.arrayBuffer();
-          const base64 = Buffer.from(arrayBuffer).toString("base64");
-          const base64WithPrefix = `data:${document.type};base64,${base64}`;
-          const url = await uploadPhoto(
-            base64WithPrefix,
-            `profiles/${user.userId}/documents`,
+        if (document.size > MAX_DOCUMENT_SIZE) {
+          console.warn(
+            `Document ${docIndex} exceeds the 10 MB limit and will be skipped`,
           );
-          documentUrls.push(url);
+          docIndex++;
+          continue;
+        }
+
+        if (!document.type || document.type !== "application/pdf") {
+          console.warn(
+            `Document ${docIndex} skipped due to unsupported type: ${document.type}`,
+          );
+          docIndex++;
+          continue;
+        }
+
+        try {
+          const uploadResult = await uploadFileToR2(document, {
+            folder: `profiles/${user.userId}/documents`,
+            filename:
+              document.name ||
+              `document-${user.userId}-${Date.now()}-${docIndex}`,
+          });
+          documentUrls.push(uploadResult.url);
         } catch (error) {
           console.error(`Failed to upload document ${docIndex}:`, error);
         }

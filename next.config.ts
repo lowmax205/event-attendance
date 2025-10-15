@@ -59,6 +59,7 @@ const nextConfig: NextConfig = {
   experimental: {
     serverActions: {
       allowedOrigins: allowedServerActionOrigins,
+      bodySizeLimit: "10mb",
     },
   },
   images: {
@@ -74,6 +75,10 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "res.cloudinary.com",
+      },
+      {
+        protocol: "https",
+        hostname: "imagedelivery.net",
       },
     ],
     formats: ["image/avif", "image/webp"],
