@@ -23,6 +23,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { User, Upload, FileText, GraduationCap, X } from "lucide-react";
 import { User as UserType, UserProfile } from "@prisma/client";
+import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
 
 const profileUpdateSchema = z.object({
   firstName: z.string().min(1, "First name is required").max(50),
@@ -164,6 +166,12 @@ export function ProfileEditForm({ user, profile }: ProfileEditFormProps) {
     return `${user.firstName?.[0] || ""}${user.lastName?.[0] || ""}`.toUpperCase();
   };
 
+  const lastLoginDate = user.lastLoginAt ? new Date(user.lastLoginAt) : null;
+  const lastLoginDisplay =
+    lastLoginDate && !Number.isNaN(lastLoginDate.getTime())
+      ? format(lastLoginDate, "MMM d, yyyy • h:mm a")
+      : "Never logged in";
+
   return (
     <Tabs defaultValue="basic" className="space-y-6">
       <TabsList className="grid w-full grid-cols-2">
@@ -192,6 +200,22 @@ export function ProfileEditForm({ user, profile }: ProfileEditFormProps) {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <Label className="text-sm text-muted-foreground">
+                      Role
+                    </Label>
+                    <Badge variant="outline" className="w-fit px-2 py-1">
+                      {user.role}
+                    </Badge>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-sm text-muted-foreground">
+                      Last Login
+                    </Label>
+                    <p className="text-sm font-medium">{lastLoginDisplay}</p>
+                  </div>
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormFieldWrapper
                     name="firstName"
@@ -230,6 +254,7 @@ export function ProfileEditForm({ user, profile }: ProfileEditFormProps) {
                   name="contactNumber"
                   control={form.control}
                   label="Contact Number"
+                  labelHint="Optional"
                   description="Optional - for event notifications"
                 >
                   {(field) => (
@@ -374,7 +399,7 @@ export function ProfileEditForm({ user, profile }: ProfileEditFormProps) {
                     name="section"
                     control={form.control}
                     label="Section"
-                    description="Optional"
+                    labelHint="Optional"
                   >
                     {(field) => (
                       <Input

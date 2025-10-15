@@ -22,6 +22,7 @@ interface FormFieldWrapperProps<
   control: Control<TFieldValues>;
   label: string;
   description?: string;
+  labelHint?: string;
   required?: boolean;
   children: (field: ControllerRenderProps<TFieldValues, TName>) => ReactNode;
 }
@@ -34,6 +35,7 @@ export function FormFieldWrapper<
   control,
   label,
   description,
+  labelHint,
   required,
   children,
 }: FormFieldWrapperProps<TFieldValues, TName>) {
@@ -43,9 +45,16 @@ export function FormFieldWrapper<
       name={name}
       render={({ field }) => (
         <FormItem>
-          <FormLabel>
-            {label}
-            {required && <span className="text-destructive ml-1">*</span>}
+          <FormLabel className="flex items-center gap-2">
+            <span>
+              {label}
+              {required && <span className="text-destructive ml-1">*</span>}
+            </span>
+            {labelHint && (
+              <span className="text-xs font-normal text-muted-foreground">
+                {labelHint}
+              </span>
+            )}
           </FormLabel>
           <FormControl>{children(field)}</FormControl>
           {description && <FormDescription>{description}</FormDescription>}

@@ -535,12 +535,9 @@ export function EventDetailDialog({
                   )}
                 </div>
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                  <code
-                    className="w-full truncate rounded border bg-muted px-3 py-2 text-xs"
-                    title={shareUrl || "Attendance link unavailable"}
-                  >
-                    {shareUrl || "Attendance link unavailable"}
-                  </code>
+                  <div className="w-full truncate rounded border bg-muted px-3 py-2 text-xs">
+                    Attendance link hidden
+                  </div>
                   <div className="flex shrink-0 flex-wrap gap-2">
                     <Button
                       type="button"

@@ -22,6 +22,9 @@ export async function checkAndUpdateExpiredEvents(): Promise<{
     const expiredEvents = await db.event.findMany({
       where: {
         status: "Active",
+        endDateTime: {
+          lte: now,
+        },
       },
       select: {
         id: true,

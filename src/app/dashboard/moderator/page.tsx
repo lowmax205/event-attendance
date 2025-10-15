@@ -159,13 +159,9 @@ export default async function ModeratorDashboardPage({
           verifiedAt: item.verifiedAt ? new Date(item.verifiedAt) : null,
           verifiedBy: item.verifiedBy,
         }))}
-        totalItems={pagination.totalItems}
-        currentPage={pagination.page}
-        totalPages={pagination.totalPages}
         pendingCurrentPage={pendingPagination.page}
         pendingTotalPages={pendingPagination.totalPages}
         pendingLimit={pendingPagination.limit}
-        isExpanded={isExpanded}
       />
     </div>
   );

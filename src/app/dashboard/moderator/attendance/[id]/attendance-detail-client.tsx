@@ -28,17 +28,19 @@ export function AttendanceDetailClient({
   const [disputeNote, setDisputeNote] = useState(attendance.disputeNote ?? "");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleVerify = async (
-    decision: "Approved" | "Rejected" | "Disputed",
-  ) => {
-    if (decision === "Rejected" && !disputeNote.trim()) {
-      toast.error("Please provide a reason for rejection");
-      return;
-    }
+  const handleVerify = async (decision: "Approved" | "Rejected") => {
+    const trimmedNote = disputeNote.trim();
 
-    if (decision === "Disputed" && !disputeNote.trim()) {
-      toast.error("Please provide details for the dispute");
-      return;
+    if (decision === "Rejected") {
+      if (!trimmedNote) {
+        toast.error("Please provide a reason for rejection");
+        return;
+      }
+
+      if (trimmedNote.length < 10) {
+        toast.error("Rejection reason must be at least 10 characters");
+        return;
+      }
     }
 
     setIsSubmitting(true);
@@ -46,7 +48,7 @@ export function AttendanceDetailClient({
     try {
       const result = await verifyAttendance(attendance.id, {
         verificationStatus: decision,
-        disputeNote: disputeNote.trim() || undefined,
+        disputeNote: trimmedNote || undefined,
       });
 
       if (!result.success) {
@@ -55,7 +57,7 @@ export function AttendanceDetailClient({
       }
 
       toast.success(`Attendance ${decision.toLowerCase()} successfully!`);
-      router.push("/dashboard/moderator/attendance");
+      router.push("/dashboard/moderator?expanded=true&pendingPage=1");
     } catch (error) {
       console.error("Verification error:", error);
       toast.error(
@@ -445,11 +447,11 @@ export function AttendanceDetailClient({
             <CardContent className="space-y-4">
               <div>
                 <Label htmlFor="disputeNote">
-                  Dispute Note / Rejection Reason (Optional)
+                  Rejection Reason (required when rejecting)
                 </Label>
                 <Textarea
                   id="disputeNote"
-                  placeholder="Provide details if rejecting or disputing..."
+                  placeholder="Provide details if rejecting..."
                   value={disputeNote}
                   onChange={(e) => setDisputeNote(e.target.value)}
                   rows={4}
@@ -482,19 +484,6 @@ export function AttendanceDetailClient({
                     <X className="mr-2 h-4 w-4" />
                   )}
                   Reject
-                </Button>
-                <Button
-                  onClick={() => handleVerify("Disputed")}
-                  disabled={isSubmitting}
-                  variant="outline"
-                  className="flex-1 sm:flex-none"
-                >
-                  {isSubmitting ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <X className="mr-2 h-4 w-4" />
-                  )}
-                  Dispute
                 </Button>
               </div>
             </CardContent>

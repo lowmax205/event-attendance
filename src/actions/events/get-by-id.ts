@@ -2,6 +2,7 @@
 
 import { db } from "@/lib/db";
 import { requireAuth } from "@/lib/auth/server";
+import { checkSingleEvent } from "@/lib/events/status-monitor";
 
 /**
  * Get event details by ID
@@ -12,6 +13,9 @@ export async function getEventById(eventId: string) {
   try {
     // Require authentication
     await requireAuth();
+
+    // Ensure status is refreshed for this event before fetching details
+    await checkSingleEvent(eventId);
 
     const event = await db.event.findUnique({
       where: { id: eventId },

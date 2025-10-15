@@ -2,6 +2,7 @@
 
 import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth/server";
+import { checkAndUpdateExpiredEvents } from "@/lib/events/status-monitor";
 
 interface UnifiedDashboardParams {
   page?: number;
@@ -36,6 +37,11 @@ export async function getModeratorDashboard(
 
     const isModerator = user.role === "Moderator";
     const isAdmin = user.role === "Administrator";
+
+    // Refresh event statuses before building dashboard data
+    await checkAndUpdateExpiredEvents().catch((error) => {
+      console.error("Failed to refresh event statuses:", error);
+    });
 
     // Build where clause - Moderators see only their events, Admins see all
     const eventWhere: {

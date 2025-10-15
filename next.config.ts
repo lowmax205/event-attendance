@@ -17,8 +17,6 @@ const buildAllowedServerActionOrigins = () => {
   };
 
   addOrigin(process.env.NEXT_PUBLIC_APP_URL);
-  addOrigin(process.env.NEXT_PUBLIC_APP_URL_PROD);
-
   addOrigin("http://localhost:3000");
   addOrigin("http://127.0.0.1:3000");
 

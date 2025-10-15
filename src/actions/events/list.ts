@@ -2,6 +2,7 @@
 
 import { db } from "@/lib/db";
 import { requireAuth } from "@/lib/auth/server";
+import { checkAndUpdateExpiredEvents } from "@/lib/events/status-monitor";
 import {
   eventListQuerySchema,
   type EventListQuery,
@@ -18,6 +19,11 @@ export async function listEvents(query: Partial<EventListQuery> = {}) {
   try {
     // Require authentication (MODERATOR or ADMIN)
     const user = await requireAuth();
+
+    // Ensure event statuses reflect current schedule before querying
+    await checkAndUpdateExpiredEvents().catch((error) => {
+      console.error("Failed to refresh event statuses:", error);
+    });
 
     // Validate and parse query parameters
     const validatedQuery = eventListQuerySchema.parse(query);

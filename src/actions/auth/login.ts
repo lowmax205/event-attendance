@@ -1,6 +1,6 @@
 "use server";
 
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { db } from "@/lib/db";
 import { verifyPassword } from "@/lib/auth/hash";
 import { createSession } from "@/lib/auth/session";
@@ -79,14 +79,41 @@ export async function login(data: LoginInput): Promise<AuthResponse> {
       };
     }
 
+    const headersList = await headers();
+    const rawForwardedFor = headersList.get("x-forwarded-for");
+    const ipAddress = rawForwardedFor
+      ? rawForwardedFor.split(",")[0]?.trim() || null
+      : headersList.get("x-real-ip") || null;
+    const userAgent = headersList.get("user-agent") || null;
+
+    const loginTimestamp = new Date();
+
+    await db.user.update({
+      where: { id: user.id },
+      data: {
+        lastLoginAt: loginTimestamp,
+      },
+      select: { id: true },
+    });
+
     // 7. Create session
-    const { accessToken, refreshToken } = await createSession({
+    const { session, accessToken, refreshToken } = await createSession({
       id: user.id,
       email: user.email,
       role: user.role,
       hasProfile,
       accountStatus: user.accountStatus,
     });
+
+    if (ipAddress || userAgent) {
+      await db.session.update({
+        where: { id: session.id },
+        data: {
+          ipAddress: ipAddress || undefined,
+          userAgent: userAgent || undefined,
+        },
+      });
+    }
 
     // 8. Set cookies
     const cookieStore = await cookies();
@@ -103,8 +130,8 @@ export async function login(data: LoginInput): Promise<AuthResponse> {
       data: {
         eventType: "LOGIN",
         userId: user.id,
-        ipAddress: null,
-        userAgent: null,
+        ipAddress: ipAddress || undefined,
+        userAgent: userAgent || undefined,
       },
     });
 

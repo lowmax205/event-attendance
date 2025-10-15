@@ -22,15 +22,7 @@ import {
 } from "@/components/ui/pagination";
 import { EventDetailDialog } from "@/components/dashboard/moderator/event-management/event-detail-dialog";
 import { AttendanceDetailDialog } from "@/components/dashboard/moderator/attendance-management/attendance-detail-dialog";
-import {
-  Calendar,
-  Users,
-  CheckCircle,
-  Clock,
-  Eye,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
+import { Calendar, Users, CheckCircle, Clock, Eye } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -106,13 +98,9 @@ interface ModeratorDashboardProps {
   systemStats?: SystemStats; // Only for admins
   myEvents: Event[];
   pendingVerifications: PendingVerification[];
-  totalItems: number;
-  currentPage: number;
-  totalPages: number;
   pendingCurrentPage: number;
   pendingTotalPages: number;
   pendingLimit: number;
-  isExpanded?: boolean;
 }
 
 const statusColors = {
@@ -128,13 +116,9 @@ export function ModeratorDashboard({
   systemStats,
   myEvents,
   pendingVerifications,
-  totalItems,
-  currentPage,
-  totalPages,
   pendingCurrentPage,
   pendingTotalPages,
   pendingLimit,
-  isExpanded = false,
 }: ModeratorDashboardProps) {
   const router = useRouter();
   const [selectedVerification, setSelectedVerification] =
@@ -142,17 +126,6 @@ export function ModeratorDashboard({
   const [isAttendanceDialogOpen, setIsAttendanceDialogOpen] = useState(false);
   const [viewEventId, setViewEventId] = useState<string | null>(null);
   const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
-  const [showAll, setShowAll] = useState(isExpanded);
-
-  const handleViewAllToggle = () => {
-    setShowAll(!showAll);
-    // Reload page with appropriate limit
-    const params = new URLSearchParams(window.location.search);
-    params.set("expanded", (!showAll).toString());
-    params.set("page", "1"); // Reset to first page when toggling
-    params.set("pendingPage", "1");
-    window.location.href = `?${params.toString()}`;
-  };
 
   const handleViewEvent = (eventId: string) => {
     setViewEventId(eventId);
@@ -272,26 +245,9 @@ export function ModeratorDashboard({
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>My Events</CardTitle>
           <div className="flex items-center gap-2">
-            {totalItems > 5 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleViewAllToggle}
-                className="flex items-center gap-2"
-              >
-                {showAll ? (
-                  <>
-                    <ChevronUp className="h-4 w-4" />
-                    Show Less
-                  </>
-                ) : (
-                  <>
-                    <ChevronDown className="h-4 w-4" />
-                    View All
-                  </>
-                )}
-              </Button>
-            )}
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/dashboard/moderator/events">View All</Link>
+            </Button>
             <Button asChild>
               <Link href="/dashboard/moderator/events/create">
                 Create Event
@@ -359,93 +315,6 @@ export function ModeratorDashboard({
               </TableBody>
             </Table>
           </div>
-          {showAll && totalPages > 1 && (
-            <div className="mt-4">
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        if (currentPage > 1) {
-                          const params = new URLSearchParams(
-                            window.location.search,
-                          );
-                          params.set("page", (currentPage - 1).toString());
-                          window.location.href = `?${params.toString()}`;
-                        }
-                      }}
-                      className={
-                        currentPage === 1
-                          ? "pointer-events-none opacity-50"
-                          : ""
-                      }
-                    />
-                  </PaginationItem>
-
-                  {[...Array(totalPages)].map((_, i) => {
-                    const page = i + 1;
-                    if (
-                      page === 1 ||
-                      page === totalPages ||
-                      (page >= currentPage - 1 && page <= currentPage + 1)
-                    ) {
-                      return (
-                        <PaginationItem key={page}>
-                          <PaginationLink
-                            href="#"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              const params = new URLSearchParams(
-                                window.location.search,
-                              );
-                              params.set("page", page.toString());
-                              window.location.href = `?${params.toString()}`;
-                            }}
-                            isActive={currentPage === page}
-                          >
-                            {page}
-                          </PaginationLink>
-                        </PaginationItem>
-                      );
-                    } else if (
-                      page === currentPage - 2 ||
-                      page === currentPage + 2
-                    ) {
-                      return (
-                        <PaginationItem key={page}>
-                          <PaginationEllipsis />
-                        </PaginationItem>
-                      );
-                    }
-                    return null;
-                  })}
-
-                  <PaginationItem>
-                    <PaginationNext
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        if (currentPage < totalPages) {
-                          const params = new URLSearchParams(
-                            window.location.search,
-                          );
-                          params.set("page", (currentPage + 1).toString());
-                          window.location.href = `?${params.toString()}`;
-                        }
-                      }}
-                      className={
-                        currentPage === totalPages
-                          ? "pointer-events-none opacity-50"
-                          : ""
-                      }
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-            </div>
-          )}
         </CardContent>
       </Card>
 
@@ -453,9 +322,6 @@ export function ModeratorDashboard({
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Pending Verifications</CardTitle>
-          <Button variant="outline" asChild>
-            <Link href="/dashboard/admin/attendance">View All</Link>
-          </Button>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
