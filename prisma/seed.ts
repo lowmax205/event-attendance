@@ -1,10 +1,192 @@
-import { PrismaClient } from "@prisma/client";
+import path from "node:path";
+import { readFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
+
+import { PrismaClient, Prisma } from "@prisma/client";
 import { hash } from "bcryptjs";
+
+import { uploadPhoto, uploadSignature } from "../src/lib/cloudinary";
+import { uploadFileToR2 } from "../src/lib/cloudflare-r2";
+
+type StorageAsset = {
+  cloudinaryUrl: string;
+  r2Url: string;
+};
+
+type PlaceholderKey =
+  | "profile"
+  | "checkIn"
+  | "checkOut"
+  | "document"
+  | "signature";
+
+type PlaceholderAssets = Record<PlaceholderKey, StorageAsset>;
+
+interface PlaceholderConfig {
+  key: PlaceholderKey;
+  filename: string;
+  folder: string;
+  type: "photo" | "signature";
+}
+
+type ProfileInput = Omit<
+  Prisma.UserProfileCreateWithoutUserInput,
+  "profilePictureUrl" | "documentUrls"
+> &
+  Partial<
+    Pick<
+      Prisma.UserProfileCreateWithoutUserInput,
+      "profilePictureUrl" | "documentUrls"
+    >
+  >;
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const PLACEHOLDER_DIR = path.resolve(
+  __dirname,
+  "../src/assets/images/Placeholder",
+);
+const SEED_STORAGE_ROOT = "seed/placeholders";
+
+const MIME_TYPES: Record<string, string> = {
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+};
+
+function assertEnvVars(required: string[], provider: string) {
+  const missing = required.filter((key) => !process.env[key]);
+
+  if (missing.length > 0) {
+    throw new Error(
+      `Missing ${provider} environment variables: ${missing.join(", ")}`,
+    );
+  }
+}
+
+function getMimeType(filePath: string): string {
+  const ext = path.extname(filePath).toLowerCase();
+  const mimeType = MIME_TYPES[ext];
+
+  if (!mimeType) {
+    throw new Error(
+      `Unsupported placeholder image format for ${filePath}. Supported extensions: ${Object.keys(
+        MIME_TYPES,
+      ).join(", ")}`,
+    );
+  }
+
+  return mimeType;
+}
+
+async function uploadPlaceholderAsset(
+  config: PlaceholderConfig,
+): Promise<StorageAsset> {
+  const filePath = path.join(PLACEHOLDER_DIR, config.filename);
+  const buffer = await readFile(filePath);
+  const mimeType = getMimeType(filePath);
+  const dataUri = `data:${mimeType};base64,${buffer.toString("base64")}`;
+  const folderPath = `${SEED_STORAGE_ROOT}/${config.folder}`;
+
+  const cloudinaryUrl =
+    config.type === "signature"
+      ? await uploadSignature(dataUri, folderPath)
+      : await uploadPhoto(dataUri, folderPath);
+
+  if (typeof File === "undefined") {
+    throw new Error(
+      "The File API is unavailable in this Node.js runtime. Please use Node.js 18 or newer.",
+    );
+  }
+
+  const file = new File([new Uint8Array(buffer)], config.filename, {
+    type: mimeType,
+  });
+  const r2Result = await uploadFileToR2(file, {
+    folder: folderPath,
+    filename: config.filename,
+  });
+
+  return {
+    cloudinaryUrl,
+    r2Url: r2Result.url,
+  };
+}
+
+async function preparePlaceholderAssets(): Promise<PlaceholderAssets> {
+  assertEnvVars(
+    ["CLOUDINARY_CLOUD_NAME", "CLOUDINARY_API_KEY", "CLOUDINARY_SECRET_KEY"],
+    "Cloudinary",
+  );
+  assertEnvVars(
+    ["CLOUDFLARE_S3_API", "CLOUDFLARE_ACCESS_ID", "CLOUDFLARE_SECRET_KEY"],
+    "Cloudflare R2",
+  );
+
+  const configs: PlaceholderConfig[] = [
+    {
+      key: "profile",
+      filename: "Profile.png",
+      folder: "profiles",
+      type: "photo",
+    },
+    {
+      key: "checkIn",
+      filename: "CheckIn.png",
+      folder: "attendance/check-in",
+      type: "photo",
+    },
+    {
+      key: "checkOut",
+      filename: "CheckOut.png",
+      folder: "attendance/check-out",
+      type: "photo",
+    },
+    {
+      key: "document",
+      filename: "PhotoSample.png",
+      folder: "documents",
+      type: "photo",
+    },
+    {
+      key: "signature",
+      filename: "PhotoSample.png",
+      folder: "signatures",
+      type: "signature",
+    },
+  ];
+
+  console.log("🖼️ Uploading placeholder media assets...");
+
+  const entries = await Promise.all(
+    configs.map(async (config) => {
+      console.log(`   • ${config.filename}`);
+      const asset = await uploadPlaceholderAsset(config);
+      return [config.key, asset] as const;
+    }),
+  );
+
+  return Object.fromEntries(entries) as PlaceholderAssets;
+}
 
 const prisma = new PrismaClient();
 
 async function main() {
   console.log("🌱 Starting database seed...");
+
+  const placeholderAssets = await preparePlaceholderAssets();
+
+  const createProfileData = (
+    overrides: ProfileInput,
+  ): Prisma.UserProfileCreateWithoutUserInput => ({
+    profilePictureUrl: placeholderAssets.profile.cloudinaryUrl,
+    documentUrls: [
+      placeholderAssets.document.cloudinaryUrl,
+      placeholderAssets.document.r2Url,
+    ],
+    ...overrides,
+  });
 
   // Clear existing data (in reverse order of dependencies)
   console.log("🧹 Cleaning existing data...");
@@ -35,13 +217,13 @@ async function main() {
       emailVerified: true,
       accountStatus: "ACTIVE",
       UserProfile: {
-        create: {
+        create: createProfileData({
           studentId: "2021-00001",
           department: "Computer Science",
           yearLevel: 3,
           section: "CS-3A",
           contactNumber: "+63 912 345 6789",
-        },
+        }),
       },
     },
   });
@@ -57,13 +239,13 @@ async function main() {
       emailVerified: true,
       accountStatus: "ACTIVE",
       UserProfile: {
-        create: {
+        create: createProfileData({
           studentId: "2021-00002",
           department: "Information Technology",
           yearLevel: 2,
           section: "IT-2B",
           contactNumber: "+63 912 345 6790",
-        },
+        }),
       },
     },
   });
@@ -93,13 +275,13 @@ async function main() {
       emailVerified: true,
       accountStatus: "ACTIVE",
       UserProfile: {
-        create: {
+        create: createProfileData({
           studentId: "MOD-2020-001",
           department: "Student Affairs",
           yearLevel: 4,
           section: "N/A",
           contactNumber: "+63 912 345 6791",
-        },
+        }),
       },
     },
   });
@@ -115,13 +297,13 @@ async function main() {
       emailVerified: true,
       accountStatus: "ACTIVE",
       UserProfile: {
-        create: {
+        create: createProfileData({
           studentId: "ADM-2019-001",
           department: "Administration",
           yearLevel: 4,
           section: "N/A",
           contactNumber: "+63 912 345 6792",
-        },
+        }),
       },
     },
   });
@@ -140,13 +322,13 @@ async function main() {
       emailVerified: true,
       accountStatus: "ACTIVE",
       UserProfile: {
-        create: {
+        create: createProfileData({
           studentId: "ADM-2020-001",
           department: "Administration",
           yearLevel: 4,
           section: "N/A",
           contactNumber: "+63 912 345 6800",
-        },
+        }),
       },
     },
   });
@@ -164,13 +346,13 @@ async function main() {
         emailVerified: true,
         accountStatus: "ACTIVE",
         UserProfile: {
-          create: {
+          create: createProfileData({
             studentId: "MOD-2020-002",
             department: "Student Affairs",
             yearLevel: 4,
             section: "N/A",
             contactNumber: "+63 912 345 6801",
-          },
+          }),
         },
       },
     }),
@@ -184,13 +366,13 @@ async function main() {
         emailVerified: true,
         accountStatus: "ACTIVE",
         UserProfile: {
-          create: {
+          create: createProfileData({
             studentId: "MOD-2020-003",
             department: "Student Affairs",
             yearLevel: 4,
             section: "N/A",
             contactNumber: "+63 912 345 6802",
-          },
+          }),
         },
       },
     }),
@@ -276,13 +458,13 @@ async function main() {
         emailVerified: true,
         accountStatus: "ACTIVE",
         UserProfile: {
-          create: {
+          create: createProfileData({
             studentId: studentIdNum,
             department: departments[i % departments.length],
             yearLevel: yearLevels[i % yearLevels.length],
             section: sections[i % sections.length],
             contactNumber: `+639${String(Math.floor(Math.random() * 1000000000)).padStart(9, "0")}`,
-          },
+          }),
         },
       },
     });
@@ -400,6 +582,12 @@ async function main() {
   console.log("✅ Creating Attendances...");
   let totalAttendances = 0;
 
+  const mobileUserAgents = [
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
+    "Mozilla/5.0 (Linux; Android 14; Pixel 7 Build/UP1A.231105.003) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36",
+    "Mozilla/5.0 (Linux; Android 13; SM-G998B Build/TP1A.220624.014) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.112 Mobile Safari/537.36",
+  ];
+
   for (const event of events) {
     // Random attendance rate between 60% and 90%
     const attendanceRate = 0.6 + Math.random() * 0.3;
@@ -445,6 +633,32 @@ async function main() {
         verifiedAt = null;
       }
 
+      const deviceUserAgent =
+        mobileUserAgents[Math.floor(Math.random() * mobileUserAgents.length)];
+      const deviceIpAddress = `192.168.1.${
+        Math.floor(Math.random() * 254) + 1
+      }`;
+
+      const earliestCheckoutTime = Math.min(
+        event.endDateTime.getTime(),
+        submittedAt.getTime() + 45 * 60 * 1000,
+      );
+      const latestCheckoutTime = event.endDateTime.getTime();
+      const checkoutWindow = Math.max(
+        latestCheckoutTime - earliestCheckoutTime,
+        5 * 60 * 1000,
+      );
+      const randomCheckoutTime =
+        earliestCheckoutTime + Math.random() * checkoutWindow;
+      const checkOutSubmittedAt = new Date(
+        Math.min(randomCheckoutTime, latestCheckoutTime),
+      );
+
+      const checkOutLatOffset = (Math.random() - 0.5) * meterOffset * 2;
+      const checkOutLngOffset = (Math.random() - 0.5) * meterOffset * 2;
+      const checkOutDistance =
+        Math.random() < 0.95 ? Math.random() * 80 : 80 + Math.random() * 50;
+
       await prisma.attendance.create({
         data: {
           eventId: event.id,
@@ -454,12 +668,21 @@ async function main() {
           checkInLatitude: event.venueLatitude + latOffset,
           checkInLongitude: event.venueLongitude + lngOffset,
           checkInDistance: distanceFromVenue,
-          checkInFrontPhoto: `https://placehold.co/600x800/png?text=Front+Photo`,
-          checkInBackPhoto: `https://placehold.co/600x800/png?text=Back+Photo`,
-          checkInSignature: `https://placehold.co/400x200/png?text=Signature`,
-          checkInIpAddress: `192.168.1.${Math.floor(Math.random() * 254) + 1}`,
-          checkInUserAgent:
-            "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15",
+          checkInFrontPhoto: placeholderAssets.checkIn.cloudinaryUrl,
+          checkInBackPhoto: placeholderAssets.checkIn.r2Url,
+          checkInSignature: placeholderAssets.signature.cloudinaryUrl,
+          checkInIpAddress: deviceIpAddress,
+          checkInUserAgent: deviceUserAgent,
+          // Check-out data mirrors completed attendance
+          checkOutSubmittedAt,
+          checkOutLatitude: event.venueLatitude + checkOutLatOffset,
+          checkOutLongitude: event.venueLongitude + checkOutLngOffset,
+          checkOutDistance,
+          checkOutFrontPhoto: placeholderAssets.checkOut.cloudinaryUrl,
+          checkOutBackPhoto: placeholderAssets.checkOut.r2Url,
+          checkOutSignature: placeholderAssets.signature.r2Url,
+          checkOutIpAddress: deviceIpAddress,
+          checkOutUserAgent: deviceUserAgent,
           // Verification data
           verificationStatus,
           verifiedById,
@@ -467,6 +690,14 @@ async function main() {
           disputeNote:
             verificationStatus === "Rejected"
               ? "Location verification failed - distance exceeds 100m threshold"
+              : null,
+          appealMessage:
+            verificationStatus === "Rejected"
+              ? "I was within range – please review my attendance proof."
+              : null,
+          resolutionNotes:
+            verificationStatus === "Approved"
+              ? "Verified automatically during seed data generation"
               : null,
         },
       });

@@ -17,14 +17,10 @@
 			"url": "https://api.githubcopilot.com/mcp/"
 		},
 		"perplexity-ask": {
-			"command": "npx",
+			"command": "node",
 			"args": [
-				"-y",
-				"server-perplexity-ask"
+				"./scripts/start-perplexity.js"
 			],
-			"env": {
-				"PERPLEXITY_API_KEY": "${env:PERPLEXITY_API_KEY}"
-			},
 			"type": "stdio"
 		},
 		"linear": {
