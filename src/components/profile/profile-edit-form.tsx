@@ -48,7 +48,7 @@ export function ProfileEditForm({ user, profile }: ProfileEditFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [profilePicturePreview, setProfilePicturePreview] = useState<
     string | null
-  >(null);
+  >(profile?.profilePictureUrl || null);
   const [profilePictureFile, setProfilePictureFile] = useState<File | null>(
     null,
   );
@@ -149,8 +149,13 @@ export function ProfileEditForm({ user, profile }: ProfileEditFormProps) {
         // Refresh the page to show updated data
         window.location.reload();
       } else {
-        setError(result.message);
-        toast.error("Update failed", { description: result.message });
+        const friendlyMessage =
+          result.message === "Failed to upload profile picture"
+            ? "We couldn't upload your profile photo. Please try again later or contact support if the issue persists."
+            : result.message;
+
+        setError(friendlyMessage);
+        toast.error("Update failed", { description: friendlyMessage });
       }
     } catch (err) {
       const message = "An unexpected error occurred. Please try again.";
@@ -183,7 +188,11 @@ export function ProfileEditForm({ user, profile }: ProfileEditFormProps) {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           {error && (
             <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription>
+                {error === "Failed to upload profile picture"
+                  ? "We couldn't upload your profile photo. Please try again later or contact support if the issue persists."
+                  : error}
+              </AlertDescription>
             </Alert>
           )}
 
@@ -295,7 +304,13 @@ export function ProfileEditForm({ user, profile }: ProfileEditFormProps) {
               <CardContent className="space-y-6">
                 <div className="flex flex-col items-center gap-4">
                   <Avatar className="h-32 w-32">
-                    <AvatarImage src={profilePicturePreview || undefined} />
+                    <AvatarImage
+                      src={
+                        profilePicturePreview ||
+                        profile?.profilePictureUrl ||
+                        undefined
+                      }
+                    />
                     <AvatarFallback className="text-2xl">
                       {getInitials()}
                     </AvatarFallback>

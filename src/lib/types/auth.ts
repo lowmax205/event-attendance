@@ -42,6 +42,7 @@ export interface UserBasicInfo {
   lastName: string;
   role: "Student" | "Moderator" | "Administrator";
   hasProfile: boolean;
+  profilePictureUrl?: string | null;
 }
 
 /**

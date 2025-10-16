@@ -48,6 +48,7 @@ export function RegisterForm() {
           lastName: result.user.lastName,
           role: result.user.role,
           hasProfile: result.user.hasProfile,
+          profilePictureUrl: result.user.profilePictureUrl ?? null,
         });
 
         toast.success("Registration successful!", {

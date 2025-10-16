@@ -63,6 +63,7 @@ export async function login(data: LoginInput): Promise<AuthResponse> {
 
     // 5. Check if user has profile
     const hasProfile = !!user.UserProfile;
+    const profilePictureUrl = user.UserProfile?.profilePictureUrl ?? null;
 
     // 6. Check account status (T058)
     if (user.accountStatus === "SUSPENDED") {
@@ -145,6 +146,7 @@ export async function login(data: LoginInput): Promise<AuthResponse> {
         lastName: user.lastName,
         role: user.role,
         hasProfile,
+        profilePictureUrl,
       },
       requiresProfile: !hasProfile,
     };

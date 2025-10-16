@@ -2,9 +2,9 @@
 
 import { getCurrentUser } from "@/lib/auth/server";
 import { db } from "@/lib/db";
-import { uploadImageToCloudflare } from "@/lib/cloudflare-images";
 import { uploadFileToR2 } from "@/lib/cloudflare-r2";
 import { revalidatePath } from "next/cache";
+import path from "node:path";
 
 interface UpdateProfileResult {
   success: boolean;
@@ -38,6 +38,40 @@ export async function updateProfile(
       return { success: false, message: "Missing required fields" };
     }
 
+    const MIME_EXTENSION_MAP: Record<string, string> = {
+      "image/jpeg": ".jpg",
+      "image/png": ".png",
+      "image/webp": ".webp",
+      "application/pdf": ".pdf",
+    };
+
+    const resolveExtension = (file: File, fallback: string) => {
+      const extFromName = file.name ? path.extname(file.name) : "";
+      if (extFromName) {
+        return extFromName.toLowerCase();
+      }
+      const mapped = MIME_EXTENSION_MAP[file.type];
+      if (mapped) {
+        return mapped;
+      }
+      return fallback;
+    };
+
+    const buildFileName = (
+      prefix: "profile" | "document",
+      file: File,
+      index?: number,
+    ) => {
+      const fallbackExt = prefix === "document" ? ".pdf" : ".jpg";
+      const extension = resolveExtension(file, fallbackExt);
+      const timestamp = Date.now();
+      const suffix =
+        typeof index === "number"
+          ? `${user.userId}-${timestamp}-${index}`
+          : `${user.userId}-${timestamp}`;
+      return `${prefix}-${suffix}${extension}`;
+    };
+
     // Handle profile picture upload
     let profilePictureUrl: string | undefined;
     if (profilePicture && profilePicture.size > 0) {
@@ -56,10 +90,10 @@ export async function updateProfile(
       }
 
       try {
-        const uploadResult = await uploadImageToCloudflare(profilePicture, {
-          folder: `profiles/${user.userId}`,
-          filename: `profile-${Date.now()}`,
-          metadata: { userId: user.userId, type: "profilePicture" },
+        const profileFileName = buildFileName("profile", profilePicture);
+        const uploadResult = await uploadFileToR2(profilePicture, {
+          folder: `Profile/${user.userId}`,
+          filename: profileFileName,
         });
         profilePictureUrl = uploadResult.url;
       } catch (error) {
@@ -91,11 +125,14 @@ export async function updateProfile(
         }
 
         try {
+          const documentFileName = buildFileName(
+            "document",
+            document,
+            docIndex,
+          );
           const uploadResult = await uploadFileToR2(document, {
-            folder: `profiles/${user.userId}/documents`,
-            filename:
-              document.name ||
-              `document-${user.userId}-${Date.now()}-${docIndex}`,
+            folder: `Profile/${user.userId}/documents`,
+            filename: documentFileName,
           });
           documentUrls.push(uploadResult.url);
         } catch (error) {

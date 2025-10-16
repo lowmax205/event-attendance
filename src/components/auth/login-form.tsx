@@ -43,6 +43,7 @@ export function LoginForm() {
           lastName: result.user.lastName,
           role: result.user.role,
           hasProfile: result.user.hasProfile,
+          profilePictureUrl: result.user.profilePictureUrl ?? null,
         });
 
         toast.success("Login successful!", {

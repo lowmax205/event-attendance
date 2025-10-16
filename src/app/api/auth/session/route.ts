@@ -44,6 +44,7 @@ export async function GET() {
         lastName: user.lastName,
         role: user.role,
         hasProfile: !!user.UserProfile,
+        profilePictureUrl: user.UserProfile?.profilePictureUrl ?? null,
       },
     });
   } catch (error) {

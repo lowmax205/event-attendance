@@ -17,6 +17,7 @@ import {
   ClipboardCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Logo } from "@/components/logo";
 import {
   Sheet,
@@ -47,6 +48,23 @@ interface Event {
   startDateTime: Date;
   venueName: string;
   status: string;
+}
+
+function buildInitials(
+  firstName?: string,
+  lastName?: string,
+  email?: string,
+): string {
+  const first = firstName?.charAt(0)?.toUpperCase() ?? "";
+  const last = lastName?.charAt(0)?.toUpperCase() ?? "";
+  const initials = `${first}${last}`.trim();
+
+  if (initials.length > 0) {
+    return initials;
+  }
+
+  const fallback = email?.charAt(0)?.toUpperCase() ?? "";
+  return fallback || "U";
 }
 
 export function Navigation() {
@@ -145,6 +163,13 @@ export function Navigation() {
     setIsAuthModalOpen(true);
     setIsOpen(false);
   };
+
+  const userInitials = user
+    ? buildInitials(user.firstName, user.lastName, user.email)
+    : "";
+  const userFullName = user
+    ? `${user.firstName} ${user.lastName}`.trim() || user.email
+    : "";
 
   // Public navigation for non-authenticated users
   const publicNavLinks = [
@@ -380,9 +405,15 @@ export function Navigation() {
                         variant="ghost"
                         className="flex items-center gap-2"
                       >
-                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                          <User className="h-4 w-4" />
-                        </div>
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage
+                            src={user.profilePictureUrl ?? undefined}
+                            alt={userFullName}
+                          />
+                          <AvatarFallback className="text-xs font-semibold uppercase">
+                            {userInitials}
+                          </AvatarFallback>
+                        </Avatar>
                         <span className="text-sm">{user.firstName}</span>
                       </Button>
                     </DropdownMenuTrigger>
@@ -510,12 +541,25 @@ export function Navigation() {
                         aria-label="Account overview"
                         className="rounded-lg border bg-muted/40 px-4 py-3 shadow-sm"
                       >
-                        <p className="text-sm font-semibold">
-                          {user.firstName} {user.lastName}
-                        </p>
-                        <p className="text-xs text-muted-foreground break-all">
-                          {user.email}
-                        </p>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-12 w-12">
+                            <AvatarImage
+                              src={user.profilePictureUrl ?? undefined}
+                              alt={userFullName}
+                            />
+                            <AvatarFallback className="text-sm font-semibold uppercase">
+                              {userInitials}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="text-sm font-semibold">
+                              {user.firstName} {user.lastName}
+                            </p>
+                            <p className="text-xs text-muted-foreground break-all">
+                              {user.email}
+                            </p>
+                          </div>
+                        </div>
                         <span className="mt-3 inline-flex items-center rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
                           {user.role}
                         </span>

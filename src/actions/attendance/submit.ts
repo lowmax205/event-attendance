@@ -144,23 +144,57 @@ export async function submitAttendance(input: any) {
       },
     });
 
-    // Upload images to Cloudinary
-    const cloudinaryFolder = `${process.env.CLOUDINARY_FOLDER}/attendance/${event.id}/${user.userId}`;
+    // Prevent re-submission of media once recorded
+    const checkInAlreadySubmitted = Boolean(
+      existingAttendance?.checkInSubmittedAt,
+    );
+    const checkOutAlreadySubmitted = Boolean(
+      existingAttendance?.checkOutSubmittedAt,
+    );
+
+    if (
+      validatedData.attendanceType === "check-in" &&
+      checkInAlreadySubmitted
+    ) {
+      return {
+        success: false,
+        error: "Duplicate submission",
+        message: "Check-in has already been recorded for this event.",
+      };
+    }
+
+    if (
+      validatedData.attendanceType === "check-out" &&
+      checkOutAlreadySubmitted
+    ) {
+      return {
+        success: false,
+        error: "Duplicate submission",
+        message: "Check-out has already been recorded for this event.",
+      };
+    }
+
+    // Upload images to Cloudinary with user-scoped naming
+    const cloudinaryFolder = `attendance/${event.id}/${user.userId}`;
     const timestamp = Date.now();
     const recordId = existingAttendance?.id || "new";
+    const baseName = `${validatedData.attendanceType}_${user.userId}_${timestamp}_${recordId}`;
 
     const [frontPhotoUrl, backPhotoUrl, signatureUrl] = await Promise.all([
       uploadPhoto(
         validatedData.frontPhotoBase64,
-        `${cloudinaryFolder}/${validatedData.attendanceType}_front_${timestamp}_${recordId}`,
+        cloudinaryFolder,
+        `${baseName}_front`,
       ),
       uploadPhoto(
         validatedData.backPhotoBase64,
-        `${cloudinaryFolder}/${validatedData.attendanceType}_back_${timestamp}_${recordId}`,
+        cloudinaryFolder,
+        `${baseName}_back`,
       ),
       uploadSignature(
         validatedData.signatureBase64,
-        `${cloudinaryFolder}/${validatedData.attendanceType}_signature_${timestamp}_${recordId}`,
+        cloudinaryFolder,
+        `${baseName}_signature`,
       ),
     ]);
 
@@ -177,7 +211,7 @@ export async function submitAttendance(input: any) {
     if (validatedData.attendanceType === "check-in") {
       // Check-in: Create new record or update if exists (shouldn't happen)
       if (existingAttendance) {
-        // Update existing with check-in data
+        // Populate initial check-in data for pre-created attendance slots
         updatedAttendance = await db.attendance.update({
           where: { id: existingAttendance.id },
           data: {
@@ -263,7 +297,7 @@ export async function submitAttendance(input: any) {
         };
       }
 
-      // Update with check-out data
+      // Update with check-out data (single allowed submission)
       updatedAttendance = await db.attendance.update({
         where: { id: existingAttendance.id },
         data: {

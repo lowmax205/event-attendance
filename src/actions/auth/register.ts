@@ -107,6 +107,7 @@ export async function register(data: RegisterInput): Promise<AuthResponse> {
         lastName: user.lastName,
         role: user.role,
         hasProfile: false, // New user has no profile yet
+        profilePictureUrl: null,
       },
       requiresProfile: true,
     };

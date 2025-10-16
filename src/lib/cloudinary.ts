@@ -19,6 +19,7 @@ const CLOUDINARY_FOLDER =
 export async function uploadPhoto(
   base64: string,
   folder: string,
+  publicId?: string,
 ): Promise<string> {
   try {
     const fullFolder = `${CLOUDINARY_FOLDER}/${folder}`;
@@ -34,6 +35,7 @@ export async function uploadPhoto(
         { width: 1200, height: 1600, crop: "limit" },
         { quality: "auto:good" },
       ],
+      ...(publicId ? { public_id: publicId } : {}),
     });
 
     return result.secure_url;
@@ -52,6 +54,7 @@ export async function uploadPhoto(
 export async function uploadSignature(
   base64: string,
   folder: string,
+  publicId?: string,
 ): Promise<string> {
   try {
     const fullFolder = `${CLOUDINARY_FOLDER}/${folder}`;
@@ -66,6 +69,7 @@ export async function uploadSignature(
         { width: 800, height: 400, crop: "limit" },
         { quality: "auto:good" },
       ],
+      ...(publicId ? { public_id: publicId } : {}),
     });
 
     return result.secure_url;

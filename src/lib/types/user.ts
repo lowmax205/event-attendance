@@ -15,6 +15,7 @@ export interface UserSession {
   firstName: string;
   lastName: string;
   hasProfile: boolean;
+  profilePictureUrl?: string | null;
   sessionId?: string;
 }
 
