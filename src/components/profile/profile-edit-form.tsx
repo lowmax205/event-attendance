@@ -21,10 +21,12 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
+import { useRouter } from "next/navigation";
 import { User, Upload, FileText, GraduationCap, X } from "lucide-react";
 import { User as UserType, UserProfile } from "@prisma/client";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import { useAuth } from "@/hooks/use-auth";
 
 const profileUpdateSchema = z.object({
   firstName: z.string().min(1, "First name is required").max(50),
@@ -53,6 +55,8 @@ export function ProfileEditForm({ user, profile }: ProfileEditFormProps) {
     null,
   );
   const [documents, setDocuments] = useState<File[]>([]);
+  const { updateUser } = useAuth();
+  const router = useRouter();
 
   const form = useForm<ProfileUpdateInput>({
     resolver: zodResolver(profileUpdateSchema),
@@ -146,8 +150,13 @@ export function ProfileEditForm({ user, profile }: ProfileEditFormProps) {
         setProfilePictureFile(null);
         setDocuments([]);
 
-        // Refresh the page to show updated data
-        window.location.reload();
+        updateUser({
+          firstName: data.firstName,
+          lastName: data.lastName,
+          profilePictureUrl: result.profilePictureUrl ?? undefined,
+        });
+
+        router.refresh();
       } else {
         const friendlyMessage =
           result.message === "Failed to upload profile picture"

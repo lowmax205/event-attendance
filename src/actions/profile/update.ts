@@ -1,14 +1,17 @@
 "use server";
 
-import { getCurrentUser } from "@/lib/auth/server";
-import { db } from "@/lib/db";
-import { uploadFileToR2 } from "@/lib/cloudflare-r2";
-import { revalidatePath } from "next/cache";
 import path from "node:path";
+
+import { getCurrentUser } from "@/lib/auth/server";
+import { uploadFileToR2 } from "@/lib/cloudflare-r2";
+import { db } from "@/lib/db";
+import { revalidatePath } from "next/cache";
 
 interface UpdateProfileResult {
   success: boolean;
   message: string;
+  profilePictureUrl?: string | null;
+  documentUrls?: string[];
 }
 
 export async function updateProfile(
@@ -156,8 +159,25 @@ export async function updateProfile(
       where: { userId: user.userId },
     });
 
+    type ProfileSnapshot = {
+      profilePictureUrl: string | null;
+      documentUrls: string[];
+    };
+
+    let updatedProfile: ProfileSnapshot | null = existingProfile
+      ? {
+          profilePictureUrl: existingProfile.profilePictureUrl ?? null,
+          documentUrls: existingProfile.documentUrls,
+        }
+      : null;
+
     if (existingProfile) {
-      await db.userProfile.update({
+      const nextDocumentUrls =
+        documentUrls.length > 0
+          ? [...existingProfile.documentUrls, ...documentUrls]
+          : existingProfile.documentUrls;
+
+      const updated = await db.userProfile.update({
         where: { userId: user.userId },
         data: {
           studentId,
@@ -166,13 +186,19 @@ export async function updateProfile(
           section,
           contactNumber,
           ...(profilePictureUrl && { profilePictureUrl }),
-          ...(documentUrls.length > 0 && {
-            documentUrls: [...existingProfile.documentUrls, ...documentUrls],
-          }),
+          documentUrls: nextDocumentUrls,
+        },
+        select: {
+          profilePictureUrl: true,
+          documentUrls: true,
         },
       });
+      updatedProfile = {
+        profilePictureUrl: updated.profilePictureUrl,
+        documentUrls: updated.documentUrls,
+      };
     } else {
-      await db.userProfile.create({
+      const created = await db.userProfile.create({
         data: {
           userId: user.userId,
           studentId,
@@ -183,11 +209,25 @@ export async function updateProfile(
           ...(profilePictureUrl && { profilePictureUrl }),
           documentUrls: documentUrls.length > 0 ? documentUrls : [],
         },
+        select: {
+          profilePictureUrl: true,
+          documentUrls: true,
+        },
       });
+      updatedProfile = {
+        profilePictureUrl: created.profilePictureUrl,
+        documentUrls: created.documentUrls,
+      };
     }
 
     revalidatePath("/profile");
-    return { success: true, message: "Profile updated successfully" };
+    return {
+      success: true,
+      message: "Profile updated successfully",
+      profilePictureUrl:
+        profilePictureUrl ?? updatedProfile?.profilePictureUrl ?? null,
+      documentUrls: documentUrls.length > 0 ? documentUrls : undefined,
+    };
   } catch (error) {
     console.error("Profile update error:", error);
     return { success: false, message: "Failed to update profile" };

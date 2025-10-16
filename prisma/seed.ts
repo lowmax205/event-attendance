@@ -47,7 +47,6 @@ const PLACEHOLDER_DIR = path.resolve(
   __dirname,
   "../src/assets/images/Placeholder",
 );
-const SEED_STORAGE_ROOT = "seed/placeholders";
 
 const MIME_TYPES: Record<string, string> = {
   ".png": "image/png",
@@ -87,7 +86,7 @@ async function uploadPlaceholderAsset(
   const buffer = await readFile(filePath);
   const mimeType = getMimeType(filePath);
   const dataUri = `data:${mimeType};base64,${buffer.toString("base64")}`;
-  const folderPath = `${SEED_STORAGE_ROOT}/${config.folder}`;
+  const folderPath = config.folder;
 
   const cloudinaryUrl =
     config.type === "signature"
@@ -128,31 +127,31 @@ async function preparePlaceholderAssets(): Promise<PlaceholderAssets> {
     {
       key: "profile",
       filename: "Profile.png",
-      folder: "profiles",
+      folder: "Profile/placeholders",
       type: "photo",
     },
     {
       key: "checkIn",
       filename: "CheckIn.png",
-      folder: "attendance/check-in",
+      folder: "Attendance_In/placeholders",
       type: "photo",
     },
     {
       key: "checkOut",
       filename: "CheckOut.png",
-      folder: "attendance/check-out",
+      folder: "Attendance_Out/placeholders",
       type: "photo",
     },
     {
       key: "document",
       filename: "PhotoSample.png",
-      folder: "documents",
+      folder: "Profile/placeholders/documents",
       type: "photo",
     },
     {
       key: "signature",
       filename: "PhotoSample.png",
-      folder: "signatures",
+      folder: "Profile/placeholders/signatures",
       type: "signature",
     },
   ];
