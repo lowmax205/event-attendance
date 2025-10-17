@@ -2,41 +2,41 @@
 
 **Preliminaries**
 
-1.  **Title Page**
+1. **Title Page**
 
-2.  **Approval Sheet**
+2. **Approval Sheet**
 
-3.  **Acknowledgement**
+3. **Acknowledgement**
 
-4.  **Abstract**
+4. **Abstract**
 
-5.  **Table of Contents**
+5. **Table of Contents**
 
-6.  **List of Tables**
+6. **List of Tables**
 
-7.  **List of Figures**
+7. **List of Figures**
 
-8.  **List of Appendices**
+8. **List of Appendices**
 
 **Chapter 1: Introduction**
 
-1.1 Background of the Study  
-1.2 Statement of the Problem  
-1.3 Objectives of the Study  
-  a. General Objectives  
-  b. Specific Objectives  
-1.4 Significance of the Study  
-1.5 Scope and Limitation  
+1.1 Background of the Study
+1.2 Statement of the Problem
+1.3 Objectives of the Study
+  a. General Objectives
+  b. Specific Objectives
+1.4 Significance of the Study
+1.5 Scope and Limitation
 1.6 Definition of Terms (optional)
 
 **Chapter 2: Review of Related Literature and Studies**
 
-2.1 Local and Foreign Studies/Literature  
+2.1 Local and Foreign Studies/Literature
 2.2 Synthesis of the Review
 
 **Chapter 3: Theoretical and Conceptual Framework**
 
-3.1 Theoretical Framework  
+3.1 Theoretical Framework
 3.2 Conceptual Framework
 
 **Chapter 4: Research Methodology**
@@ -55,12 +55,12 @@
 
 **Chapter 5: Results and Discussions**
 
-5.1 Presentation of Results  
+5.1 Presentation of Results
 5.2 Discussion of Findings
 
 **Chapter 6: Conclusion and Recommendations**
 
-6.1 Conclusion  
+6.1 Conclusion
 6.2 Recommendations
 
 **References**
